@@ -1,0 +1,264 @@
+@model ConceptFactory.Models.Product
+@{
+    ViewData["Title"] = "Add Product";
+    ViewData["ActivePage"] = "Products";
+}
+
+<div class="page-container">
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Add New Product</h1>
+            <p class="page-subtitle">Fill in the details below to create a new product.</p>
+        </div>
+        <a asp-action="Index" class="btn btn-outline">
+            <i class="fa-solid fa-arrow-left"></i> Back to Products
+        </a>
+    </div>
+
+    <div class="form-card">
+        <form asp-action="Create" method="post" enctype="multipart/form-data">
+            @Html.AntiForgeryToken()
+
+            <div class="form-grid">
+    <!-- Left Column -->
+    <div class="form-col left">
+        <div class="form-header">
+            <h2>Basic Information</h2>
+        </div>
+        <div class="form-group">
+            <label asp-for="ProductName" class="form-label"></label>
+            <input asp-for="ProductName" class="form-control" placeholder="e.g. Basic Cotton T-Shirt" />
+            <span asp-validation-for="ProductName" class="field-error"></span>
+        </div>
+
+        <div class="form-group">
+            <label asp-for="CategoryID" class="form-label">Category</label>
+            <select asp-for="CategoryID" asp-items="ViewBag.CategoryID" id="categorySelect"
+                    class="form-control" onchange="updateMockup()">
+                <option value="">-- Select Category --</option>
+            </select>
+            <span asp-validation-for="CategoryID" class="field-error"></span>
+        </div>
+                    <div class="form-group">
+                        <label asp-for="Size" class="form-label"></label>
+                        <select asp-for="Size" class="form-control">
+                            <option value="">-- Select Size --</option>
+                            <option value="XS">XS</option>
+                            <option value="S">S</option>
+                            <option value="M">M</option>
+                            <option value="L">L</option>
+                            <option value="XL">XL</option>
+                            <option value="XXL">XXL</option>
+                            <option value="One Size">One Size</option>
+                        </select>
+                        <span asp-validation-for="Size" class="field-error"></span>
+                    </div>
+
+
+        <div class="form-row-2">
+                        <div class="form-group">
+                            <label asp-for="Price" class="form-label"></label>
+                            <div class="input-prefix">
+                                <span class="prefix-text">₱</span>
+                                <input asp-for="Price" type="number" step="0.01" min="0"
+                                       class="form-control prefix-input" placeholder="Enter price" />
+                            </div>
+                            <span asp-validation-for="Price" class="field-error"></span>
+                        </div>
+            <div class="form-group">
+                <label asp-for="StockQuantity" class="form-label"></label>
+                <input asp-for="StockQuantity" type="number" min="0"
+                       class="form-control" placeholder="Enter stock quantity" />
+                <span asp-validation-for="StockQuantity" class="field-error"></span>
+            </div>
+        </div>
+
+                    <div class="form-group">
+                        <label asp-for="ProductDescription" class="form-label"></label>
+                        <textarea asp-for="ProductDescription" class="form-control form-textarea"
+                                  placeholder="Describe the product..."></textarea>
+                        <span asp-validation-for="ProductDescription" class="field-error"></span>
+                    </div>
+    </div> 
+    <!-- End Left Column-->
+
+    <!-- Right Column -->
+    <div class="form-col">
+        <div class="form-group">
+            <label class="form-label">Product Image</label>
+            <p class="form-sublabel">Upload a clear image of your product</p>
+
+            <div class="upload-dropzone" id="uploadArea"
+                 onclick="document.getElementById('imageFile').click()"
+                 ondragover="handleDragOver(event)"
+                 ondragleave="handleDragLeave(event)"
+                 ondrop="handleDrop(event)">
+                <div class="upload-dropzone-inner" id="uploadPlaceholder">
+                    <div class="upload-icon-circle">
+                        <i class="fa-solid fa-arrow-up-from-bracket"></i>
+                    </div>
+                    <p class="upload-main-text">Drag and drop an image here<br>or click to browse</p>
+                    <p class="upload-sub-text">PNG, JPEG, WEBP up to 5MB</p>
+                </div>
+                <p id="uploadedFileName" class="upload-file-name" style="display:none;"></p>
+            </div>
+            <input type="file" id="imageFile" name="imageFile"
+                   accept="image/*" style="display:none;" onchange="handleImageUpload(this)" />
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Image Preview</label>
+            <div class="mockup-wrapper">
+                <div class="mockup-canvas-container" id="mockupContainer" style="display:none;">
+                    <canvas id="mockupCanvas" width="400" height="440"></canvas>
+                    <p class="mockup-hint">This is how your design will look on the product</p>
+                </div>
+                <div id="mockupPlaceholder" class="mockup-placeholder">
+                    <i class="fa-solid fa-shirt"></i>
+                    <p>Select a category and upload a design to preview</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-actions">
+        <button type="submit" class="btn btn-primary">Save Product</button>
+    <a asp-action="Index" class="btn btn-outline">Cancel</a>
+</div>
+
+    </div>  
+</div>  
+        </form>
+    </div>
+</div>
+
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        const mockupConfig = {
+            'tshirt':  { svg: '/images/mockups/tshirt.svg',  x: 148, y: 130, w: 104, h: 110 },
+            't-shirt': { svg: '/images/mockups/tshirt.svg',  x: 148, y: 130, w: 104, h: 110 },
+            't shirt': { svg: '/images/mockups/tshirt.svg',  x: 148, y: 130, w: 104, h: 110 },
+            'hoodie':  { svg: '/images/mockups/hoodie.svg',  x: 152, y: 148, w: 96,  h: 100 },
+            'polo':    { svg: '/images/mockups/polo.svg',    x: 152, y: 195, w: 96,  h: 100 },
+            'tote':    { svg: '/images/mockups/totebag.svg', x: 148, y: 165, w: 104, h: 130 },
+            'bag':     { svg: '/images/mockups/totebag.svg', x: 148, y: 165, w: 104, h: 130 },
+            'apparel': { svg: '/images/mockups/tshirt.svg',  x: 148, y: 130, w: 104, h: 110 },
+        };
+
+        let uploadedDesignImage = null;
+        let currentMockup = null;
+
+        function getCategoryMockup() {
+            const sel = document.getElementById('categorySelect');
+            if (!sel || sel.selectedIndex <= 0) return null;
+            const text = sel.options[sel.selectedIndex].text.toLowerCase();
+            for (const key in mockupConfig) {
+                if (text.includes(key)) return mockupConfig[key];
+            }
+            return mockupConfig['tshirt'];
+        }
+
+        function updateMockup() {
+            const cfg         = getCategoryMockup();
+            const container   = document.getElementById('mockupContainer');
+            const placeholder = document.getElementById('mockupPlaceholder');
+
+            if (!cfg) {
+                container.style.display   = 'none';
+                placeholder.style.display = 'flex';
+                return;
+            }
+
+            currentMockup = cfg;
+            container.style.display   = 'block';
+            placeholder.style.display = 'none';
+            renderMockup(cfg);
+        }
+
+        function renderMockup(cfg) {
+            const canvas = document.getElementById('mockupCanvas');
+            const ctx    = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            const garmentImg = new Image();
+            garmentImg.onload = function () {
+                ctx.drawImage(garmentImg, 0, 0, canvas.width, canvas.height);
+
+                if (uploadedDesignImage) {
+                    ctx.save();
+                    ctx.beginPath();
+                    ctx.rect(cfg.x, cfg.y, cfg.w, cfg.h);
+                    ctx.clip();
+                    ctx.globalAlpha = 0.92;
+                    ctx.drawImage(uploadedDesignImage, cfg.x, cfg.y, cfg.w, cfg.h);
+                    ctx.globalAlpha = 1.0;
+                    ctx.restore();
+                    ctx.globalAlpha = 0.08;
+                    ctx.fillStyle = '#000';
+                    ctx.fillRect(cfg.x, cfg.y, cfg.w, cfg.h);
+                    ctx.globalAlpha = 1.0;
+                } else {
+                    ctx.save();
+                    ctx.setLineDash([5, 4]);
+                    ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+                    ctx.lineWidth = 1.5;
+                    ctx.strokeRect(cfg.x, cfg.y, cfg.w, cfg.h);
+                    ctx.restore();
+                    ctx.fillStyle = 'rgba(255,255,255,0.18)';
+                    ctx.font = '11px sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('Print area', cfg.x + cfg.w / 2, cfg.y + cfg.h / 2);
+                }
+            };
+            garmentImg.src = cfg.svg;
+        }
+
+        function handleImageUpload(input) {
+            if (!input.files || !input.files[0]) return;
+            const file = input.files[0];
+
+            const nameEl = document.getElementById('uploadedFileName');
+            nameEl.textContent = '✓ ' + file.name;
+            nameEl.style.display = 'block';
+
+            document.getElementById('uploadPlaceholder').querySelector('.upload-main-text').textContent = 'Image loaded — click to change';
+            document.getElementById('uploadArea').classList.add('upload-loaded');
+
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                const img = new Image();
+                img.onload = function () {
+                    uploadedDesignImage = img;
+                    if (currentMockup) {
+                        renderMockup(currentMockup);
+                    } else {
+                        updateMockup();
+                    }
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            document.getElementById('uploadArea').classList.add('drag-over');
+        }
+        function handleDragLeave(e) {
+            document.getElementById('uploadArea').classList.remove('drag-over');
+        }
+        function handleDrop(e) {
+            e.preventDefault();
+            document.getElementById('uploadArea').classList.remove('drag-over');
+            const file = e.dataTransfer.files[0];
+            if (file && file.type.startsWith('image/')) {
+                const input = document.getElementById('imageFile');
+                const dt = new DataTransfer();
+                dt.items.add(file);
+                input.files = dt.files;
+                handleImageUpload(input);
+            }
+        }
+    </script>
+}
