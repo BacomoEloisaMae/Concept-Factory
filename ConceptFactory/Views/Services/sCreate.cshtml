@@ -1,0 +1,72 @@
+@model ConceptFactory.Models.Service
+@{
+    ViewData["Title"] = "Add Service";
+    ViewData["ActivePage"] = "Services";
+}
+
+<div class="page-container">
+
+        <div class="page-header">
+            <div>
+                <h1 class="page-title">Add Printing Service</h1>
+                <p class="page-subtitle">Fill in the details to register a new printing service.</p>
+            </div>
+            <a asp-action="sIndex" class="btn btn-outline">
+                <i class="fa-solid fa-arrow-left"></i> Back to Services
+            </a>
+        </div>
+
+        <div class="form-card form-card-narrow">
+            <form asp-action="sCreate" method="post">
+                @Html.AntiForgeryToken()
+			<div class="form-col left">
+                <div class="form-header">
+                    <h2>Service Information</h2>
+                </div>
+                <div class="form-group">
+                    <label asp-for="ServiceName" class="form-label"></label>
+                    <input asp-for="ServiceName" class="form-control-service" placeholder="e.g. DTG Printing" />
+                    <span asp-validation-for="ServiceName" class="field-error"></span>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="ServiceDescription" class="form-label"></label>
+                    <textarea asp-for="ServiceDescription" class="form-control-service form-textarea"
+                              placeholder="Describe what this service includes..."></textarea>
+                    <span asp-validation-for="ServiceDescription" class="field-error"></span>
+                </div>
+
+                <div class="form-row-2">
+                    <div class="form-group">
+                        <label asp-for="ServicePrice" class="form-label"></label>
+                        <div class="input-prefix">
+                            <span class="prefix-text">₱</span>
+                            <input asp-for="ServicePrice" type="number" step="0.01" min="0"
+                                   class="form-control prefix-input-service" placeholder="Enter price" />
+                        </div>
+                        <span asp-validation-for="ServicePrice" class="field-error"></span>
+                    </div>
+
+                    @* <div class="form-group">
+                        <label asp-for="Status" class="form-label"></label>
+                        <select asp-for="Status" class="form-control">
+                            <option value="Active">Active</option>
+                            <option value="Inactive">Inactive</option>
+                        </select>
+                    </div> *@
+                </div>
+
+				<div class="form-actions-service">
+					<button type="submit" class="btn btn-primary">
+						<i class="fa-solid fa-plus"></i> Add Service
+					</button>
+                    <a asp-action="sIndex" class="btn btn-outline">Cancel</a>                   
+                </div>
+			</div>
+            </form>
+        </div>
+</div>
+
+@section Scripts {
+<partial name="_ValidationScriptsPartial" />
+}

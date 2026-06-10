@@ -1,0 +1,222 @@
+@model IEnumerable<ConceptFactory.Models.Product>
+@{
+    ViewData["Title"] = "Deleted Products";
+    ViewData["ActivePage"] = "Products";
+    int page = ViewBag.Page ?? 1;
+    int totalPages = ViewBag.TotalPages ?? 1;
+    int totalCount = ViewBag.TotalCount ?? 0;
+    int pageSize = 12;
+    int startItem = totalCount == 0 ? 0 : ((page - 1) * pageSize) + 1;
+    int endItem = Math.Min(page * pageSize, totalCount);
+}
+
+<div class="page-container">
+
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Deleted Products</h1>
+            <p class="page-subtitle">Restore items or permanently delete them from here.</p>
+        </div>
+        <a asp-action="pIndex" class="btn btn-outline">
+            <i class="fa-solid fa-arrow-left"></i> Back to Products
+        </a>
+    </div>
+
+    <div class="filter-bar">
+        <form method="get" asp-action="pDeleted" class="filter-form">
+            <div class="search-box">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" name="search" value="@ViewBag.Search"
+                       placeholder="Search deleted products..." class="search-input" />
+            </div>
+            <select name="categoryId" asp-items="ViewBag.Categories" class="filter-select">
+                <option value="">All Categories</option>
+            </select>
+            <button type="submit" class="btn btn-outline">
+                <i class="fa-solid fa-filter"></i> Filter
+            </button>
+        </form>
+    </div>
+
+    <div class="card">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Product</th>
+                    <th>Category</th>
+                    <th>Price</th>
+                    <th>Stock</th>
+                    <th>Deleted At</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Any())
+                {
+                    <tr>
+                        <td colspan="6" class="empty-state">
+                            <i class="fa-solid fa-trash-can"></i>
+                            <p>No deleted products.</p>
+                            <a asp-action="pIndex" class="btn btn-outline btn-sm">Back to Products</a>
+                        </td>
+                    </tr>
+                }
+                else
+                {
+                    @foreach (var product in Model)
+                    {
+                        <tr style="opacity:0.75;">
+                            <td>
+                                <div class="product-cell">
+                                    <div class="product-thumb">
+                                        @if (!string.IsNullOrEmpty(product.ImagePath))
+                                        {
+                                            <img src="@product.ImagePath" alt="@product.ProductName" style="width:50px;height:50px;object-fit:cover;border-radius:6px;" />
+                                        }
+                                        else
+                                        {
+                                            <div style="width:50px;height:50px;background:#e2e8f0;display:flex;align-items:center;justify-content:center;border-radius:6px;color:#94a3b8;">
+                                                <i class="fa-solid fa-shirt"></i>
+                                            </div>
+                                        }
+                                    </div>
+                                    <span class="product-name">@product.ProductName</span>
+                                </div>
+                            </td>
+                            <td>@product.Category?.CategoryName</td>
+                            <td class="price-cell">₱@product.Price.ToString("N2")</td>
+                            <td>@product.StockQuantity</td>
+                            <td>@(product.DeletedAt?.ToString("MMM dd, yyyy") ?? "—")</td>
+                            <td>
+                                <div class="action-btn">
+                                    <button type="button" class="btn-icon" style="color: var(--primary, #4f46e5);" title="Restore"
+                                            onclick="confirmRestore(@product.ProductID, '@Html.Raw(product.ProductName.Replace("'", "\\'"))')">
+                                        <i class="fa-solid fa-rotate-left"></i>
+                                    </button>
+
+                                    <button type="button" class="btn-icon btn-delete" title="Permanently Delete"
+                                            onclick="confirmHardDelete(@product.ProductID, '@Html.Raw(product.ProductName.Replace("'", "\\'"))')">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+
+        @if (totalPages > 1)
+        {
+            <div class="pagination">
+                <span class="page-info">Showing @startItem–@endItem of @totalCount deleted products</span>
+                <div class="page-btns">
+                    @if (page > 1)
+                    {
+                        <a asp-action="pDeleted" asp-route-page="@(page - 1)"
+                           asp-route-search="@ViewBag.Search" asp-route-categoryId="@ViewBag.CategoryId"
+                           class="page-btn">‹</a>
+                    }
+                    @for (int i = 1; i <= totalPages; i++)
+                    {
+                        <a asp-action="pDeleted" asp-route-page="@i"
+                           asp-route-search="@ViewBag.Search" asp-route-categoryId="@ViewBag.CategoryId"
+                           class="page-btn @(i == page ? "active" : "")">@i</a>
+                    }
+                    @if (page < totalPages)
+                    {
+                        <a asp-action="pDeleted" asp-route-page="@(page + 1)"
+                           asp-route-search="@ViewBag.Search" asp-route-categoryId="@ViewBag.CategoryId"
+                           class="page-btn">›</a>
+                    }
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="pagination">
+                <span class="page-info">Showing @startItem–@endItem of @totalCount deleted products</span>
+            </div>
+        }
+    </div>
+</div>
+
+<div id="restoreModal" class="modal-overlay" style="display:none;">
+    <div class="modal-box">
+        <div class="modal-icon" style="color:var(--primary, #4f46e5);"><i class="fa-solid fa-arrow-rotate-left"></i></div>
+        <h3 class="modal-title">Restore Product?</h3>
+        <p class="modal-body">
+            Are you sure you want to restore <strong id="restoreProductName"></strong> back to active status?
+        </p>
+        <div class="modal-actions">
+            <button onclick="closeAllModals()" class="btn btn-outline">Cancel</button>
+            <form id="restoreForm" method="post">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn btn-primary">Restore Product</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div id="softDeleteModal" class="modal-overlay" style="display:none;">
+    <div class="modal-box">
+        <div class="modal-icon" style="color:var(--warning, #dd6b20);"><i class="fa-solid fa-trash-can-arrow-up"></i></div>
+        <h3 class="modal-title">Archive Product?</h3>
+        <p class="modal-body">
+            Are you sure you want to move <strong id="softDeleteName"></strong> to deleted items? It can be restored later.
+        </p>
+        <div class="modal-actions">
+            <button onclick="closeAllModals()" class="btn btn-outline">Cancel</button>
+            <form id="softDeleteForm" method="post">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn" style="background-color: var(--warning, #dd6b20); color: white;">Move to Trash</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div id="hardDeleteModal" class="modal-overlay" style="display:none;">
+    <div class="modal-box">
+        <div class="modal-icon" style="color:var(--danger,#e53e3e);"><i class="fa-solid fa-triangle-exclamation"></i></div>
+        <h3 class="modal-title">Permanently Delete?</h3>
+        <p class="modal-body">
+            <strong id="hardDeleteName"></strong> will be permanently removed and cannot be recovered.
+        </p>
+        <div class="modal-actions">
+            <button onclick="closeAllModals()" class="btn btn-outline">Cancel</button>
+            <form id="hardDeleteForm" method="post">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn btn-danger">Delete Forever</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Modal 
+        function confirmRestore(id, name) {
+            document.getElementById('restoreProductName').textContent = name;
+            document.getElementById('restoreForm').action = '/Products/pRestore/' + id;
+            document.getElementById('restoreModal').style.display = 'flex';
+        }
+
+        function openSoftDeleteModal(productId, productName, softDeleteUrl) {
+            document.getElementById('softDeleteName').textContent = productName;
+            document.getElementById('softDeleteForm').action = softDeleteUrl;
+            document.getElementById('softDeleteModal').style.display = 'flex';
+        }
+
+        function confirmHardDelete(id, name) {
+            document.getElementById('hardDeleteName').textContent = name;
+            document.getElementById('hardDeleteForm').action = '/Products/pHardDelete/' + id;
+            document.getElementById('hardDeleteModal').style.display = 'flex';
+        }
+
+        function closeAllModals() {
+            document.getElementById('restoreModal').style.display = 'none';
+            document.getElementById('softDeleteModal').style.display = 'none';
+            document.getElementById('hardDeleteModal').style.display = 'none';
+        }
+    </script>
+}
