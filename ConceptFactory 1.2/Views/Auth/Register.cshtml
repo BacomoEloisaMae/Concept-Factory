@@ -1,0 +1,126 @@
+@{
+    ViewData["Title"] = "Register";
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Create Account — ConceptFactory</title>
+    <link rel="stylesheet" href="~/css/auth.css" asp-append-version="true" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+</head>
+<body>
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+    <div class="blob blob-3"></div>
+    <div class="dot-grid"></div>
+
+    <div class="mockup-float">
+        <img src="/images/mockups/tshirt.svg" alt="" />
+    </div>
+    <div class="tote-float">
+        <img src="/images/mockups/totebag.svg" alt="" />
+    </div>
+
+    <div class="auth-card">
+        <div class="auth-icon">💡</div>
+        <h1 class="auth-title">Create Account</h1>
+        <p class="auth-sub">Fill in the details to get started</p>
+
+        <form method="post" action="/Auth/Register">
+            <input name="__RequestVerificationToken" type="hidden" />
+
+            <div class="form-group">
+                <label class="form-label">Full Name</label>
+                <div class="input-wrap">
+                    <i class="fa-regular fa-user prefix"></i>
+                    <input type="text" name="FullName" placeholder="Enter your full name" autocomplete="name" />
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Email</label>
+                <div class="input-wrap">
+                    <i class="fa-regular fa-envelope prefix"></i>
+                    <input type="email" name="Email" placeholder="Enter your email" autocomplete="email" />
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Password</label>
+                <div class="input-wrap">
+                    <i class="fa-solid fa-lock prefix"></i>
+                    <input type="password" name="Password" id="pwReg" placeholder="Enter your password"
+                           autocomplete="new-password" oninput="checkStrength(this.value)" />
+                    <button type="button" class="toggle-pw" onclick="togglePw('pwReg', this)">
+                        <i class="fa-regular fa-eye"></i>
+                    </button>
+                </div>
+                <div class="pw-strength" id="pwStrength">
+                    <span></span><span></span><span></span>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Confirm Password</label>
+                <div class="input-wrap">
+                    <i class="fa-solid fa-lock prefix"></i>
+                    <input type="password" name="ConfirmPassword" id="pwConfirm"
+                           placeholder="Enter your password" autocomplete="new-password" />
+                    <button type="button" class="toggle-pw" onclick="togglePw('pwConfirm', this)">
+                        <i class="fa-regular fa-eye"></i>
+                    </button>
+                </div>
+            </div>
+
+            <button type="submit" class="btn-primary">Register</button>
+        </form>
+
+        <div class="divider">or continue with</div>
+
+        <div class="social-row">
+            <button class="btn-social">
+                <img src="https://www.google.com/favicon.ico" alt="Google" />
+                Google
+            </button>
+            <button class="btn-social">
+                <i class="fa-brands fa-facebook-f"></i>
+                Facebook
+            </button>
+        </div>
+
+        <p class="auth-footer">
+            Already have an account? <a href="/Auth/Login">Login</a>
+        </p>
+    </div>
+
+    <script>
+        function togglePw(inputId, btn) {
+            const input = document.getElementById(inputId);
+            const icon = btn.querySelector('i');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.className = 'fa-regular fa-eye-slash';
+            } else {
+                input.type = 'password';
+                icon.className = 'fa-regular fa-eye';
+            }
+        }
+
+        function checkStrength(val) {
+            const bar = document.getElementById('pwStrength');
+            bar.className = 'pw-strength';
+            if (!val) return;
+            const strong = val.length >= 8 && /[A-Z]/.test(val) && /[0-9]/.test(val) && /[^A-Za-z0-9]/.test(val);
+            const medium = val.length >= 6 && (/[A-Z]/.test(val) || /[0-9]/.test(val));
+            if (strong)      bar.classList.add('strong');
+            else if (medium) bar.classList.add('medium');
+            else             bar.classList.add('weak');
+        }
+    </script>
+</body>
+</html>

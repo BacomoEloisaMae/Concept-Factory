@@ -1,0 +1,61 @@
+@model IEnumerable<ConceptFactory.Models.Product>
+@{
+    ViewData["Title"] = "Home";
+    ViewData["ActivePage"] = "Home";
+}
+
+<section class="store-hero">
+    <div class="store-hero-text">
+        <h1>High quality custom printed apparel<br>for every occasion</h1>
+        <p>Create your own design, your own style, your own story.</p>
+        <a asp-controller="Store" asp-action="Browse" class="store-card-btn" style="display:inline-block; margin-top:14px; padding:11px 22px;">
+            Browse Products
+        </a>
+    </div>
+    <div class="store-hero-images">
+        <i class="fa-solid fa-shirt" style="font-size:90px; color:#c7caff;"></i>
+        <i class="fa-solid fa-shirt" style="font-size:90px; color:#9ea3ff;"></i>
+        <i class="fa-solid fa-bag-shopping" style="font-size:90px; color:#c7caff;"></i>
+    </div>
+</section>
+
+<div class="store-section-head">
+    <h2 class="store-section-title">Browse our Products</h2>
+    <a asp-controller="Store" asp-action="Browse">View All <i class="fa-solid fa-arrow-right"></i></a>
+</div>
+
+<div class="store-grid">
+    @if (!Model.Any())
+    {
+        <div class="store-empty">
+            <i class="fa-solid fa-box-open"></i>
+            <p>No products available yet.</p>
+        </div>
+    }
+    else
+    {
+        @foreach (var item in Model)
+        {
+            <a asp-controller="Store" asp-action="Details" asp-route-id="@item.ProductID" class="store-card">
+                <div class="store-card-thumb">
+                    @if (!string.IsNullOrEmpty(item.ImagePath))
+                    {
+                        <img src="@item.ImagePath" alt="@item.ProductName" />
+                    }
+                    else
+                    {
+                        <div class="store-card-placeholder">
+                            <i class="fa-solid fa-image"></i>
+                            <span>No Image</span>
+                        </div>
+                    }
+                </div>
+                <div class="store-card-body">
+                    <span class="store-card-name">@item.ProductName</span>
+                    <span class="store-card-price">₱@item.Price.ToString("N2")</span>
+                    <span class="store-card-btn">View Product</span>
+                </div>
+            </a>
+        }
+    }
+</div>

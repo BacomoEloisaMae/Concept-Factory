@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] – The Concept Factory</title>
+    <link rel="stylesheet" href="~/css/store.css" asp-append-version="true" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body class="store-body">
+
+@{
+    string? userName = Context.Session.GetString("UserName");
+    string? userRole = Context.Session.GetString("UserRole");
+    bool isLoggedIn = userName != null;
+    bool isAdmin = userRole == "Admin";
+}
+
+<header class="store-header">
+    <div class="store-header-inner">
+        <a href="/" class="store-logo">
+            <img src="~/images/logo/logo.png" alt="logo" onerror="this.style.display='none'" />
+            <span>The Concept Factory</span>
+        </a>
+
+        <nav class="store-nav">
+            <a asp-controller="Store" asp-action="Index" class="@(ViewData["ActivePage"]?.ToString() == "Home" ? "active" : "")">Home</a>
+            <a asp-controller="Store" asp-action="Browse" class="@(ViewData["ActivePage"]?.ToString() == "Products" ? "active" : "")">Products</a>
+            <a href="#" class="@(ViewData["ActivePage"]?.ToString() == "Customize" ? "active" : "")">Customize</a>
+            <a href="#" class="@(ViewData["ActivePage"]?.ToString() == "TrackOrder" ? "active" : "")">Track Order</a>
+            <a href="#" class="@(ViewData["ActivePage"]?.ToString() == "AboutUs" ? "active" : "")">About Us</a>
+        </nav>
+
+        <div class="store-header-actions">
+            <form asp-controller="Store" asp-action="Browse" method="get" class="store-search">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" name="search" placeholder="Search Products" />
+            </form>
+
+            <a href="#" class="store-icon-btn" title="Cart">
+                <i class="fa-solid fa-cart-shopping"></i>
+            </a>
+
+            <div class="store-account" id="accountDropdown">
+                <button type="button" class="store-account-btn" onclick="toggleAccountMenu()">
+                    <i class="fa-solid fa-circle-user"></i>
+                    @(isLoggedIn ? userName : "Account")
+                    <i class="fa-solid fa-chevron-down" style="font-size:10px;"></i>
+                </button>
+                <div class="store-account-menu" id="accountMenu">
+                    @if (isLoggedIn)
+                    {
+                        @if (isAdmin)
+                        {
+                            <a asp-controller="Home" asp-action="pIndex" class="admin-link">
+                                <i class="fa-solid fa-gauge-high"></i> Admin Panel
+                            </a>
+                            <div class="menu-divider"></div>
+                        }
+                        <a href="#"><i class="fa-regular fa-user"></i> My Profile</a>
+                        <a href="#"><i class="fa-solid fa-box"></i> My Orders</a>
+                        <a asp-controller="Auth" asp-action="Logout"><i class="fa-solid fa-arrow-right-from-bracket"></i> Logout</a>
+                    }
+                    else
+                    {
+                        <a asp-controller="Auth" asp-action="Login"><i class="fa-solid fa-arrow-right-to-bracket"></i> Login</a>
+                        <a asp-controller="Auth" asp-action="Register"><i class="fa-regular fa-square-plus"></i> Register</a>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<main class="store-main">
+    @if (TempData["Success"] != null)
+    {
+        <div class="store-alert store-alert-success">
+            <i class="fa-solid fa-circle-check"></i> @TempData["Success"]
+        </div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="store-alert store-alert-danger">
+            <i class="fa-solid fa-circle-xmark"></i> @TempData["Error"]
+        </div>
+    }
+    @RenderBody()
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+<script>
+    function toggleAccountMenu() {
+        document.getElementById('accountMenu').classList.toggle('open');
+    }
+    document.addEventListener('click', function (e) {
+        const wrap = document.getElementById('accountDropdown');
+        if (wrap && !wrap.contains(e.target)) {
+            document.getElementById('accountMenu').classList.remove('open');
+        }
+    });
+</script>
+@await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

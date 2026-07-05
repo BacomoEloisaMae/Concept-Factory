@@ -1,0 +1,171 @@
+@model ConceptFactory.Models.Product
+@{
+    ViewData["Title"] = Model.ProductName;
+    ViewData["ActivePage"] = "Products";
+
+    var sizes = string.IsNullOrEmpty(Model.Size)
+        ? new List<string>()
+        : Model.Size.Split(',').Select(s => s.Trim()).Where(s => !string.IsNullOrEmpty(s)).ToList();
+
+    var colors = string.IsNullOrEmpty(Model.Color)
+        ? new List<string>()
+        : Model.Color.Split(',').Select(s => s.Trim()).Where(s => !string.IsNullOrEmpty(s)).ToList();
+
+    var colorMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+    {
+        {"red","#e53e3e"},{"blue","#3182ce"},{"black","#1a202c"},{"white","#f7fafc"},
+        {"green","#38a169"},{"yellow","#d69e2e"},{"orange","#dd6b20"},{"purple","#805ad5"},
+        {"pink","#d53f8c"},{"brown","#744210"},{"gray","#718096"},{"grey","#718096"},
+        {"navy","#1a365d"},{"maroon","#742a2a"},{"teal","#2c7a7b"},{"beige","#fef3c7"}
+    };
+}
+
+<a asp-controller="Store" asp-action="Browse" class="store-details-back">
+    <i class="fa-solid fa-arrow-left"></i> Back to Products
+</a>
+
+<div class="store-details-grid">
+
+    @*LEFT: Image / Placeholder*@
+    <div>
+        <div class="store-details-image">
+            @if (!string.IsNullOrEmpty(Model.ImagePath))
+            {
+                <img src="@Model.ImagePath" alt="@Model.ProductName" />
+            }
+            else
+            {
+                <div class="store-details-placeholder">
+                    <i class="fa-solid fa-shirt"></i>
+                    <span>YOUR DESIGN HERE</span>
+                </div>
+            }
+        </div>
+
+        <div class="store-details-thumbs">
+            @for (int i = 0; i < 4; i++)
+            {
+                <div class="store-details-thumb">
+                    <i class="fa-solid fa-shirt" style="font-size:22px;"></i>
+                </div>
+            }
+        </div>
+    </div>
+
+    @*RIGHT: Info panel*@
+    <div class="store-details-info">
+        <h1>@Model.ProductName</h1>
+        <div class="store-details-rating">
+            <i class="fa-solid fa-star" style="color:#f6b93b;"></i>
+            <i class="fa-solid fa-star" style="color:#f6b93b;"></i>
+            <i class="fa-solid fa-star" style="color:#f6b93b;"></i>
+            <i class="fa-solid fa-star" style="color:#f6b93b;"></i>
+            <i class="fa-solid fa-star" style="color:#f6b93b;"></i>
+            &nbsp;<span style="color:#64748b;">(Rated 5.0)</span>
+        </div>
+
+        @*Upload design*@
+        <div class="store-detail-block">
+            <span class="store-detail-label">Add Your Design</span>
+            <div class="store-upload-box" onclick="document.getElementById('designUpload').click()">
+                <i class="fa-solid fa-arrow-up-from-bracket"></i>
+                Click to upload or drag and drop<br>
+                <small>PNG, JPG, SVG, PDF | Max 10MB</small>
+            </div>
+            <input type="file" id="designUpload" accept="image/*,.pdf,.svg" style="display:none;"
+                   onchange="showDesignFile(this)" />
+            <div id="designFileName" style="display:none; margin-top:8px; font-size:12.5px; font-weight:600; color:#64748b;">
+                <i class="fa-regular fa-file"></i> <span id="designName"></span>
+                <span onclick="clearDesign()" style="color:#e53e3e; cursor:pointer; margin-left:8px;">Remove</span>
+            </div>
+        </div>
+
+        @*Size*@
+        @if (sizes.Any())
+        {
+            <div class="store-detail-block">
+                <span class="store-detail-label">Size</span>
+                <div class="store-option-row">
+                    @foreach (var size in sizes)
+                    {
+                        <div class="store-size-chip" onclick="selectSize(this)">@size</div>
+                    }
+                </div>
+            </div>
+        }
+
+        @*Color*@
+        @if (colors.Any())
+        {
+            <div class="store-detail-block">
+                <span class="store-detail-label">Colors</span>
+                <div class="store-option-row">
+                    @foreach (var color in colors)
+                    {
+                        string hex = colorMap.ContainsKey(color) ? colorMap[color] : "#cccccc";
+                        <div class="store-color-dot" title="@color"
+                             style="background:@hex;"
+                             onclick="selectColor(this)">
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+
+        @*Quantity*@
+        <div class="store-detail-block">
+            <span class="store-detail-label">Quantity</span>
+            <div class="store-qty-control">
+                <button type="button" onclick="changeQty(-1)">−</button>
+                <span id="qtyDisplay">1</span>
+                <button type="button" onclick="changeQty(1)">+</button>
+            </div>
+        </div>
+
+        @*Total*@
+        <div class="store-total-price">
+            <span>Total Price</span>
+            <span id="totalPrice">₱@Model.Price.ToString("N2")</span>
+        </div>
+
+        <div class="store-action-row">
+            <a href="#" class="store-btn-cart">Add to Cart</a>
+            <a href="#" class="store-btn-buy">Buy Now</a>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    const unitPrice = @Model.Price;
+    let qty = 1;
+
+    function changeQty(delta) {
+        qty = Math.max(1, qty + delta);
+        document.getElementById('qtyDisplay').textContent = qty;
+        document.getElementById('totalPrice').textContent =
+            '₱' + (unitPrice * qty).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function selectSize(el) {
+        document.querySelectorAll('.store-size-chip').forEach(c => c.classList.remove('active'));
+        el.classList.add('active');
+    }
+
+    function selectColor(el) {
+        document.querySelectorAll('.store-color-dot').forEach(c => c.classList.remove('active'));
+        el.classList.add('active');
+    }
+
+    function showDesignFile(input) {
+        if (!input.files[0]) return;
+        document.getElementById('designName').textContent = input.files[0].name;
+        document.getElementById('designFileName').style.display = 'block';
+    }
+
+    function clearDesign() {
+        document.getElementById('designUpload').value = '';
+        document.getElementById('designFileName').style.display = 'none';
+    }
+</script>
+}

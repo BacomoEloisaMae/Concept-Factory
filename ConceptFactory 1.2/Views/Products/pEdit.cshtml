@@ -1,0 +1,258 @@
+@model ConceptFactory.Models.Product
+@{
+    ViewData["Title"] = "Edit Item";
+    ViewData["ActivePage"] = "Products";
+    string existingImage = Model.ImagePath ?? "";
+}
+
+<div class="page-container">
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Edit Item</h1>
+            <p class="page-subtitle">Update the item details below.</p>
+        </div>
+        <a asp-action="pIndex" class="btn btn-outline">
+            <i class="fa-solid fa-arrow-left"></i> Back to Items
+        </a>
+    </div>
+
+    <div class="form-card">
+        <form asp-action="pEdit" method="post" enctype="multipart/form-data">
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="ProductID" />
+            <input type="hidden" asp-for="DateAdded" />
+            <input type="hidden" asp-for="ImagePath" />
+
+            <div class="form-grid">
+                <div class="form-col left">
+                    <div class="form-header"><h2>Basic Information</h2></div>
+
+                    <div class="form-group">
+                        <label asp-for="ProductName" class="form-label">Item Name</label>
+                        <input asp-for="ProductName" class="form-control" placeholder="e.g. Basic Cotton T-Shirt" />
+                        <span asp-validation-for="ProductName" class="field-error"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label asp-for="CategoryID" class="form-label">Category</label>
+                        <select asp-for="CategoryID" asp-items="ViewBag.CategoryID" class="form-control">
+                            <option value="">-- Select Category --</option>
+                        </select>
+                        <span asp-validation-for="CategoryID" class="field-error"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Size</label>
+                        <div class="size-dropdown" id="sizeDropdown">
+                            <button type="button" class="size-dropdown-trigger" id="sizeTrigger" onclick="toggleSizeDropdown()">
+                                <span id="sizeTriggerText">Select Size</span>
+                                <i class="fa-solid fa-chevron-down size-chevron" id="sizeChevron"></i>
+                            </button>
+                            <div class="size-dropdown-panel" id="sizePanel">
+                                <div class="size-list" id="sizeList">
+                                    <div class="size-list-item" data-size="XS">XS</div>
+                                    <div class="size-list-item" data-size="S">S</div>
+                                    <div class="size-list-item" data-size="M">M</div>
+                                    <div class="size-list-item" data-size="L">L</div>
+                                    <div class="size-list-item" data-size="XL">XL</div>
+                                    <div class="size-list-item" data-size="XXL">XXL</div>
+                                    <div class="size-list-item" data-size="One Size">One Size</div>
+                                </div>
+                            </div>
+                        </div>
+                        <input type="hidden" id="sizeHidden" name="Size" value="@Model.Size" />
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Color Options</label>
+                        <div class="color-picker-wrap" id="colorPickerWrap"></div>
+                        <button type="button" class="btn-add-color" onclick="document.getElementById('nativeColorPicker').click()">
+                            <i class="fa-solid fa-plus"></i> Add Color
+                        </button>
+                        <input type="hidden" id="colorHidden" name="Color" value="@Model.Color" />
+                        <input type="color" id="nativeColorPicker" style="display:none;" onchange="addColor(this.value)" />
+                    </div>
+
+                    <div class="form-row-2">
+                        <div class="form-group">
+                            <label asp-for="Price" class="form-label"></label>
+                            <div class="input-prefix">
+                                <span class="prefix-text">₱</span>
+                                <input asp-for="Price" type="number" step="0.01" min="0" class="form-control prefix-input" placeholder="Enter price" />
+                            </div>
+                            <span asp-validation-for="Price" class="field-error"></span>
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="StockQuantity" class="form-label"></label>
+                            <input asp-for="StockQuantity" type="number" min="0" class="form-control" placeholder="Enter stock quantity" />
+                            <span asp-validation-for="StockQuantity" class="field-error"></span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label asp-for="ProductDescription" class="form-label"></label>
+                        <textarea asp-for="ProductDescription" class="form-control form-textarea" placeholder="Describe the item..."></textarea>
+                    </div>
+                </div>
+
+                <div class="form-col">
+                    <div class="form-group">
+                        <label class="form-label">Item Image</label>
+                        <p class="form-sublabel">Upload a new image or keep the current one</p>
+
+                        <div class="upload-dropzone" id="uploadArea"
+                             ondragover="handleDragOver(event)"
+                             ondragleave="handleDragLeave(event)"
+                             ondrop="handleDrop(event)">
+
+                            <div class="upload-dropzone-inner" id="uploadPlaceholder"
+                                 onclick="document.getElementById('imageFile').click()"
+                                 style="cursor:pointer; @(!string.IsNullOrEmpty(existingImage) ? "display:none;" : "")">
+                                <div class="upload-icon-circle"><i class="fa-solid fa-arrow-up-from-bracket"></i></div>
+                                <p class="upload-main-text">Drag and drop an image here<br>or click to browse</p>
+                                <p class="upload-sub-text">PNG, JPEG, WEBP up to 5MB</p>
+                            </div>
+
+                            <div id="uploadPreviewWrapper"
+                                 style="@(!string.IsNullOrEmpty(existingImage) ? "" : "display:none;") position:relative; width:100%; height:100%;">
+                                <img id="uploadPreviewImg" src="@existingImage" alt="Item image"
+                                     style="width:100%; height:100%; object-fit:contain; border-radius:10px; display:block; cursor:pointer;"
+                                     onclick="document.getElementById('imageFile').click()" />
+                                <button type="button" onclick="clearImage(event)" title="Remove image"
+                                        style="position:absolute; top:8px; right:8px; width:26px; height:26px; border-radius:50%; border:none; background:rgba(80,40,130,.8); color:#fff; font-size:14px; cursor:pointer; display:flex; align-items:center; justify-content:center; padding:0;">
+                                    &times;
+                                </button>
+                            </div>
+                        </div>
+
+                        @if (!string.IsNullOrEmpty(existingImage))
+                        {
+                            <script>
+                                document.getElementById('uploadArea').style.padding = '0';
+                                document.getElementById('uploadArea').style.height = '220px';
+                            </script>
+                        }
+
+                        <input type="file" id="imageFile" name="imageFile" accept="image/*" style="display:none;" onchange="handleImageUpload(this)" />
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fa-solid fa-floppy-disk"></i> Save Changes
+                        </button>
+                        <a asp-action="pIndex" class="btn btn-outline">Cancel</a>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+<partial name="_ValidationScriptsPartial" />
+<script>
+    // ── Color Swatch Picker ──────────────────────────────────────
+    (function () {
+        const hidden = document.getElementById('colorHidden');
+        const wrap = document.getElementById('colorPickerWrap');
+        let colors = hidden.value ? hidden.value.split(',').map(c => c.trim()).filter(Boolean) : [];
+
+        function render() {
+            wrap.innerHTML = '';
+            colors.forEach((hex, i) => {
+                const sw = document.createElement('div');
+                sw.className = 'color-swatch';
+                sw.style.background = hex;
+                sw.title = hex;
+                const rm = document.createElement('span');
+                rm.className = 'rm';
+                rm.textContent = '×';
+                rm.onclick = e => { e.stopPropagation(); colors.splice(i, 1); sync(); render(); };
+                sw.appendChild(rm);
+                wrap.appendChild(sw);
+            });
+        }
+
+        function sync() { hidden.value = colors.join(', '); }
+
+        window.addColor = function (hex) {
+            if (!colors.includes(hex)) { colors.push(hex); sync(); render(); }
+        };
+
+        render();
+    })();
+
+    // ── Image Upload ─────────────────────────────────────────────
+    function handleImageUpload(input) {
+        if (!input.files?.[0]) return;
+        const reader = new FileReader();
+        reader.onload = e => {
+            document.getElementById('uploadPlaceholder').style.display = 'none';
+            document.getElementById('uploadPreviewImg').src = e.target.result;
+            document.getElementById('uploadPreviewWrapper').style.display = 'block';
+            document.getElementById('uploadArea').style.padding = '0';
+            document.getElementById('uploadArea').style.height = '220px';
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+
+    function clearImage(e) {
+        e.stopPropagation();
+        document.getElementById('imageFile').value = '';
+        document.getElementById('uploadPreviewImg').src = '';
+        document.getElementById('uploadPreviewWrapper').style.display = 'none';
+        document.getElementById('uploadPlaceholder').style.display = '';
+        document.getElementById('uploadArea').style.padding = '';
+        document.getElementById('uploadArea').style.height = '';
+    }
+
+    function handleDragOver(e) { e.preventDefault(); document.getElementById('uploadArea').classList.add('drag-over'); }
+    function handleDragLeave(e) { document.getElementById('uploadArea').classList.remove('drag-over'); }
+    function handleDrop(e) {
+        e.preventDefault();
+        document.getElementById('uploadArea').classList.remove('drag-over');
+        const file = e.dataTransfer.files[0];
+        if (file?.type.startsWith('image/')) {
+            const dt = new DataTransfer(); dt.items.add(file);
+            const input = document.getElementById('imageFile');
+            input.files = dt.files;
+            handleImageUpload(input);
+        }
+    }
+
+    // ── Size Multi-Select Dropdown ───────────────────────────────
+    (function () {
+        const hidden = document.getElementById('sizeHidden');
+        const items = document.querySelectorAll('#sizeList .size-list-item');
+        const triggerText = document.getElementById('sizeTriggerText');
+        let selected = hidden.value ? hidden.value.split(',').map(s => s.trim()).filter(Boolean) : [];
+
+        function sync() { hidden.value = selected.join(', '); triggerText.textContent = selected.length ? selected.join(', ') : 'Select Size'; }
+
+        sync();
+        items.forEach(item => {
+            if (selected.includes(item.dataset.size)) item.classList.add('selected');
+            item.addEventListener('click', () => {
+                const s = item.dataset.size;
+                selected.includes(s) ? (selected = selected.filter(x => x !== s), item.classList.remove('selected'))
+                                     : (selected.push(s), item.classList.add('selected'));
+                sync();
+            });
+        });
+
+        document.addEventListener('click', e => { if (!document.getElementById('sizeDropdown').contains(e.target)) closeSizeDropdown(); });
+    })();
+
+    function toggleSizeDropdown() {
+        const open = document.getElementById('sizePanel').classList.contains('open');
+        document.getElementById('sizePanel').classList.toggle('open', !open);
+        document.getElementById('sizeChevron').classList.toggle('rotated', !open);
+        document.getElementById('sizeTrigger').classList.toggle('active', !open);
+    }
+    function closeSizeDropdown() {
+        document.getElementById('sizePanel').classList.remove('open');
+        document.getElementById('sizeChevron').classList.remove('rotated');
+        document.getElementById('sizeTrigger').classList.remove('active');
+    }
+</script>
+}
