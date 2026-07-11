@@ -1,0 +1,363 @@
+@model ConceptFactory.Models.Product
+@using ConceptFactory.Models
+@{
+    ViewData["Title"] = Model.ProductName;
+    Layout = null;
+
+    var sizes = string.IsNullOrEmpty(Model.Size)
+        ? new List<string>()
+        : Model.Size.Split(',').Select(s => s.Trim()).Where(s => !string.IsNullOrEmpty(s)).ToList();
+
+    var colors = string.IsNullOrEmpty(Model.Color)
+        ? new List<string>()
+        : Model.Color.Split(',').Select(s => s.Trim()).Where(s => !string.IsNullOrEmpty(s)).ToList();
+
+    var colorMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+    {
+        {"red","#e53e3e"},{"blue","#3182ce"},{"black","#1a202c"},{"white","#f0f0f0"},
+        {"green","#38a169"},{"yellow","#d69e2e"},{"orange","#dd6b20"},{"purple","#805ad5"},
+        {"pink","#d53f8c"},{"brown","#744210"},{"gray","#718096"},{"grey","#718096"},
+        {"navy","#1a365d"},{"maroon","#742a2a"},{"teal","#2c7a7b"},{"beige","#fef3c7"}
+    };
+
+    var services = ViewBag.Services as List<Service> ?? new List<Service>();
+
+    var printLocations = new[]
+    {
+        new { Icon = "/images/printLoc/front.png",             Label = "Front" },
+        new { Icon = "/images/printLoc/back.png",             Label = "Back" },
+        new { Icon = "/images/printLoc/left.png",             Label = "Left Chest" },
+        new { Icon = "/images/printLoc/right.png",             Label = "Right Chest" },
+        new { Icon = "/images/printLoc/left-sleeve.png",             Label = "Left Sleeve" },
+        new { Icon = "/images/printLoc/right-sleeve.png",             Label = "Right Sleeve" },
+        new { Icon = "/images/printLoc/front-back.png",             Label = "Front / Back" },
+    };
+
+    int step = 1;
+
+    string GetMockup(string? cat)
+    {
+        if (string.IsNullOrEmpty(cat)) return "tshirt";
+        var n = cat.ToLower();
+        if (n.Contains("hoodie"))                    return "hoodie";
+        if (n.Contains("polo"))                      return "polo";
+        if (n.Contains("tote") || n.Contains("bag")) return "totebag";
+        return "tshirt";
+    }
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@Model.ProductName — Concept Factory</title>
+    <link rel="stylesheet" href="~/css/home/home-index.css" asp-append-version="true" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    <link rel="stylesheet" href="~/css/home/product-details.css" asp-append-version="true" />
+</head>
+<body>
+
+<!-- ═══ NAVBAR (preserved exactly) ═══ -->
+<nav class="navbar">
+    <a asp-controller="Home" asp-action="hIndex" class="nav-brand">
+        <img src="/images/logo/logo.png" alt="ConceptFactory" />
+        <span class="nav-brand-name">Concept Factory</span>
+    </a>
+    <div class="nav-links">
+        <a asp-controller="Home" asp-action="hIndex" class="nav-link">Home</a>
+        <a href="#" class="nav-link">Customize</a>
+        <a href="#" class="nav-link">Track Order</a>
+        <a href="#" class="nav-link">About Us</a>
+    </div>
+    <div class="nav-right">
+        <div class="search-bar">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" placeholder="Search products..." />
+        </div>
+        <a href="#" class="nav-icon-btn" title="Cart">
+            <i class="fa-solid fa-cart-shopping"></i>
+        </a>
+        <div class="nav-account-wrap" id="navAccountWrap">
+            <button type="button" class="btn-nav-account" onclick="toggleAccountMenu()">
+                <i class="fa-regular fa-user"></i>
+                My Account
+                <i class="fa-solid fa-chevron-down" style="font-size:10px;"></i>
+            </button>
+            <div class="nav-account-menu" id="navAccountMenu">
+                <a asp-controller="Products" asp-action="pIndex" class="nav-account-item admin-item">
+                    <i class="fa-solid fa-gauge-high"></i> Admin Panel
+                </a>
+                <div class="nav-account-divider"></div>
+                <a href="#" class="nav-account-item"><i class="fa-regular fa-user"></i> My Profile</a>
+                <a href="#" class="nav-account-item"><i class="fa-solid fa-box"></i> My Orders</a>
+                <a asp-controller="Auth" asp-action="Login" class="nav-account-item">
+                    <i class="fa-solid fa-arrow-right-to-bracket"></i> Login
+                </a>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<!-- ═══ DETAIL PAGE ═══ -->
+<div class="pd-page">
+
+    <a asp-controller="Home" asp-action="hIndex" class="pd-back">
+        <i class="fa-solid fa-arrow-left"></i>
+    </a>
+
+    <div class="pd-grid">
+
+        <!-- ════ LEFT: image ════ -->
+        <div class="pd-img-card">
+            <div class="pd-img-main">
+                @if (!string.IsNullOrEmpty(Model.ImagePath))
+                {
+                    <img src="@Model.ImagePath" alt="@Model.ProductName" id="mainImg" />
+                }
+                else
+                {
+                    <img src="/images/mockups/@(GetMockup(Model.Category?.CategoryName)).svg"
+                         alt="@Model.ProductName" id="mainImg"
+                         style="width:75%; height:75%; object-fit:contain; opacity:.9;" />
+                    <div class="pd-design-overlay">YOUR<br>DESIGN<br>HERE</div>
+                }
+            </div>
+            <div class="pd-thumbs">
+                @{
+                    var showcaseThumbs = Model.AdditionalImageList;
+                    bool hasMainImg = !string.IsNullOrEmpty(Model.ImagePath);
+                }
+                @if (hasMainImg || showcaseThumbs.Count > 0)
+                {
+                    @* Main image product *@
+                    @if (hasMainImg)
+                    {
+                        <div class="pd-thumb active" onclick="switchMainImage(this, '@Model.ImagePath')">
+                            <img src="@Model.ImagePath" alt="Main" style="width:100%;height:100%;object-fit:cover;" />
+                        </div>
+                    }
+                    @* Showcase product it can be optional *@
+                    @foreach (var sc in showcaseThumbs)
+                    {
+                        <div class="pd-thumb" onclick="switchMainImage(this, '@sc')">
+                            <img src="@sc" alt="" style="width:100%;height:100%;object-fit:cover;" />
+                        </div>
+                    }
+                }
+                else
+                {
+                    @* No images at all — show 4 placeholder slots *@
+                    @for (int i = 0; i < 4; i++)
+                    {
+                        <div class="pd-thumb @(i == 0 ? "active" : "")">
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+
+        <!-- ════ RIGHT: info ════ -->
+        <div class="pd-info">
+            <div class="pd-title">@Model.ProductName</div>
+            <div class="pd-price">₱@Model.Price.ToString("N2")</div>
+
+            @if (!string.IsNullOrEmpty(Model.ProductDescription))
+            {
+                <p class="pd-desc">@Model.ProductDescription</p>
+            }
+
+            <!-- Size -->
+            @if (sizes.Any())
+            {
+                <div class="pd-step">
+                    <div class="pd-step-title">1. Select Size</div>
+                    <div class="pd-size-row">
+                        @foreach (var s in sizes)
+                        {
+                            <div class="pd-size" onclick="selectGroup(this, '.pd-size-row', '.pd-size')">@s</div>
+                        }
+                    </div>
+                </div>
+            }
+
+            <!-- Colors -->
+            @if (colors.Any())
+            {
+                <div class="pd-step">
+                    <div class="pd-step-title">2. Choose Colors</div>
+                    <div class="pd-color-row">
+                        @foreach (var c in colors)
+                        {
+                            // If value is already a hex code use it directly, otherwise look up by name
+                            string hex = c.StartsWith("#") ? c : (colorMap.ContainsKey(c) ? colorMap[c] : "#cccccc");
+                            <div class="pd-color" title="@c" style="background:@hex;"
+                                 onclick="selectGroup(this, '.pd-color-row', '.pd-color')"></div>
+                        }
+                    </div>
+                </div>
+            }
+
+            <!-- Printing Services -->
+            @if (services.Any())
+            {
+                <div class="pd-step">
+                    <div class="pd-step-title">3. Select Printing Services</div>
+                    <div class="pd-svc-grid">
+                        @foreach (var svc in services)
+                        {
+                            <div class="pd-svc" onclick="selectSvc(this)">
+                                <div class="pd-svc-name">@svc.ServiceName</div>
+                                <div class="pd-svc-price">+₱@svc.ServicePrice.ToString("N2")</div>
+                                <div class="pd-svc-desc">@svc.ServiceDescription</div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+
+            <!-- Print Location -->
+            <div class="pd-step">
+                <div class="pd-step-title">4. Print Location</div>
+                <div class="pd-loc-grid">
+                    @foreach (var loc in printLocations)
+                    {
+                        <div class="pd-loc" onclick="selectGroup(this, '.pd-loc-grid', '.pd-loc')">
+                            <img src= "@loc.Icon" alt="@loc.Label"/>
+                            @loc.Label
+                        </div>
+                    }
+                </div>
+                    <div class="pdl-specific">
+                        <div class="pdl-title"> Specify your print location</div>
+                        <p class="pd-loc-hint">Describe exactly where you want the print on the t-shirt</p>
+                        <textarea class="pd-loc-text" rows="2"
+                                  placeholder="Example: Lower right side near the waist, full left side, across both sleeves, etc."></textarea>
+                    </div>     
+            </div>
+
+            <!-- Quantity -->
+            <div class="pd-step">
+                <div class="pd-step-title">Quantity</div>
+                <div class="pd-qty-row">
+                    <div class="pd-stepper">
+                        <button type="button" onclick="changeQty(-1)">−</button>
+                        <span id="qtyDisplay">1</span>
+                        <button type="button" onclick="changeQty(1)">+</button>
+                    </div>
+                    <div class="pd-qty-badges">
+                        <div class="pd-qty-badge" onclick="setQty(20)">
+                            20 pcs <small>5% OFF</small>
+                        </div>
+                        <div class="pd-qty-badge" onclick="setQty(50)">
+                            50 pcs <small>10% OFF</small>
+                        </div>
+                        <div class="pd-qty-badge" onclick="setQty(100)">
+                            100 pcs <small>15% OFF</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <hr class="pd-divider" />
+
+            <!-- Total -->
+            <div class="pd-total-row">
+                <span class="pd-total-label">Total Price</span>
+                <span class="pd-total-val" id="totalPrice">₱@Model.Price.ToString("N2")</span>
+            </div>
+
+            <!-- Stock -->
+            // <div class="pd-stock">
+            //     <i class="fa-solid fa-circle-check"></i>
+            //     In Stock (@Model.StockQuantity available)
+            // </div>
+
+            // <hr class="pd-divider" />
+
+            <!-- CTA -->
+            <div class="pd-cta">
+                <a href="#" class="pd-btn-cart">
+                    <i class="fa-solid fa-cart-plus"></i> Add to Cart
+                </a>
+                <a href="#" class="pd-btn-checkout">
+                    Check Out
+                </a>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+    const unitPrice = @Model.Price;
+    let qty = 1;
+    let svcPrice = 0;
+
+    function changeQty(d) { setQty(Math.max(1, qty + d)); }
+
+    function setQty(n) {
+        qty = n;
+        document.getElementById('qtyDisplay').textContent = qty;
+        updateTotal();
+    }
+
+    function updateTotal() {
+        const discount = qty >= 100 ? .15 : qty >= 50 ? .10 : qty >= 20 ? .05 : 0;
+        const total = (unitPrice + svcPrice) * qty * (1 - discount);
+        document.getElementById('totalPrice').textContent =
+            '₱' + total.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function selectGroup(el, containerSel, itemSel) {
+        el.closest(containerSel).querySelectorAll(itemSel)
+          .forEach(c => c.classList.remove('active'));
+        el.classList.add('active');
+    }
+
+    function selectSvc(el) {
+        const wasActive = el.classList.contains('active');
+        document.querySelectorAll('.pd-svc').forEach(c => c.classList.remove('active'));
+        svcPrice = 0;
+        if (!wasActive) {
+            el.classList.add('active');
+            const txt = el.querySelector('.pd-svc-price')?.textContent || '';
+            svcPrice = parseFloat(txt.replace(/[^\d.]/g, '')) || 0;
+        }
+        updateTotal();
+    }
+
+    function switchMainImage(el, src) {
+        document.querySelectorAll('.pd-thumb').forEach(t => t.classList.remove('active'));
+        el.classList.add('active');
+        if (src) document.getElementById('mainImg').src = src;
+    }
+
+    function handleFiles(input) {
+        const wrap = document.getElementById('uploadPreviews');
+        wrap.innerHTML = '';
+        Array.from(input.files).forEach(file => {
+            if (!file.type.startsWith('image/')) return;
+            const reader = new FileReader();
+            reader.onload = e => {
+                const div = document.createElement('div');
+                div.className = 'pd-preview-thumb';
+                div.innerHTML = `<img src="${e.target.result}"/><button class="pd-preview-rm" onclick="this.parentElement.remove()">✕</button>`;
+                wrap.appendChild(div);
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+
+    function toggleAccountMenu() {
+        document.getElementById('navAccountMenu').classList.toggle('show');
+    }
+    document.addEventListener('click', function(e) {
+        const wrap = document.getElementById('navAccountWrap');
+        if (wrap && !wrap.contains(e.target))
+            document.getElementById('navAccountMenu')?.classList.remove('show');
+    });
+</script>
+</body>
+</html>

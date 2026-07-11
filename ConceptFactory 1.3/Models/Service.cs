@@ -1,0 +1,41 @@
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace ConceptFactory.Models
+{
+    [Table("Services")]
+    public class Service
+    {
+        [Key]
+        public int ServiceID { get; set; }
+
+        [Required(ErrorMessage = "Service name is required.")]
+        [StringLength(200)]
+        [Display(Name = "Service Name")]
+        public string ServiceName { get; set; } = string.Empty;
+
+        [Display(Name = "Description")]
+        public string? ServiceDescription { get; set; }
+
+        [Required(ErrorMessage = "Service price is required.")]
+        [Column(TypeName = "decimal(10,2)")]
+        [Range(0.01, 999999.99, ErrorMessage = "Price must be greater than 0.")]
+        [Display(Name = "Price (₱)")]
+        public decimal ServicePrice { get; set; }
+
+        [StringLength(20)]
+        [Display(Name = "Status")]
+        public string Status { get; set; } = "Active";
+
+        [Display(Name = "Date Added")]
+        public DateTime DateAdded { get; set; } = DateTime.Now;
+
+        // Soft delete
+        public bool IsDeleted { get; set; } = false;
+        public DateTime? DeletedAt { get; set; }
+
+        // Navigation
+        public virtual ICollection<ProductService> ProductServices { get; set; } = new List<ProductService>();
+        public virtual ICollection<OrderDetail> OrderDetails { get; set; } = new List<OrderDetail>();
+    }
+}

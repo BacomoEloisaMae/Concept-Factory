@@ -1,0 +1,302 @@
+@model IEnumerable<ConceptFactory.Models.Product>
+@{
+    ViewData["Title"] = "Home";
+    Layout = null;
+    var categories = ViewBag.Categories as List<ConceptFactory.Models.Category>;
+    int? selectedCategory = ViewBag.SelectedCategory;
+    string? search = ViewBag.Search;
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ConceptFactory — Bring Your Ideas to Life</title>
+    <link rel="stylesheet" href="~/css/home/home-index.css" asp-append-version="true" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    <style>
+        html { scroll-behavior: smooth; }
+        #products { scroll-margin-top: 70px; }
+        .cat-img-thumb img { width: 100%; height: 100%; object-fit: contain; }
+    </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════
+     NAVBAR
+═══════════════════════════════════ -->
+<nav class="navbar">
+    <a href="/" class="nav-brand">
+        <img src="/images/logo/logo.png" alt="ConceptFactory" />
+        <span class="nav-brand-name">
+            Concept Factory
+        </span>
+    </a>
+
+    <div class="nav-links">
+        <a asp-action="hIndex" class="nav-link">Home</a>
+        <a asp-action="hIndex" class="nav-link">Products</a>
+        <a href="#" class="nav-link">Customize</a>
+        <a href="#" class="nav-link">Track Order</a>
+        <a href="#" class="nav-link">About Us</a>
+    </div>
+
+    <div class="nav-right">
+        <div class="search-bar">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" placeholder="Search products..." />
+        </div>
+        <a href="#" class="nav-icon-btn" title="Wishlist">
+            <i class="fa-regular fa-heart"></i>
+        </a>
+        <a href="#" class="nav-icon-btn" title="Cart">
+            <i class="fa-solid fa-cart-shopping"></i>
+        </a>
+        <div class="nav-account-wrap" id="navAccountWrap">
+            <button type="button" class="btn-nav-account" onclick="toggleAccountMenu()">
+                <i class="fa-regular fa-user"></i>
+                My Account
+                <i class="fa-solid fa-chevron-down" style="font-size:10px;"></i>
+            </button>
+            <div class="nav-account-menu" id="navAccountMenu">
+                <a asp-controller="Products" asp-action="pIndex" class="nav-account-item admin-item">
+                    <i class="fa-solid fa-gauge-high"></i> Admin Panel
+                </a>
+                <div class="nav-account-divider"></div>
+                <a href="#" class="nav-account-item">
+                    <i class="fa-regular fa-user"></i> My Profile
+                </a>
+                <a href="#" class="nav-account-item">
+                    <i class="fa-solid fa-box"></i> My Orders
+                </a>
+                <a asp-controller="Auth" asp-action="Login" class="nav-account-item">
+                    <i class="fa-solid fa-arrow-right-to-bracket"></i> Login
+                </a>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<!-- ═══════════════════════════════════
+     HERO
+═══════════════════════════════════ -->
+<section class="hero">
+    <div class="hero-content">
+        <p class="hero-eyebrow">Welcome to Concept Factory</p>
+        <h1 class="hero-title">
+            Bring your Ideas<br>
+            to <span class="accent">Life.</span>
+        </h1>
+        <p class="hero-desc">
+            High quality custom printing for every style, every story.
+            Design by you. Printed by us.
+        </p>
+        <div class="hero-btns">
+            <a href="#" class="btn-hero-primary">Shop Now</a>
+            <a href="#" class="btn-hero-outline">Customize Now</a>
+        </div>
+
+        <div class="hero-social">
+            <div class="hero-avatars">
+                <span>A</span>
+                <span>B</span>
+                <span>C</span>
+                <span>D</span>
+            </div>
+            <span class="hero-social-text"><strong>1,000+</strong> Happy Customers</span>
+        </div>
+    </div>
+</section>
+
+<!-- ═══════════════════════════════════
+     FEATURE STRIP
+═══════════════════════════════════ -->
+<div class="features-strip">
+    <div class="feature-item">
+        <div class="feature-icon"><i class="fa-solid fa-medal"></i></div>
+        <div>
+            <div class="feature-label">High Quality Prints</div>
+            <div class="feature-desc">Vivid colors and long lasting print</div>
+        </div>
+    </div>
+    <div class="feature-item" style="padding-left:24px;">
+        <div class="feature-icon"><i class="fa-solid fa-shirt"></i></div>
+        <div>
+            <div class="feature-label">Premium Materials</div>
+            <div class="feature-desc">We use the best fabric for maximum comfort</div>
+        </div>
+    </div>
+    <div class="feature-item" style="padding-left:24px;">
+        <div class="feature-icon"><i class="fa-solid fa-truck-fast"></i></div>
+        <div>
+            <div class="feature-label">Custom Designs</div>
+            <div class="feature-desc">Custom Printer, upload your desire design</div>
+        </div>
+    </div>
+    <div class="feature-item" style="padding-left:24px;">
+        <div class="feature-icon"><i class="fa-solid fa-headset"></i></div>
+        <div>
+            <div class="feature-label">Customer Support</div>
+            <div class="feature-desc">We're here to help you anytime</div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════
+     CATEGORIES SECTION
+═══════════════════════════════════ -->
+<section class="section" style="background: var(--bg);" id="products">
+
+    <div class="section-header">
+        <p class="section-eyebrow">Our Collection</p>
+        <h2 class="section-title">Browse our Products</h2>
+        <p class="section-sub">High quality custom printed apparel for every occasion</p>
+    </div>
+	<div>
+		<h2 class="category-filter">Shop by Category</h2>
+	</div>
+
+        <div class="cat-cards-row">
+            <a asp-action="hIndex" asp-fragment="products"
+               class="cat-img-card @(selectedCategory == null && string.IsNullOrEmpty(search) ? "active" : "")">
+                <div class="cat-img-thumb">
+                    <img src="/images/categories/default.png" alt="All" />
+                </div>
+                <span class="cat-img-label">All</span>
+            </a>
+            @if (categories != null)
+            {
+                foreach (var cat in categories)
+                {
+                    string mockup = cat.CategoryName.ToLower() switch
+                    {
+                        var n when n.Contains("jacket") => "/images/categories/hoodies.png",
+                        var n when n.Contains("sweater") => "/images/categories/sweats.png",
+                        var n when n.Contains("tote") => "/images/categories/tote.png",
+                        var n when n.Contains("compression") => "/images/categories/compressions.png",
+                        var n when n.Contains("t-shirt") => "/images/categories/t-shirts.png",
+                        var n when n.Contains("tshirt") => "/images/categories/t-shirts.png",
+                        _ => "/images/categories/t-shirts.png"
+                    };
+
+                    <a asp-action="hIndex" asp-route-categoryId="@cat.CategoryID" asp-fragment="products"
+                       class="cat-img-card @(selectedCategory == cat.CategoryID ? "active" : "")">
+                        <div class="cat-img-thumb">
+                            <img src="@mockup" alt="@cat.CategoryName" />
+                        </div>
+                        <span class="cat-img-label">@cat.CategoryName</span>
+                    </a>
+                }
+            }
+        </div>
+    <div>
+        <h2 class="category-filter">Most Popular Products</h2>
+     </div>
+    @* Product grid *@
+    @if (!Model.Any())
+    {
+        <div class="catalog-empty">
+            <i class="fa-solid fa-box-open"></i>
+            <p>No products available yet. Check back soon!</p>
+        </div>
+    }
+    else
+    {
+        <div class="catalog-grid">
+            @foreach (var item in Model)
+            {
+                <a asp-action="hDetails" asp-route-id="@item.ProductID" class="catalog-card">
+                    <div class="catalog-card-thumb">
+                        @if (!string.IsNullOrEmpty(item.ImagePath))
+                        {
+                            <img src="@item.ImagePath" alt="@item.ProductName" />
+                        }
+                        else
+                        {
+                            <div class="catalog-card-placeholder">
+                                <i class="fa-solid fa-shirt"></i>
+                            </div>
+                        }
+                        <span class="catalog-card-fav"><i class="fa-regular fa-heart"></i></span>
+                    </div>
+                    <div class="catalog-card-body">
+                        <span class="catalog-card-category">@(item.Category?.CategoryName ?? "Item")</span>
+                        <span class="catalog-card-name">@item.ProductName</span>
+                        <span class="catalog-card-price">₱@item.Price.ToString("N2")</span>
+                        <span class="catalog-card-btn">View Product</span>
+                    </div>
+                </a>
+            }
+        </div>
+    }
+</section>
+
+<!-- ═══════════════════════════════════
+     FOOTER STRIP
+═══════════════════════════════════ -->
+<div class="footer-strip">
+    &copy; 2026 ConceptFactory. All rights reserved. &nbsp;·&nbsp;
+    <a href="#">Privacy Policy</a> &nbsp;·&nbsp;
+    <a href="#">Terms of Service</a>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<script>
+    // Intersection Observer for scroll-reveal on category cards
+    const cards = document.querySelectorAll('.cat-card');
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach((e, i) => {
+            if (e.isIntersecting) {
+                e.target.style.opacity = '0';
+                e.target.style.transform = 'translateY(20px)';
+                e.target.style.transition = `opacity .4s ${i * 0.06}s ease, transform .4s ${i * 0.06}s ease, border-color .2s, box-shadow .2s`;
+                requestAnimationFrame(() => {
+                    e.target.style.opacity = '1';
+                    e.target.style.transform = 'translateY(0)';
+                });
+                observer.unobserve(e.target);
+            }
+        });
+    }, { threshold: 0.15 });
+    cards.forEach(c => {
+        c.style.opacity = '0';
+        observer.observe(c);
+    });
+
+        // Account dropdown
+        function toggleAccountMenu() {
+            document.getElementById('navAccountMenu').classList.toggle('open');
+        }
+        document.addEventListener('click', function(e) {
+            const wrap = document.getElementById('navAccountWrap');
+            if (wrap && !wrap.contains(e.target)) {
+                document.getElementById('navAccountMenu').classList.remove('open');
+            }
+        });
+</script>
+</body>
+</html>

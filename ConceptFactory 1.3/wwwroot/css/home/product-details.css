@@ -1,0 +1,534 @@
+
+
+/* ============================================================
+    CSS Custom Properties
+   ============================================================ */
+:root {
+    --pd-primary:       #5B5EF4;
+    --pd-primary-dark:  #4547d4;
+    --pd-primary-light: #eef0ff;
+    --pd-primary-muted: #c7caff;
+    --pd-primary-bg:    #f0f1ff;
+    --pd-card-bg:       #fafbff;
+    --pd-border:        #e2e8f0;
+    --pd-text:          #1e293b;
+    --pd-text-sub:      #64748b;
+    --pd-text-muted:    #94a3b8;
+    --pd-success:       #16a34a;
+    --pd-danger:        rgba(229, 62, 62, .85);
+    --pd-star:          #f59e0b;
+    --pd-accent:        #818cf8;
+    --pd-shadow:        0 4px 14px rgba(91, 94, 244, .3);
+    --pd-radius-sm:     8px;
+    --pd-radius-md:     10px;
+    --pd-radius-lg:     18px;
+}
+
+
+/* ============================================================
+    Page Wrapper & Back Link
+   ============================================================ */
+.pd-page {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 24px 24px 60px;
+}
+
+.pd-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--pd-text-sub);
+    text-decoration: none;
+    margin-bottom: 20px;
+    transition: color .15s;
+}
+.pd-back:hover { color: var(--pd-primary); }
+
+
+/* ============================================================
+    Two-Column Grid
+   ============================================================ */
+.pd-grid {
+    display: grid;
+    grid-template-columns: 380px 1fr;
+    gap: 32px;
+    align-items: start;
+}
+
+
+/* ============================================================
+    Left Column — Image Card
+   ============================================================ */
+.pd-img-card {
+    background: var(--pd-primary-bg);
+    border-radius: var(--pd-radius-lg);
+    border: 1.5px solid var(--pd-border);
+    overflow: hidden;
+}
+
+/*  Main Image Area & Design Overlay */
+.pd-img-main {
+    aspect-ratio: 1 / 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    position: relative;
+    background: var(--pd-primary-bg);
+}
+.pd-img-main img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    border-radius: var(--pd-radius-sm);
+}
+.pd-design-overlay {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 14px;
+    font-weight: 900;
+    color: #7c86d4;
+    text-align: center;
+    line-height: 1.4;
+    letter-spacing: 1px;
+    pointer-events: none;
+}
+
+/*  Thumbnail Strip */
+.pd-thumbs {
+    display: flex;
+    gap: 7px;
+    padding: 10px 12px;
+    border-top: 1.5px solid var(--pd-border);
+    background: #fff;
+    flex-wrap: wrap;
+}
+.pd-thumb {
+    width: 56px;
+    height: 56px;
+    flex-shrink: 0;
+    border-radius: var(--pd-radius-sm);
+    border: 1.5px solid var(--pd-border);
+    overflow: hidden;
+    cursor: pointer;
+    transition: border-color .15s;
+    background: var(--pd-primary-bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.pd-thumb img  { width: 100%; height: 100%; object-fit: cover; }
+.pd-thumb i    { font-size: 18px; color: #a5b4fc; }
+.pd-thumb:hover,
+.pd-thumb.active { border-color: var(--pd-primary); }
+
+
+/* ============================================================
+    Right Column — Info Panel
+   ============================================================ */
+.pd-info { 
+    display: flex; 
+    flex-direction: column; 
+    gap: 0; 
+    padding: 9px 8px;
+    border: 1.5px solid var(--pd-border);
+    border-radius: var(--pd-radius-sm)
+}
+
+/*  Title / Price / Description */
+.pd-title {
+    font-size: 26px;
+    font-weight: 800;
+    color: var(--pd-text);
+    margin-bottom: 6px;
+    line-height: 1.2;
+}
+.pd-price {
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--pd-text);
+    margin-bottom: 6px;
+}
+.pd-desc {
+    font-size: 13px;
+    color: var(--pd-text-sub);
+    line-height: 1.65;
+    margin-bottom: 18px;
+}
+
+/*  In-Stock Badge */
+.pd-stock {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--pd-success);
+    margin-top: 8px;
+}
+.pd-stock i { font-size: 13px; }
+
+
+/* ============================================================
+    Step Blocks
+   ============================================================ */
+.pd-step { margin-bottom: 16px; }
+
+.pd-step-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--pd-text);
+    margin-bottom: 9px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.pd-step-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    background: var(--pd-primary);
+    color: #fff;
+    border-radius: 50%;
+    font-size: 10px;
+    font-weight: 800;
+    flex-shrink: 0;
+}
+
+
+/* ============================================================
+    Design Upload Zone
+   ============================================================ */
+.pd-upload {
+    border: 1.5px dashed var(--pd-primary-muted);
+    border-radius: 11px;
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    cursor: pointer;
+    background: var(--pd-card-bg);
+    transition: border-color .2s, background .2s;
+}
+.pd-upload:hover {
+    border-color: var(--pd-primary);
+    background: var(--pd-primary-light);
+}
+.pd-upload-icon { font-size: 24px; color: var(--pd-accent); flex-shrink: 0; }
+.pd-upload-text strong {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--pd-text);
+    display: block;
+    margin-bottom: 2px;
+}
+.pd-upload-text small { font-size: 11px; color: var(--pd-text-muted); }
+
+.pd-upload-previews {
+    display: flex;
+    gap: 7px;
+    flex-wrap: wrap;
+    margin-top: 8px;
+}
+.pd-preview-thumb {
+    position: relative;
+    width: 54px;
+    height: 54px;
+    border-radius: var(--pd-radius-sm);
+    overflow: hidden;
+    border: 1.5px solid var(--pd-border);
+}
+.pd-preview-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.pd-preview-rm {
+    position: absolute;
+    top: 1px;
+    right: 1px;
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    background: var(--pd-danger);
+    color: #fff;
+    font-size: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border: none;
+}
+
+
+/* ============================================================
+    Size Selector Chips
+   ============================================================ */
+.pd-size-row { display: flex; gap: 7px; flex-wrap: wrap; }
+
+.pd-size {
+    min-width: 40px;
+    padding: 6px 12px;
+    border-radius: var(--pd-radius-sm);
+    border: 1.5px solid var(--pd-border);
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--pd-text-sub);
+    background: #fff;
+    cursor: pointer;
+    text-align: center;
+    transition: border-color .15s, color .15s, background .15s;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+}
+.pd-size:hover  { border-color: var(--pd-primary); color: var(--pd-primary); }
+.pd-size.active { background: var(--pd-primary); color: #fff; border-color: var(--pd-primary); }
+
+
+/* ============================================================
+    Color Selector Dots
+   ============================================================ */
+.pd-color-row {
+    display: flex;
+    gap: 9px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+.pd-color {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2.5px solid transparent;
+    outline: 2px solid transparent;
+    transition: outline-color .15s, transform .15s;
+}
+.pd-color:hover  { transform: scale(1.12); }
+.pd-color.active { outline: 2.5px solid var(--pd-primary); outline-offset: 3px; }
+
+
+/* ============================================================
+    Printing Services Grid
+   ============================================================ */
+.pd-svc-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+}
+.pd-svc {
+    border: 1.5px solid var(--pd-border);
+    border-radius: var(--pd-radius-md);
+    padding: 9px 8px 8px;
+    cursor: pointer;
+    transition: border-color .15s, background .15s;
+    text-align: center;
+}
+.pd-svc:hover  { border-color: var(--pd-primary); background: var(--pd-card-bg); }
+.pd-svc.active { border-color: var(--pd-primary); background: var(--pd-primary-light); }
+
+.pd-svc-name  { font-size: 11.5px; font-weight: 700; color: var(--pd-text);     line-height: 1.3; margin-bottom: 2px; }
+.pd-svc-price { font-size: 11px;   font-weight: 700; color: var(--pd-primary); }
+.pd-svc-desc  { font-size: 10px;   color: var(--pd-text-muted); line-height: 1.3; margin-top: 2px; }
+
+
+/* ============================================================
+    Print Location Chips & Textarea
+   ============================================================ */
+.pd-loc-grid { display: flex; gap: 7px; flex-wrap: wrap; }
+
+.pd-loc {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 8px 10px 6px;
+    border: 1.5px solid var(--pd-border);
+    border-radius: var(--pd-radius-md);
+    cursor: pointer;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--pd-text-sub);
+    background: #fff;
+    min-width: 78px;
+    transition: border-color .15s, color .15s, background .15s;
+    text-align: center;
+}
+.pd-loc img { 
+    font-size: 20px; 
+    color: #a5b4fc; }
+.pd-loc:hover, .pd-loc.active {
+    border-color: var(--pd-primary);
+    color: var(--pd-primary);
+    background: var(--pd-primary-light);
+}
+.pd-loc.active img {
+    border-color: var(--pd-primary);
+    color: var(--pd-primary);
+    background: var(--pd-primary-light);
+}
+
+.pd-loc-text {
+    width: 100%;
+    margin-top: 8px;
+    padding: 9px 12px;
+    border: 1.5px solid var(--pd-border);
+    border-radius: 9px;
+    font-size: 12.5px;
+    font-family: inherit;
+    color: var(--pd-text);
+    outline: none;
+    resize: none;
+    transition: border-color .2s;
+}
+.pd-loc-text:focus {
+    border-color: var(--pd-primary);
+    box-shadow: 0 0 0 3px rgba(91, 94, 244, .08);
+}
+.pd-loc-hint { font-size: 11px; color: var(--pd-text-muted); margin-top: 4px; }
+
+.pdl-specific {
+    border: 1.5px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 9px 8px;
+    margin: 9px auto;
+}
+.pdl-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #1e293b;
+}  
+
+/* ============================================================
+    Quantity Stepper & Discount Badges
+   ============================================================ */
+.pd-qty-row { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+
+.pd-stepper {
+    display: flex;
+    align-items: center;
+    border: 1.5px solid var(--pd-border);
+    border-radius: 9px;
+    overflow: hidden;
+}
+.pd-stepper button {
+    width: 36px;
+    height: 36px;
+    border: none;
+    background: #f8f9fc;
+    font-size: 18px;
+    font-weight: 700;
+    cursor: pointer;
+    color: var(--pd-text);
+    font-family: inherit;
+    transition: background .15s;
+}
+.pd-stepper button:hover { background: var(--pd-border); }
+.pd-stepper span {
+    min-width: 46px;
+    text-align: center;
+    font-size: 14px;
+    font-weight: 700;
+    height: 36px;
+    line-height: 36px;
+    border-left: 1.5px solid var(--pd-border);
+    border-right: 1.5px solid var(--pd-border);
+}
+
+.pd-qty-badges { display: flex; gap: 6px; flex-wrap: wrap; }
+.pd-qty-badge {
+    padding: 5px 11px;
+    border-radius: 7px;
+    background: var(--pd-primary-bg);
+    border: 1px solid var(--pd-primary-muted);
+    font-size: 11.5px;
+    font-weight: 700;
+    color: var(--pd-primary);
+    cursor: pointer;
+    transition: background .15s;
+    line-height: 1.4;
+}
+.pd-qty-badge:hover { background: #e0e1ff; }
+.pd-qty-badge small {
+    display: block;
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--pd-text-muted);
+}
+
+
+/* ============================================================
+    Divider & Total Price Row
+   ============================================================ */
+.pd-divider {
+    border: none;
+    border-top: 1.5px solid var(--pd-border);
+    margin: 14px 0 12px;
+}
+.pd-total-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+}
+.pd-total-label { font-size: 14px; font-weight: 700; color: var(--pd-text); }
+.pd-total-val   { font-size: 24px; font-weight: 800; color: var(--pd-primary); }
+
+
+/* ============================================================
+    CTA Buttons
+   ============================================================ */
+.pd-cta { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+.pd-btn-cart {
+    padding: 13px;
+    border: 2px solid var(--pd-primary);
+    border-radius: var(--pd-radius-md);
+    background: #fff;
+    color: var(--pd-primary);
+    font-size: 14px;
+    font-weight: 700;
+    font-family: inherit;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: background .15s, color .15s;
+    text-decoration: none;
+}
+.pd-btn-cart:hover { background: var(--pd-primary); color: #fff; }
+
+.pd-btn-checkout {
+    padding: 13px;
+    border: none;
+    border-radius: var(--pd-radius-md);
+    background: var(--pd-primary);
+    color: #fff;
+    font-size: 14px;
+    font-weight: 700;
+    font-family: inherit;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    box-shadow: var(--pd-shadow);
+    transition: background .15s;
+    text-decoration: none;
+}
+.pd-btn-checkout:hover { background: var(--pd-primary-dark); }
+
+
+/* ============================================================
+    Responsive Breakpoints
+   ============================================================ */
+@media (max-width: 860px) {
+    .pd-grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 500px) {
+    .pd-svc-grid { grid-template-columns: repeat(2, 1fr); }
+    .pd-cta      { grid-template-columns: 1fr; }
+}
