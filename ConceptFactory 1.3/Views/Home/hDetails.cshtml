@@ -56,6 +56,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
     <link rel="stylesheet" href="~/css/home/product-details.css" asp-append-version="true" />
+    <script src="~/js/storefront.js" asp-append-version="true"></script>
 </head>
 <body>
 
@@ -74,10 +75,15 @@
     <div class="nav-right">
         <div class="search-bar">
             <i class="fa-solid fa-magnifying-glass"></i>
-            <input type="text" placeholder="Search products..." />
+            <input type="text" id="navSearchInput" placeholder="Search products..." />
         </div>
-        <a href="#" class="nav-icon-btn" title="Cart">
+        <a asp-controller="Home" asp-action="hWishlist" class="nav-icon-btn" title="Wishlist">
+            <i class="fa-regular fa-heart"></i>
+            <span class="nav-icon-badge" data-cf-wishlist-badge></span>
+        </a>
+        <a asp-controller="Home" asp-action="hCart" class="nav-icon-btn" title="Cart">
             <i class="fa-solid fa-cart-shopping"></i>
+            <span class="nav-icon-badge" data-cf-cart-badge></span>
         </a>
         <div class="nav-account-wrap" id="navAccountWrap">
             <button type="button" class="btn-nav-account" onclick="toggleAccountMenu()">
@@ -160,7 +166,18 @@
 
         <!-- ════ RIGHT: info ════ -->
         <div class="pd-info">
-            <div class="pd-title">@Model.ProductName</div>
+            <div class="pd-title" style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
+                <span>@Model.ProductName</span>
+                <button type="button" id="pdWishlistBtn" class="catalog-card-fav" style="position:static; flex-shrink:0;"
+                        data-cf-fav="@Model.ProductID"
+                        data-name="@Model.ProductName"
+                        data-price="@Model.Price"
+                        data-image="@Model.ImagePath"
+                        data-category="@(Model.Category?.CategoryName ?? "Item")"
+                        title="Add to wishlist" onclick="cfDetailToggleFav(this)">
+                    <i class="fa-regular fa-heart"></i>
+                </button>
+            </div>
             <div class="pd-price">₱@Model.Price.ToString("N2")</div>
 
             @if (!string.IsNullOrEmpty(Model.ProductDescription))
@@ -269,18 +286,18 @@
             </div>
 
             <!-- Stock -->
-            // <div class="pd-stock">
-            //     <i class="fa-solid fa-circle-check"></i>
-            //     In Stock (@Model.StockQuantity available)
-            // </div>
+            <div class="pd-stock">
+                <i class="fa-solid fa-circle-check"></i>
+                In Stock (@Model.StockQuantity available)
+            </div>
 
-            // <hr class="pd-divider" />
+            <hr class="pd-divider" />
 
             <!-- CTA -->
             <div class="pd-cta">
-                <a href="#" class="pd-btn-cart">
+                <button type="button" class="pd-btn-cart" onclick="cfDetailAddToCart()">
                     <i class="fa-solid fa-cart-plus"></i> Add to Cart
-                </a>
+                </button>
                 <a href="#" class="pd-btn-checkout">
                     Check Out
                 </a>
@@ -291,73 +308,13 @@
 </div>
 
 <script>
-    const unitPrice = @Model.Price;
-    let qty = 1;
-    let svcPrice = 0;
-
-    function changeQty(d) { setQty(Math.max(1, qty + d)); }
-
-    function setQty(n) {
-        qty = n;
-        document.getElementById('qtyDisplay').textContent = qty;
-        updateTotal();
-    }
-
-    function updateTotal() {
-        const discount = qty >= 100 ? .15 : qty >= 50 ? .10 : qty >= 20 ? .05 : 0;
-        const total = (unitPrice + svcPrice) * qty * (1 - discount);
-        document.getElementById('totalPrice').textContent =
-            '₱' + total.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    }
-
-    function selectGroup(el, containerSel, itemSel) {
-        el.closest(containerSel).querySelectorAll(itemSel)
-          .forEach(c => c.classList.remove('active'));
-        el.classList.add('active');
-    }
-
-    function selectSvc(el) {
-        const wasActive = el.classList.contains('active');
-        document.querySelectorAll('.pd-svc').forEach(c => c.classList.remove('active'));
-        svcPrice = 0;
-        if (!wasActive) {
-            el.classList.add('active');
-            const txt = el.querySelector('.pd-svc-price')?.textContent || '';
-            svcPrice = parseFloat(txt.replace(/[^\d.]/g, '')) || 0;
-        }
-        updateTotal();
-    }
-
-    function switchMainImage(el, src) {
-        document.querySelectorAll('.pd-thumb').forEach(t => t.classList.remove('active'));
-        el.classList.add('active');
-        if (src) document.getElementById('mainImg').src = src;
-    }
-
-    function handleFiles(input) {
-        const wrap = document.getElementById('uploadPreviews');
-        wrap.innerHTML = '';
-        Array.from(input.files).forEach(file => {
-            if (!file.type.startsWith('image/')) return;
-            const reader = new FileReader();
-            reader.onload = e => {
-                const div = document.createElement('div');
-                div.className = 'pd-preview-thumb';
-                div.innerHTML = `<img src="${e.target.result}"/><button class="pd-preview-rm" onclick="this.parentElement.remove()">✕</button>`;
-                wrap.appendChild(div);
-            };
-            reader.readAsDataURL(file);
-        });
-    }
-
-    function toggleAccountMenu() {
-        document.getElementById('navAccountMenu').classList.toggle('show');
-    }
-    document.addEventListener('click', function(e) {
-        const wrap = document.getElementById('navAccountWrap');
-        if (wrap && !wrap.contains(e.target))
-            document.getElementById('navAccountMenu')?.classList.remove('show');
-    });
+    window.CF_PRODUCT = {
+        id: @Model.ProductID,
+        name: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.ProductName)),
+        price: @Model.Price,
+        homeUrl: '@Url.Action("hIndex", "Home")'
+    };
 </script>
+<script src="~/js/product-details.js" asp-append-version="true"></script>
 </body>
 </html>

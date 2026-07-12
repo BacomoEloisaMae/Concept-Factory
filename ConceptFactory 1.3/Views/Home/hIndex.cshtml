@@ -16,6 +16,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    <script src="~/js/storefront.js" asp-append-version="true"></script>
     <style>
         html { scroll-behavior: smooth; }
         #products { scroll-margin-top: 70px; }
@@ -46,13 +47,15 @@
     <div class="nav-right">
         <div class="search-bar">
             <i class="fa-solid fa-magnifying-glass"></i>
-            <input type="text" placeholder="Search products..." />
+            <input type="text" id="navSearchInput" placeholder="Search products..." value="@search" />
         </div>
-        <a href="#" class="nav-icon-btn" title="Wishlist">
+        <a asp-action="hWishlist" class="nav-icon-btn" title="Wishlist">
             <i class="fa-regular fa-heart"></i>
+            <span class="nav-icon-badge" data-cf-wishlist-badge></span>
         </a>
-        <a href="#" class="nav-icon-btn" title="Cart">
+        <a asp-action="hCart" class="nav-icon-btn" title="Cart">
             <i class="fa-solid fa-cart-shopping"></i>
+            <span class="nav-icon-badge" data-cf-cart-badge></span>
         </a>
         <div class="nav-account-wrap" id="navAccountWrap">
             <button type="button" class="btn-nav-account" onclick="toggleAccountMenu()">
@@ -219,7 +222,25 @@
                                 <i class="fa-solid fa-shirt"></i>
                             </div>
                         }
-                        <span class="catalog-card-fav"><i class="fa-regular fa-heart"></i></span>
+                        <div class="catalog-card-actions">
+                            <button type="button" class="catalog-card-fav" title="Add to wishlist"
+                                    data-cf-fav="@item.ProductID"
+                                    data-name="@item.ProductName"
+                                    data-price="@item.Price"
+                                    data-image="@item.ImagePath"
+                                    data-category="@(item.Category?.CategoryName ?? "Item")"
+                                    onclick="cfToggleFav(event, this)">
+                                <i class="fa-regular fa-heart"></i>
+                            </button>
+                            <button type="button" class="catalog-card-quickadd" title="Add to cart"
+                                    data-id="@item.ProductID"
+                                    data-name="@item.ProductName"
+                                    data-price="@item.Price"
+                                    data-image="@item.ImagePath"
+                                    onclick="cfQuickAdd(event, this)">
+                                <i class="fa-solid fa-cart-plus"></i>
+                            </button>
+                        </div>
                     </div>
                     <div class="catalog-card-body">
                         <span class="catalog-card-category">@(item.Category?.CategoryName ?? "Item")</span>
@@ -266,37 +287,11 @@
 
 
 <script>
-    // Intersection Observer for scroll-reveal on category cards
-    const cards = document.querySelectorAll('.cat-card');
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach((e, i) => {
-            if (e.isIntersecting) {
-                e.target.style.opacity = '0';
-                e.target.style.transform = 'translateY(20px)';
-                e.target.style.transition = `opacity .4s ${i * 0.06}s ease, transform .4s ${i * 0.06}s ease, border-color .2s, box-shadow .2s`;
-                requestAnimationFrame(() => {
-                    e.target.style.opacity = '1';
-                    e.target.style.transform = 'translateY(0)';
-                });
-                observer.unobserve(e.target);
-            }
-        });
-    }, { threshold: 0.15 });
-    cards.forEach(c => {
-        c.style.opacity = '0';
-        observer.observe(c);
-    });
-
-        // Account dropdown
-        function toggleAccountMenu() {
-            document.getElementById('navAccountMenu').classList.toggle('open');
-        }
-        document.addEventListener('click', function(e) {
-            const wrap = document.getElementById('navAccountWrap');
-            if (wrap && !wrap.contains(e.target)) {
-                document.getElementById('navAccountMenu').classList.remove('open');
-            }
-        });
+    window.CF_HOME = {
+        baseUrl: '@Url.Action("hIndex", "Home")',
+        selectedCategory: @(selectedCategory.HasValue ? selectedCategory.Value.ToString() : "null")
+    };
 </script>
+<script src="~/js/home-index.js" asp-append-version="true"></script>
 </body>
 </html>

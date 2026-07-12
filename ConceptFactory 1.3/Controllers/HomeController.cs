@@ -56,5 +56,15 @@ namespace ConceptFactory.Controllers
         {
             return View();
         }
+
+        public IActionResult hWishlist()
+        {
+            return View();
+        }
+
+        public IActionResult hCart()
+        {
+            return View();
+        }
     }
 }

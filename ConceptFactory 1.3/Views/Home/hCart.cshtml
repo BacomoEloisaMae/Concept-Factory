@@ -1,0 +1,97 @@
+@{
+    ViewData["Title"] = "Cart";
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cart — Concept Factory</title>
+    <link rel="stylesheet" href="~/css/home/home-index.css" asp-append-version="true" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    <script src="~/js/storefront.js" asp-append-version="true"></script>
+</head>
+<body>
+
+<!-- ═══ NAVBAR ═══ -->
+<nav class="navbar">
+    <a asp-controller="Home" asp-action="hIndex" class="nav-brand">
+        <img src="/images/logo/logo.png" alt="ConceptFactory" />
+        <span class="nav-brand-name">Concept Factory</span>
+    </a>
+    <div class="nav-links">
+        <a asp-controller="Home" asp-action="hIndex" class="nav-link">Home</a>
+        <a asp-controller="Home" asp-action="hIndex" class="nav-link">Products</a>
+        <a href="#" class="nav-link">Customize</a>
+        <a href="#" class="nav-link">Track Order</a>
+        <a href="#" class="nav-link">About Us</a>
+    </div>
+    <div class="nav-right">
+        <div class="search-bar">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" id="navSearchInput" placeholder="Search products..." />
+        </div>
+        <a asp-controller="Home" asp-action="hWishlist" class="nav-icon-btn" title="Wishlist">
+            <i class="fa-regular fa-heart"></i>
+            <span class="nav-icon-badge" data-cf-wishlist-badge></span>
+        </a>
+        <a asp-controller="Home" asp-action="hCart" class="nav-icon-btn active-fav" title="Cart">
+            <i class="fa-solid fa-cart-shopping"></i>
+            <span class="nav-icon-badge" data-cf-cart-badge></span>
+        </a>
+        <div class="nav-account-wrap" id="navAccountWrap">
+            <button type="button" class="btn-nav-account" onclick="toggleAccountMenu()">
+                <i class="fa-regular fa-user"></i>
+                My Account
+                <i class="fa-solid fa-chevron-down" style="font-size:10px;"></i>
+            </button>
+            <div class="nav-account-menu" id="navAccountMenu">
+                <a asp-controller="Products" asp-action="pIndex" class="nav-account-item admin-item">
+                    <i class="fa-solid fa-gauge-high"></i> Admin Panel
+                </a>
+                <div class="nav-account-divider"></div>
+                <a href="#" class="nav-account-item"><i class="fa-regular fa-user"></i> My Profile</a>
+                <a href="#" class="nav-account-item"><i class="fa-solid fa-box"></i> My Orders</a>
+                <a asp-controller="Auth" asp-action="Login" class="nav-account-item">
+                    <i class="fa-solid fa-arrow-right-to-bracket"></i> Login
+                </a>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<div class="cf-page">
+    <div class="cf-page-title">My Cart</div>
+    <div class="cf-page-sub" id="cartCountLabel">Loading…</div>
+
+    <div id="cartLayout" class="cf-cart-layout">
+        <div id="cartList" class="cf-cart-list"></div>
+
+        <div class="cf-summary">
+            <div class="cf-summary-title">Order Summary</div>
+            <div class="cf-summary-row"><span>Subtotal</span><span id="cartSubtotal">₱0.00</span></div>
+            <div class="cf-summary-row"><span>Items</span><span id="cartItemCount">0</span></div>
+            <div class="cf-summary-total"><span>Total</span><span id="cartTotal">₱0.00</span></div>
+            <button class="cf-summary-btn" onclick="cfCheckout()">Proceed to Checkout</button>
+            <button class="cf-summary-clear" onclick="cfClearCart()">Clear Cart</button>
+        </div>
+    </div>
+
+    <div id="cartEmpty" class="cf-empty" style="display:none;">
+        <i class="fa-solid fa-cart-shopping"></i>
+        <p>Your cart is empty.</p>
+        <a asp-controller="Home" asp-action="hIndex">Browse Products</a>
+    </div>
+</div>
+
+<script>
+    window.CF_CART_PAGE = {
+        homeUrl: '@Url.Action("hIndex", "Home")'
+    };
+</script>
+<script src="~/js/cart-page.js" asp-append-version="true"></script>
+</body>
+</html>
