@@ -1,0 +1,14 @@
+@* Reusable "Design Your Own" promo card — appears after the product listing
+   on the storefront, for every category filter and the "All" view. *@
+<a asp-controller="Customize" asp-action="custom" asp-route-categoryId="@ViewBag.SelectedCategory"
+   class="catalog-card customize-card">
+    <div class="catalog-card-thumb">
+        <i class="fa-solid fa-palette"></i>
+    </div>
+    <div class="catalog-card-body">
+        <span class="catalog-card-category">Custom Order</span>
+        <span class="catalog-card-name">Design Your Own</span>
+        <span class="catalog-card-desc">Have your own artwork? Upload it and we'll bring it to life on any item.</span>
+        <span class="catalog-card-btn">Get Started</span>
+    </div>
+</a>

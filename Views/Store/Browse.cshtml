@@ -1,0 +1,348 @@
+@model IEnumerable<ConceptFactory.Models.Product>
+@{
+    ViewData["Title"] = "Online Product Catalog";
+    ViewData["ActivePage"] = "Products";
+    var categories = ViewBag.Categories as List<ConceptFactory.Models.Category>;
+    int? selectedCat = ViewBag.CategoryId;
+    string? search = ViewBag.Search;
+    string? sort = ViewBag.Sort;
+    int total = ViewBag.TotalCount ?? 0;
+}
+
+<style>
+    /* ── Hero banner ── */
+    .browse-hero {
+        background: linear-gradient(135deg, #f0f1ff 0%, #e6e8ff 100%);
+        border-radius: 16px;
+        padding: 32px 36px;
+        margin-bottom: 28px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+        overflow: hidden;
+        position: relative;
+    }
+    .browse-hero::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background-image: radial-gradient(circle, #9496d080 1px, transparent 1px);
+        background-size: 24px 24px;
+        opacity: .25;
+        pointer-events: none;
+    }
+    .browse-hero-text { position: relative; z-index: 1; }
+    .browse-hero-text h1 { font-size: 28px; font-weight: 800; color: #1e293b; margin-bottom: 6px; }
+    .browse-hero-text p  { font-size: 13.5px; color: #64748b; }
+    .browse-hero-imgs {
+        display: flex;
+        gap: 12px;
+        align-items: flex-end;
+        position: relative;
+        z-index: 1;
+        flex-shrink: 0;
+    }
+    .browse-hero-imgs img {
+        height: 110px;
+        object-fit: contain;
+        filter: drop-shadow(0 8px 16px rgba(91,94,244,.15));
+    }
+    .browse-hero-imgs img:nth-child(2) { height: 120px; }
+
+    /* ── Filter bar ── */
+    .browse-bar {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 22px;
+        flex-wrap: wrap;
+    }
+    .browse-pills { display: flex; gap: 8px; flex-wrap: wrap; flex: 1; }
+    .browse-pill {
+        padding: 6px 16px;
+        border-radius: 20px;
+        font-size: 13px;
+        font-weight: 600;
+        border: 1.5px solid var(--store-border);
+        color: var(--store-text-sub);
+        background: var(--store-white);
+        text-decoration: none;
+        transition: all .15s;
+    }
+    .browse-pill:hover { border-color: var(--store-primary); color: var(--store-primary); }
+    .browse-pill.active { background: var(--store-primary); color: #fff; border-color: var(--store-primary); }
+
+    .browse-sort {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        flex-shrink: 0;
+    }
+    .browse-sort label { font-size: 12.5px; color: var(--store-text-muted); white-space: nowrap; }
+    .browse-sort select {
+        border: 1.5px solid var(--store-border);
+        border-radius: 8px;
+        padding: 6px 10px;
+        font-size: 12.5px;
+        font-family: inherit;
+        color: var(--store-text-main);
+        background: var(--store-white);
+        outline: none;
+        cursor: pointer;
+    }
+    .browse-sort select:focus { border-color: var(--store-primary); }
+
+    .browse-count {
+        font-size: 12.5px;
+        color: var(--store-text-muted);
+        flex-shrink: 0;
+    }
+
+    /* ── Product grid ── */
+    .catalog-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 18px;
+    }
+    @@media (max-width: 1100px) { .catalog-grid { grid-template-columns: repeat(3, 1fr); } }
+    @@media (max-width: 760px)  { .catalog-grid { grid-template-columns: repeat(2, 1fr); } }
+
+    .catalog-card {
+        background: var(--store-white);
+        border-radius: 14px;
+        border: 1.5px solid var(--store-border);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        transition: box-shadow .2s, transform .2s, border-color .2s;
+        text-decoration: none;
+        color: inherit;
+        position: relative;
+    }
+    .catalog-card:hover {
+        box-shadow: 0 8px 28px rgba(91,94,244,.13);
+        transform: translateY(-3px);
+        border-color: #c7caff;
+    }
+
+    /* wishlist heart */
+    .catalog-card-wish {
+        position: absolute;
+        top: 10px; right: 10px;
+        z-index: 5;
+        width: 30px; height: 30px;
+        border-radius: 50%;
+        background: rgba(255,255,255,.85);
+        display: flex; align-items: center; justify-content: center;
+        cursor: pointer;
+        border: none;
+        transition: background .15s, transform .15s;
+        backdrop-filter: blur(4px);
+    }
+    .catalog-card-wish:hover { background: #fff; transform: scale(1.1); }
+    .catalog-card-wish i { font-size: 13px; color: #cbd5e1; transition: color .15s; }
+    .catalog-card-wish.wished i { color: #e53e3e; }
+
+    /* image area */
+    .catalog-card-img {
+        aspect-ratio: 1 / 1;
+        background: #f0f1ff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        position: relative;
+    }
+    .catalog-card-img img {
+        width: 100%; height: 100%;
+        object-fit: cover;
+        transition: transform .3s;
+    }
+    .catalog-card:hover .catalog-card-img img { transform: scale(1.04); }
+    .catalog-card-img-placeholder {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        color: #a5b4fc;
+        padding: 20px;
+        text-align: center;
+        height: 100%;
+    }
+    .catalog-card-img-placeholder .design-text {
+        font-size: 11px;
+        font-weight: 800;
+        color: #7c86d4;
+        line-height: 1.3;
+        text-align: center;
+    }
+
+    /* body */
+    .catalog-card-body {
+        padding: 14px 14px 14px;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        flex: 1;
+    }
+    .catalog-card-cat  { font-size: 10.5px; color: var(--store-primary); font-weight: 600; text-transform: uppercase; letter-spacing: .4px; }
+    .catalog-card-name { font-size: 13.5px; font-weight: 700; color: var(--store-text-main); line-height: 1.35; }
+    .catalog-card-price {
+        font-size: 14.5px;
+        font-weight: 800;
+        color: var(--store-text-main);
+        margin-top: 4px;
+    }
+    .catalog-card-btn {
+        display: block;
+        margin-top: 10px;
+        padding: 9px;
+        background: var(--store-primary);
+        color: #fff;
+        border-radius: 8px;
+        font-size: 12.5px;
+        font-weight: 700;
+        text-align: center;
+        transition: background .15s;
+    }
+    .catalog-card:hover .catalog-card-btn { background: var(--store-primary-dark); }
+
+    /* empty state */
+    .catalog-empty {
+        grid-column: 1/-1;
+        text-align: center;
+        padding: 60px 20px;
+        color: var(--store-text-muted);
+    }
+    .catalog-empty i  { font-size: 40px; margin-bottom: 14px; display: block; }
+    .catalog-empty p  { font-size: 14px; margin-bottom: 14px; }
+</style>
+
+<!-- Hero banner -->
+<div class="browse-hero">
+    <div class="browse-hero-text">
+        <h1>Browse our Products</h1>
+        <p>High quality custom printed apparel for every occasion</p>
+    </div>
+    <div class="browse-hero-imgs">
+        <img src="/images/mockups/hoodie.svg" alt="Hoodie" />
+        <img src="/images/mockups/tshirt.svg" alt="T-Shirt" />
+        <img src="/images/mockups/totebag.svg" alt="Tote" />
+    </div>
+</div>
+
+<!-- Filter / sort bar -->
+<div class="browse-bar">
+    <div class="browse-pills">
+        <a asp-action="Browse" asp-route-search="@search" asp-route-sort="@sort"
+           class="browse-pill @(selectedCat == null ? "active" : "")">All</a>
+        @if (categories != null)
+        {
+            @foreach (var cat in categories)
+            {
+                <a asp-action="Browse"
+                   asp-route-categoryId="@cat.CategoryID"
+                   asp-route-search="@search"
+                   asp-route-sort="@sort"
+                   class="browse-pill @(selectedCat == cat.CategoryID ? "active" : "")">
+                    @cat.CategoryName
+                </a>
+            }
+        }
+    </div>
+
+    <span class="browse-count">@total product@(total == 1 ? "" : "s")</span>
+
+    <div class="browse-sort">
+        <label>Sort:</label>
+        <select onchange="applySort(this.value)">
+            <option value=""      selected="@(sort == null)">Newest</option>
+            <option value="name"  selected="@(sort == "name")">Name A–Z</option>
+            <option value="price_asc"  selected="@(sort == "price_asc")">Price ↑</option>
+            <option value="price_desc" selected="@(sort == "price_desc")">Price ↓</option>
+        </select>
+    </div>
+</div>
+
+<!-- Product grid -->
+<div class="catalog-grid">
+    @if (!Model.Any())
+    {
+        <div class="catalog-empty">
+            <i class="fa-solid fa-box-open"></i>
+            <p>No products found.</p>
+            <a asp-action="Browse" class="browse-pill active" style="display:inline-block;">Clear filters</a>
+        </div>
+    }
+    else
+    {
+        @foreach (var item in Model)
+        {
+            <a asp-controller="Store" asp-action="Details" asp-route-id="@item.ProductID" class="catalog-card">
+
+                <!-- Wishlist button (stops link navigation) -->
+                <button class="catalog-card-wish" onclick="toggleWish(event, this)" title="Add to wishlist">
+                    <i class="fa-regular fa-heart"></i>
+                </button>
+
+                <!-- Image -->
+                <div class="catalog-card-img">
+                    @if (!string.IsNullOrEmpty(item.ImagePath))
+                    {
+                        <img src="@item.ImagePath" alt="@item.ProductName" loading="lazy" />
+                    }
+                    else
+                    {
+                        <div class="catalog-card-img-placeholder">
+                            <img src="/images/mockups/@(GetMockup(item.Category?.CategoryName)).svg"
+                                 alt="@item.ProductName"
+                                 style="width:75%; height:75%; object-fit:contain; opacity:.85;" />
+                            <div class="design-text">YOUR<br>DESIGN<br>HERE</div>
+                        </div>
+                    }
+                </div>
+
+                <!-- Info -->
+                <div class="catalog-card-body">
+                    <span class="catalog-card-cat">@(item.Category?.CategoryName ?? "Product")</span>
+                    <span class="catalog-card-name">@item.ProductName</span>
+                    <span class="catalog-card-price">₱@item.Price.ToString("N2")</span>
+                    <span class="catalog-card-btn">View Products</span>
+                </div>
+            </a>
+        }
+    }
+</div>
+
+@section Scripts {
+<script>
+    function toggleWish(e, btn) {
+        e.preventDefault();
+        e.stopPropagation();
+        btn.classList.toggle('wished');
+        const icon = btn.querySelector('i');
+        icon.className = btn.classList.contains('wished') ? 'fa-solid fa-heart' : 'fa-regular fa-heart';
+    }
+
+    function applySort(val) {
+        const url = new URL(window.location.href);
+        if (val) url.searchParams.set('sort', val);
+        else url.searchParams.delete('sort');
+        window.location.href = url.toString();
+    }
+</script>
+}
+
+@functions {
+    string GetMockup(string? categoryName)
+    {
+        if (string.IsNullOrEmpty(categoryName)) return "tshirt";
+        var n = categoryName.ToLower();
+        if (n.Contains("hoodie"))                    return "hoodie";
+        if (n.Contains("polo"))                      return "polo";
+        if (n.Contains("tote") || n.Contains("bag")) return "totebag";
+        return "tshirt";
+    }
+}

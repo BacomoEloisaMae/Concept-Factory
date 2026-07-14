@@ -1,0 +1,1407 @@
+/* ============================================================
+   SITE.CSS — Admin Panel Global Styles
+   The Concept Factory — ConceptFactory ASP.NET Core MVC
+   
+   TABLE OF CONTENTS:
+   01. Reset & CSS Variables
+   02. Base Body
+   03. Layout (App Wrapper)
+   04. Sidebar
+   05. Main Content
+   06. Page Header & Container
+   07. Filter Bar & Search
+   08. Card
+   09. Data Table
+   10. Table Cells (Product, Service, Shared)
+   11. Status Badges
+   12. Action Buttons
+   13. Empty State
+   14. Pagination
+   15. Buttons
+   16. Alerts
+   17. Modals
+   18. Form Card & Layout
+   19. Form Controls
+   20. Image Upload / Dropzone
+   21. Mockup Canvas
+   22. Additional Images Strip
+   23. Size Dropdown Multi-Select
+   24. Color Picker Swatches
+   25. Sidebar Extras (Logout, Brand Link)
+============================================================ */
+
+
+/* ============================================================
+   01. RESET & CSS VARIABLES
+============================================================ */
+*, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+:root {
+    --primary:        #5B5EF4;
+    --primary-dark:   #4547d4;
+    --primary-light:  #EEEEFF;
+    --danger:         #ef4444;
+    --danger-light:   #fef2f2;
+    --success:        #22c55e;
+    --success-light:  #f0fdf4;
+    --warning:        #f59e0b;
+    --text-main:      #1e293b;
+    --text-sub:       #64748b;
+    --text-muted:     #94a3b8;
+    --border:         #e2e8f0;
+    --bg:             #f8fafc;
+    --white:          #ffffff;
+    --sidebar-w:      220px;
+    --radius:         10px;
+    --shadow:         0 1px 4px rgba(0,0,0,.08);
+    --shadow-md:      0 4px 16px rgba(0,0,0,.10);
+}
+
+
+/* ============================================================
+   02. BASE BODY
+============================================================ */
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 14px;
+    color: var(--text-main);
+    background: var(--bg);
+    min-height: 100vh;
+}
+
+
+/* ============================================================
+   03. LAYOUT
+============================================================ */
+.app-wrapper {
+    display: flex;
+    min-height: 100vh;
+}
+
+
+/* ============================================================
+   04. SIDEBAR
+============================================================ */
+.sidebar {
+    width: var(--sidebar-w);
+    background: var(--white);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    z-index: 100;
+    overflow-y: auto;
+}
+
+.sidebar-brand {
+    display: flex;
+    align-items: center;
+    padding: 10px 5px 5px;
+    border-bottom: 1px solid var(--border);
+}
+
+.brand-logo {
+    width: 56px;
+    height: 60px;
+}
+
+.brand-name {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-main);
+    line-height: 1.3;
+}
+
+.sidebar-nav {
+    flex: 1;
+    padding: 12px 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 12px;
+    border-radius: 8px;
+    color: var(--text-sub);
+    text-decoration: none;
+    font-size: 13.5px;
+    font-weight: 500;
+    transition: background .15s, color .15s;
+}
+
+.nav-item i {
+    width: 16px;
+    text-align: center;
+    font-size: 13px;
+}
+
+.nav-item:hover {
+    background: var(--bg);
+    color: var(--text-main);
+}
+
+.nav-item.active {
+    background: var(--primary-light);
+    color: var(--primary);
+    font-weight: 600;
+}
+
+.sidebar-user {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 16px;
+    border-top: 1px solid var(--border);
+}
+
+.sidebar-user img {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--border);
+}
+
+.user-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.user-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-main);
+}
+
+.user-role {
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+
+/* ============================================================
+   05. MAIN CONTENT
+============================================================ */
+.main-content {
+    margin-left: var(--sidebar-w);
+    flex: 1;
+    padding: 20px 10px;
+    min-height: 100vh;
+}
+
+
+/* ============================================================
+   06. PAGE HEADER & CONTAINER
+============================================================ */
+.page-container {
+    width: 100%;
+    max-width: 1400px;
+    margin: 0;
+}
+
+.page-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+.page-title {
+    font-size: 25px;
+    font-weight: 700;
+    color: var(--text-main);
+}
+
+.page-subtitle {
+    font-size: 16px;
+    color: var(--text-sub);
+    margin-top: 2px;
+}
+
+
+/* ============================================================
+   07. FILTER BAR & SEARCH
+============================================================ */
+.filter-bar {
+    background: var(--white);
+    border: 2px solid var(--border);
+    border-radius: 10px 10px 0 0;
+    padding: 14px 16px;
+    margin-bottom: -1px;
+}
+
+.filter-form {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.search-box {
+    position: relative;
+    flex: 1;
+    min-width: 160px;
+}
+
+.search-box i {
+    position: absolute;
+    left: 11px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    font-size: 13px;
+}
+
+.search-input {
+    width: 100%;
+    padding: 8px 12px 8px 34px;
+    border: 2px solid var(--border);
+    border-radius: 7px;
+    font-size: 13px;
+    color: var(--text-main);
+    background: var(--white);
+    outline: none;
+    transition: border-color .15s;
+}
+
+.search-input:focus {
+    border-color: var(--primary);
+}
+
+.filter-select {
+    padding: 8px 12px;
+    border: 2px solid var(--border);
+    border-radius: 7px;
+    font-size: 13px;
+    color: var(--text-main);
+    background: var(--white);
+    outline: none;
+    cursor: pointer;
+}
+
+.filter-select:focus {
+    border-color: var(--primary);
+}
+
+
+/* ============================================================
+   08. CARD
+============================================================ */
+.card {
+    background: var(--white);
+    border: 2px solid var(--border);
+    border-radius: 0 0 10px 10px;
+    overflow: hidden;
+    box-shadow: var(--shadow);
+}
+
+
+/* ============================================================
+   09. DATA TABLE
+============================================================ */
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.data-table thead {
+    background: var(--bg);
+}
+
+.data-table th {
+    padding: 11px 22px;
+    text-align: left;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-sub);
+    text-transform: uppercase;
+    letter-spacing: .4px;
+    border-bottom: 2px solid var(--border);
+    white-space: nowrap;
+}
+
+.data-table td {
+    padding: 11px 22px;
+    border-bottom: 2px solid var(--border);
+    font-size: 15px;
+    color: var(--text-main);
+    vertical-align: middle;
+}
+
+.data-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.data-table tbody tr:hover {
+    background: #fafafa;
+}
+
+
+/* ============================================================
+   10. TABLE CELLS
+============================================================ */
+
+/* Product Cell */
+.product-cell {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.product-thumb {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    overflow: hidden;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg);
+}
+
+.product-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.product-name {
+    font-weight: 500;
+}
+
+/* Service Cell */
+.service-cell {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.service-icon {
+    width: 34px;
+    height: 34px;
+    background: var(--primary-light);
+    color: var(--primary);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    flex-shrink: 0;
+}
+
+.service-name {
+    font-weight: 500;
+}
+
+/* Shared Cell Helpers */
+.price-cell {
+    font-weight: 600;
+    color: var(--text-main);
+}
+
+.desc-cell {
+    max-width: 260px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--text-sub);
+}
+
+
+/* ============================================================
+   11. STATUS BADGES
+============================================================ */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.status-active {
+    background: var(--success-light);
+    color: #16a34a;
+}
+
+.status-inactive {
+    background: var(--danger-light);
+    color: var(--danger);
+}
+
+
+/* ============================================================
+   12. ACTION BUTTONS
+============================================================ */
+.action-btn {
+    display: flex;
+    gap: 6px;
+}
+
+.btn-icon {
+    width: 35px;
+    height: 35px;
+    border-radius: 7px;
+    border: 2px solid var(--border);
+    background: var(--white);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    transition: background .15s, border-color .15s, color .15s;
+    color: var(--text-sub);
+    text-decoration: none;
+}
+
+.btn-icon.btn-edit:hover {
+    background: var(--primary-light);
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+.btn-icon.btn-delete {
+    color: var(--danger);
+}
+
+.btn-icon.btn-delete:hover {
+    background: var(--danger-light);
+    border-color: var(--danger);
+    color: var(--danger);
+}
+
+
+/* ============================================================
+   13. EMPTY STATE
+============================================================ */
+.empty-state {
+    text-align: center;
+    padding: 60px 20px !important;
+    color: var(--text-muted);
+}
+
+.empty-state i {
+    font-size: 40px;
+    margin-bottom: 12px;
+    display: block;
+}
+
+.empty-state p {
+    margin-bottom: 16px;
+    font-size: 14px;
+}
+
+
+/* ============================================================
+   14. PAGINATION
+============================================================ */
+.pagination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    border-top: 1px solid var(--border);
+}
+
+.page-info {
+    font-size: 13px;
+    color: var(--text-sub);
+}
+
+.page-btns {
+    display: flex;
+    gap: 4px;
+}
+
+.page-btn {
+    min-width: 32px;
+    height: 32px;
+    padding: 0 8px;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    background: var(--white);
+    color: var(--text-sub);
+    font-size: 13px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    transition: background .15s, border-color .15s, color .15s;
+}
+
+.page-btn:hover {
+    background: var(--bg);
+    color: var(--text-main);
+}
+
+.page-btn.active {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: var(--white);
+    font-weight: 600;
+}
+
+
+/* ============================================================
+   15. BUTTONS
+============================================================ */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    padding: 9px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    text-decoration: none;
+    transition: background .15s, box-shadow .15s, opacity .15s;
+    white-space: nowrap;
+}
+
+.btn-primary {
+    background: var(--primary);
+    color: var(--white);
+}
+
+.btn-primary:hover {
+    background: var(--primary-dark);
+    color: var(--white);
+}
+
+.btn-outline {
+    background: var(--white);
+    color: var(--text-main);
+    border: 1px solid var(--border);
+}
+
+.btn-outline:hover {
+    background: var(--bg);
+}
+
+.btn-danger {
+    background: var(--danger);
+    color: var(--white);
+    border: none;
+}
+
+.btn-danger:hover {
+    background: #dc2626;
+}
+
+.btn-sm {
+    padding: 6px 14px;
+    font-size: 12.5px;
+}
+
+
+/* ============================================================
+   16. ALERTS
+============================================================ */
+.alert {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    border-radius: var(--radius);
+    margin-bottom: 20px;
+    font-size: 13.5px;
+    font-weight: 500;
+}
+
+.alert-success {
+    background: var(--success-light);
+    color: #166534;
+    border: 1px solid #bbf7d0;
+}
+
+.alert-danger {
+    background: var(--danger-light);
+    color: #991b1b;
+    border: 1px solid #fecaca;
+}
+
+.alert-close {
+    margin-left: auto;
+    background: none;
+    border: none;
+    font-size: 18px;
+    cursor: pointer;
+    color: inherit;
+    opacity: .6;
+    line-height: 1;
+}
+
+.alert-close:hover {
+    opacity: 1;
+}
+
+
+/* ============================================================
+   17. MODALS
+============================================================ */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 999;
+}
+
+.modal-box {
+    background: var(--white);
+    border-radius: 14px;
+    padding: 32px;
+    max-width: 400px;
+    width: 90%;
+    text-align: center;
+    box-shadow: var(--shadow-md);
+}
+
+.modal-icon {
+    font-size: 38px;
+    color: var(--warning);
+    margin-bottom: 12px;
+}
+
+.modal-title {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+
+.modal-body {
+    font-size: 14px;
+    color: var(--text-sub);
+    margin-bottom: 24px;
+    line-height: 1.5;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+}
+
+.modal-actions form {
+    margin: 0;
+}
+
+
+/* ============================================================
+   18. FORM CARD & LAYOUT
+============================================================ */
+.form-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px;
+    box-shadow: var(--shadow);
+}
+
+.form-card-narrow {
+    max-width: 760px;
+}
+
+.form-header {
+    margin-bottom: 4px;
+    padding-bottom: 14px;
+}
+
+.form-header h2 {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-main);
+}
+
+.form-header p {
+    font-size: 13px;
+    color: var(--text-sub);
+    margin-top: 3px;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr 400px;
+    gap: 28px;
+}
+
+@media (max-width: 960px) {
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.form-col {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.form-col.left {
+    padding: 20px;
+    border-radius: var(--radius);
+    border: 2px solid var(--border);
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.form-row-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+}
+
+.form-actions {
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+    padding-top: 20px;
+    margin-top: 8px;
+    border-top: 1px solid var(--border);
+}
+
+.form-actions-service {
+    display: flex;
+    gap: 10px;
+    padding-top: 16px;
+    margin-top: 8px;
+    border-top: 1px solid var(--border);
+}
+
+
+/* ============================================================
+   19. FORM CONTROLS
+============================================================ */
+.form-label {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-main);
+}
+
+.form-sublabel {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 2px;
+    margin-bottom: 6px;
+}
+
+/*Shared base for inputs — used in Products forms*/
+.form-control {
+    padding: 9px 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 13.5px;
+    color: var(--text-main);
+    background: var(--white);
+    outline: none;
+    transition: border-color .15s, box-shadow .15s;
+    width: 100%;
+}
+
+.form-control:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(91,94,244,.12);
+}
+
+/* Variant used in Services forms (same styling, kept separate for scoping) */
+.form-control-service {
+    padding: 9px 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 13.5px;
+    color: var(--text-main);
+    background: var(--white);
+    outline: none;
+    transition: border-color .15s, box-shadow .15s;
+    width: 100%;
+}
+
+.form-control-service:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(91,94,244,.12);
+}
+
+.form-textarea {
+    resize: vertical;
+    min-height: 100px;
+    font-family: inherit;
+}
+
+/* Currency prefix input wrapper */
+.input-prefix {
+    position: relative;
+}
+
+.prefix-text {
+    position: absolute;
+    left: 11px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--text-sub);
+    pointer-events: none;
+}
+
+.prefix-input,
+.prefix-input-service {
+    padding-left: 26px !important;
+}
+
+.field-error {
+    font-size: 12px;
+    color: var(--danger);
+    margin-top: 2px;
+}
+
+
+/* ============================================================
+   20. IMAGE UPLOAD / DROPZONE
+============================================================ */
+.upload-dropzone {
+    border: 2px dashed #c7d0e0;
+    border-radius: 12px;
+    height: 400px;
+    padding: 36px 20px;
+    text-align: center;
+    cursor: pointer;
+    background: #fafbff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transition: border-color .2s, background .2s;
+}
+
+.upload-dropzone:hover,
+.upload-dropzone.drag-over {
+    border-color: var(--primary);
+    background: var(--primary-light);
+}
+
+.upload-dropzone.upload-loaded {
+    border-color: var(--primary);
+    background: var(--primary-light);
+}
+
+.upload-dropzone-inner {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
+.upload-icon-circle {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    border: 2px solid #c7d0e0;
+    background: var(--white);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 14px;
+    font-size: 18px;
+    color: var(--primary);
+    transition: border-color .2s;
+}
+
+.upload-dropzone:hover .upload-icon-circle {
+    border-color: var(--primary);
+}
+
+.upload-main-text {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-sub);
+    line-height: 1.6;
+    margin-bottom: 6px;
+}
+
+.upload-sub-text {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.upload-file-name {
+    font-size: 12px;
+    color: var(--primary);
+    font-weight: 600;
+    text-align: center;
+    display: block;
+    margin-top: 8px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 100%;
+}
+
+
+/* ============================================================
+   21. MOCKUP CANVAS
+============================================================ */
+
+/* Small thumbnail in table rows */
+.product-thumb-canvas {
+    width: 56px;
+    height: 62px;
+    background: #1a1a2e;
+    border-radius: 8px;
+    border: 1px solid #2a2a4a;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.product-thumb-canvas .thumb-canvas {
+    width: 56px;
+    height: 62px;
+    display: block;
+}
+
+/* Mockup preview panel in Create / Edit */
+.mockup-canvas-container {
+    background: #1a1a2e;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-md);
+    text-align: center;
+}
+
+.mockup-canvas-container canvas {
+    display: block;
+    width: 100%;
+    height: auto;
+    max-width: 340px;
+    margin: 0 auto;
+}
+
+.mockup-hint {
+    font-size: 11px;
+    color: rgba(255,255,255,0.4);
+    padding: 8px;
+    text-align: center;
+}
+
+.mockup-placeholder {
+    border: 2px dashed var(--border);
+    border-radius: 12px;
+    min-height: 220px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+    gap: 10px;
+}
+
+.mockup-placeholder i {
+    font-size: 40px;
+}
+
+.mockup-placeholder p {
+    font-size: 13px;
+    text-align: center;
+    max-width: 180px;
+}
+
+.mockup-wrapper {
+    margin-top: 12px;
+}
+
+.mockup-label {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+    font-style: italic;
+}
+
+
+/* ============================================================
+   22. ADDITIONAL IMAGES STRIP
+============================================================ */
+.additional-images-strip {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+    overflow-x: auto;
+    padding: 10px 8px;
+    min-height: 112px;
+    background: #faf9ff;
+    border: 2px dashed #c4b5e8;
+    border-radius: 10px;
+    scrollbar-width: thin;
+    scrollbar-color: #c4b5e8 transparent;
+    transition: border-color .2s;
+}
+
+.additional-images-strip.drag-over {
+    border-color: #7c5cbf;
+    background: #f0eaff;
+}
+
+.additional-images-strip::-webkit-scrollbar {
+    height: 5px;
+}
+
+.additional-images-strip::-webkit-scrollbar-thumb {
+    background: #c4b5e8;
+    border-radius: 4px;
+}
+
+.additional-img-thumb {
+    position: relative;
+    flex: 0 0 88px;
+    width: 88px;
+    height: 88px;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1.5px solid #d6c9f5;
+    background: var(--white);
+}
+
+.additional-img-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.remove-thumb-btn {
+    position: absolute;
+    top: 3px;
+    right: 3px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(80,40,130,.78);
+    color: var(--white);
+    font-size: 14px;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    transition: background .15s;
+}
+
+.remove-thumb-btn:hover {
+    background: rgba(80,40,130,1);
+}
+
+.additional-img-add {
+    flex: 0 0 88px;
+    width: 88px;
+    height: 88px;
+    border-radius: 8px;
+    border: 2px dashed #9b7de0;
+    background: #f3eeff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    gap: 4px;
+    transition: background .15s, border-color .15s;
+    user-select: none;
+}
+
+.additional-img-add:hover {
+    background: #e8deff;
+    border-color: #7c5cbf;
+}
+
+.additional-img-add .add-icon {
+    font-size: 26px;
+    color: #7c5cbf;
+    line-height: 1;
+}
+
+.additional-img-add .add-label {
+    font-size: 10px;
+    color: #7c5cbf;
+    text-align: center;
+    line-height: 1.3;
+}
+
+
+/* ============================================================
+   23. SIZE DROPDOWN MULTI-SELECT
+============================================================ */
+
+.size-dropdown {
+    position: relative;
+    width: 100%;
+}
+
+/* Trigger — matches form-control look */
+.size-dropdown-trigger {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 9px 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--white);
+    font-size: 13.5px;
+    font-family: inherit;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: border-color .15s, box-shadow .15s;
+    text-align: left;
+    gap: 8px;
+}
+
+.size-dropdown-trigger:hover {
+    border-color: var(--primary);
+}
+
+.size-dropdown-trigger.active {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(91,94,244,.12);
+    color: var(--text-main);
+}
+
+.size-chevron {
+    font-size: 11px;
+    color: var(--text-muted);
+    flex-shrink: 0;
+    transition: transform .2s;
+}
+
+.size-chevron.rotated {
+    transform: rotate(180deg);
+}
+
+/* Dropdown panel */
+.size-dropdown-panel {
+    display: none;
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    width: 100%;
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    z-index: 50;
+    box-shadow: 0 8px 24px rgba(0,0,0,.10);
+    overflow: hidden;
+    animation: dropdownFadeIn .15s ease;
+}
+
+.size-dropdown-panel.open {
+    display: block;
+}
+
+@keyframes dropdownFadeIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* List rows */
+.size-list {
+    padding: 4px 0;
+}
+
+.size-list-item {
+    padding: 10px 14px;
+    font-size: 13.5px;
+    color: var(--text-main);
+    cursor: pointer;
+    transition: background .12s;
+    user-select: none;
+}
+
+.size-list-item:hover {
+    background: var(--bg);
+}
+
+.size-list-item.selected {
+    background: var(--primary-light);
+    color: var(--primary);
+    font-weight: 600;
+}
+
+.size-list-item.selected::after {
+    content: '✓';
+    float: right;
+    font-size: 12px;
+    color: var(--primary);
+}
+
+
+/* ============================================================
+   COLOR PICKER — Swatch picker UI
+   Applies to: Views/Products/pCreate.cshtml, pEdit.cshtml
+   Used for selecting multiple item colors via native color
+   input, rendered as clickable circular swatches.
+============================================================ */
+
+
+.color-picker-wrap { 
+    display:flex; 
+    flex-wrap:wrap; 
+    gap:8px; 
+    padding:4px; 
+    min-height:48px; 
+    align-items:center; 
+}
+
+/* Color picker box */
+.color-picker-box {
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 6px 12px;
+    background: transparent;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    min-height: 48px;
+    justify-content: space-between;
+}
+
+.color-picker-wrap {
+    display: flex;
+    flex: 1;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Center the color dots vertically */
+.color-swatch {
+    width: 28px;
+    height: 28px;
+    border: 1.5px solid var(--primary-light);
+    border-radius: 50%;
+    position: relative;
+    cursor: pointer;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+    .color-swatch .rm {
+        display: none;
+        position: absolute;
+        top: -4px;
+        right: -4px;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: #e53e3e;
+        color: #fff;
+        font-size: 9px;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        border: 1.5px solid #fff;
+        font-weight: 700;
+        line-height: 1;
+    }
+
+    .color-swatch:hover .rm {
+        display: flex;
+    }
+.btn-add-color {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    background: transparent;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    font-family: inherit;
+    flex-shrink: 0;
+}
+
+/* Only the icon has the border box */
+.btn-add-color-icon {
+    width: 28px;
+    height: 28px;
+    border: 1.5px dashed var(--primary);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary);
+    font-size: 13px;
+    transition: background .15s, color .15s;
+}
+
+.btn-add-color:hover .btn-add-color-icon {
+    background: var(--primary);
+    color: #fff;
+}
+
+/* Label is plain text, no border */
+.btn-add-color-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--primary);
+}
+
+.btn-add-color:hover .btn-add-color-label {
+    color: var(--primary-dark);
+}
+
+
+/* ============================================================
+   SIDEBAR EXTRAS — Logout link & logo link
+   Applies to: Views/Shared/_Layout.cshtml
+============================================================ */
+
+.sidebar-logout {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 8px 12px 12px;
+    padding: 9px 12px;
+    border-radius: 8px;
+    color: rgba(255,255,255,.7);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 600;
+    transition: background .15s;
+}
+
+.sidebar-logout:hover {
+    background: rgba(255,255,255,.1);
+}
+
+.sidebar-brand a {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+}
