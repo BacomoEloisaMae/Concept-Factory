@@ -1,0 +1,211 @@
+@model IEnumerable<ConceptFactory.Models.Product>
+@{
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+
+    ViewData["Title"] = "Items";
+    ViewData["ActivePage"] = "Products";
+    int page = ViewBag.Page ?? 1;
+    int totalPages = ViewBag.TotalPages ?? 1;
+    int totalCount = ViewBag.TotalCount ?? 0;
+    int pageSize = 12;
+    int startItem = totalCount == 0 ? 0 : ((page - 1) * pageSize) + 1;
+    int endItem = Math.Min(page * pageSize, totalCount);
+    // Current filtered/paged URL, so Add/Edit can send the admin right
+    // back here after saving instead of resetting to page 1.
+    string currentUrl = $"{Context.Request.Path}{Context.Request.QueryString}";
+}
+
+<div class="page-container">
+
+    <!-- Page Header -->
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Items</h1>
+            <p class="page-subtitle">Manage your store products, edit details and organize</p>
+        </div>
+        <div style="display:flex;gap:0.5rem;">
+            <a asp-action="pDeleted" class="btn btn-outline">
+                <i class="fa-solid fa-trash-can-arrow-up"></i> Archive
+            </a>
+            <a asp-action="pCreate" asp-route-returnUrl="@currentUrl" class="btn btn-primary">
+                <i class="fa-solid fa-plus fa-lg"></i> Add Item
+            </a>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="filter-bar">
+        <form method="get" asp-action="pIndex" class="filter-form">
+            <div class="search-box">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" name="search" value="@ViewBag.Search"
+                       placeholder="Search Items..." class="search-input" />
+            </div>
+            <select name="categoryId" asp-items="ViewBag.Categories" class="filter-select">
+                <option value="">All Categories</option>
+            </select>
+            <select name="status" class="filter-select">
+                <option value="" selected="@(ViewBag.Status == null)">All Status</option>
+                <option value="Active" selected="@(ViewBag.Status == "Active")">Active</option>
+                <option value="Inactive" selected="@(ViewBag.Status == "Inactive")">Inactive</option>
+            </select>
+            <button type="submit" class="btn btn-outline">
+                <i class="fa-solid fa-filter"></i> Filter
+            </button>
+        </form>
+    </div>
+
+    <!-- Product Table -->
+    <div class="card">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Products</th>
+                    <th>Category</th>
+                    <th>Price</th>
+                    <th>Stock</th>
+                        <th>Color</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Any())
+                {
+                    <tr>
+                        <td colspan="6" class="empty-state">
+                            <i class="fa-solid fa-box-open"></i>
+                            <p>No items found.</p>
+                            <a asp-action="pCreate" asp-route-returnUrl="@currentUrl" class="btn btn-primary btn-sm">Add Your First Item</a>
+                        </td>
+                    </tr>
+                }
+                else
+                {
+                    @foreach (var product in Model)
+                    {
+                        string catName = product.Category?.CategoryName?.ToLower() ?? "";
+                        string mockupSvg = "/images/mockups/tshirt.svg";
+                        int px = 148, py = 130, pw = 104, ph = 110;
+
+                        if (catName.Contains("hoodie")) {
+                            mockupSvg = "/images/mockups/hoodie.svg"; px=152; py=148; pw=96; ph=100;
+                        } else if (catName.Contains("polo")) {
+                            mockupSvg = "/images/mockups/polo.svg"; px=152; py=195; pw=96; ph=100;
+                        } else if (catName.Contains("tote") || catName.Contains("bag")) {
+                            mockupSvg = "/images/mockups/totebag.svg"; px=148; py=165; pw=104; ph=130;
+                        }
+
+                        string designSrc = string.IsNullOrEmpty(product.ImagePath) ? "" : product.ImagePath;
+
+                        <tr>
+                            <td>
+                                <div class="product-cell">
+                                    <div class="product-thumb">
+                                        @if (!string.IsNullOrEmpty(product.ImagePath))
+                                        {
+                                            <img src="@product.ImagePath" alt="@product.ProductName" style="width: 50px; height: 50px; object-fit: cover; border-radius: 6px;" />
+                                        }
+                                        else
+                                        {
+                                            <div style="width: 50px; height: 50px; background: #e2e8f0; display: flex; align-items: center; justify-content: center; border-radius: 6px; color: #94a3b8;">
+                                                <i class="fa-solid fa-shirt"></i>
+                                            </div>
+                                        }
+                                    </div>
+                                    <span class="product-name">@product.ProductName</span>
+                                </div>
+                            </td>
+                            <td>@product.Category?.CategoryName</td>
+                            <td class="price-cell">₱@product.Price.ToString("N2")</td>
+                            <td>@product.StockQuantity</td>
+                                <td>
+                                    @if (!string.IsNullOrEmpty(product.Color)) {
+                                        foreach (var hex in product.Color.Split(",").Select(c => c.Trim()).Where(c => !string.IsNullOrEmpty(c))) {
+                                            <span style="display:inline-block;width:14px;height:14px;border-radius:50%;background:@hex;border:1px solid rgba(0,0,0,.15);margin-right:2px;" title="@hex"></span>
+                                        }
+                                    } else { <span style="color:#94a3b8;">—</span> }
+                                </td>
+                            <td>
+                                <span class="status-badge @(product.Status == "Active" ? "status-active" : "status-inactive")">
+                                    @product.Status
+                                </span>
+                            </td>
+                            <td>
+                                <div class="action-btn">
+                                    <a asp-action="pEdit" asp-route-id="@product.ProductID" asp-route-returnUrl="@currentUrl"
+                                       class="btn-icon btn-edit" title="Edit">
+                                        <i class="fa-solid fa-pen-to-square"></i>
+                                    </a>
+                                    <button type="button" class="btn-icon btn-delete" title="Delete"
+                                            onclick="confirmDelete(@product.ProductID, '@Html.Raw(product.ProductName.Replace("'","\\'"))')">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+
+        <!-- Pagination -->
+        @if (totalPages > 1)
+        {
+            <div class="pagination">
+                <span class="page-info">Showing @startItem–@endItem of @totalCount products</span>
+                <div class="page-btns">
+                    @if (page > 1)
+                    {
+                        <a asp-action="pIndex" asp-route-page="@(page-1)"
+                           asp-route-search="@ViewBag.Search" asp-route-categoryId="@ViewBag.CategoryId"
+                           asp-route-status="@ViewBag.Status" class="page-btn">‹</a>
+                    }
+                    @for (int i = 1; i <= totalPages; i++)
+                    {
+                        <a asp-action="pIndex" asp-route-page="@i"
+                           asp-route-search="@ViewBag.Search" asp-route-categoryId="@ViewBag.CategoryId"
+                           asp-route-status="@ViewBag.Status"
+                           class="page-btn @(i == page ? "active" : "")">@i</a>
+                    }
+                    @if (page < totalPages)
+                    {
+                        <a asp-action="pIndex" asp-route-page="@(page+1)"
+                           asp-route-search="@ViewBag.Search" asp-route-categoryId="@ViewBag.CategoryId"
+                           asp-route-status="@ViewBag.Status" class="page-btn">›</a>
+                    }
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="pagination">
+                <span class="page-info">Showing @startItem–@endItem of @totalCount products</span>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Soft Delete Modal -->
+<div id="deleteModal" class="modal-overlay" style="display:none;">
+    <div class="modal-box">
+        <div class="modal-icon"><i class="fa-solid fa-trash"></i></div>
+        <h3 class="modal-title">Delete Product?</h3>
+        <p class="modal-body">
+            <strong id="deleteProductName"></strong> will be moved to deleted items.
+            You can restore it later or permanently delete it from there.
+        </p>
+        <div class="modal-actions">
+            <button onclick="closeModal()" class="btn btn-outline">Cancel</button>
+            <form id="deleteForm" method="post">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn btn-danger">Move to Deleted</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script src="~/js/admin/admin-live-filter.js" asp-append-version="true"></script>
+<script src="~/js/admin/products-index.js" asp-append-version="true"></script>
+}

@@ -1,0 +1,86 @@
+
+
+/* ── Catalog-only hero banner ── */
+.browse-hero {
+    background: #ffffff;
+    border: 1px solid var(--border);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 28px 74px 0;
+    border-radius: 16px;
+}
+
+.browse-hero-img {
+    align-self: flex-end;
+    max-width: 720px;
+    max-height: 250px;
+    object-fit: contain;
+}
+
+.browse-hero-text h1 {
+    font-size: 26px;
+    font-weight: 800;
+    color: var(--text-main);
+    margin-bottom: 6px;
+}
+
+.browse-hero-text p {
+    font-size: 13px;
+    color: var(--text-sub);
+}
+ 
+ 
+ 
+/* ── Filter / sort bar ── */
+.browse-bar {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 24px 64px 0;
+    margin-bottom: 8px;
+}
+.browse-pills { display: flex; gap: 8px; flex-wrap: wrap; }
+.browse-pill {
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    border: 1.5px solid var(--border);
+    color: var(--text-sub);
+    background: var(--white);
+    text-decoration: none;
+    transition: all .15s;
+}
+.browse-pill:hover { border-color: var(--primary); color: var(--primary); }
+.browse-pill.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+.browse-meta-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 6px;
+}
+.browse-sort { display: flex; align-items: center; gap: 7px; flex-shrink: 0; }
+.browse-sort label { font-size: 12.5px; color: var(--text-muted); white-space: nowrap; }
+.browse-sort select {
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 6px 10px;
+    font-size: 12.5px;
+    font-family: inherit;
+    color: var(--text-main);
+    background: var(--white);
+    outline: none;
+    cursor: pointer;
+}
+.browse-sort select:focus { border-color: var(--primary); }
+
+.browse-count { font-size: 12.5px; color: var(--text-muted); flex-shrink: 0; }
+
+.browse-grid-wrap { padding: 16px 64px 56px; }

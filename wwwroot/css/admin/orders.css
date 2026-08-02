@@ -1,0 +1,133 @@
+/* ============================================================
+   ORDERS.CSS — Order Management admin page
+   Built on top of the design tokens already defined in site.css
+   (--primary, --border, --radius, --shadow, --text-*, etc.)
+============================================================ */
+
+/* ── Stat cards row ── */
+.stat-cards-row {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.stat-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 16px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.stat-card-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-sub);
+}
+
+.stat-card-body {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.stat-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+}
+
+.stat-icon-purple { background: var(--primary-light); color: var(--primary); }
+.stat-icon-green  { background: var(--success-light); color: var(--success); }
+.stat-icon-orange { background: #fff7ed; color: var(--warning); }
+.stat-icon-blue   { background: #eff6ff; color: #3b82f6; }
+.stat-icon-red    { background: var(--danger-light); color: var(--danger); }
+
+.stat-value {
+    font-size: 26px;
+    font-weight: 800;
+    color: var(--text-main);
+}
+
+/* ── Tabs row ── */
+.order-tabs {
+    display: flex;
+    gap: 24px;
+    padding: 0 4px 12px;
+    margin-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+}
+
+.order-tab {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-sub);
+    text-decoration: none;
+    padding-bottom: 12px;
+    position: relative;
+}
+
+.order-tab:hover { color: var(--text-main); }
+
+.order-tab.active {
+    color: var(--primary);
+}
+
+.order-tab.active::after {
+    content: "";
+    position: absolute;
+    left: 0; right: 0; bottom: -13px;
+    height: 2px;
+    background: var(--primary);
+}
+
+/* ── Order-specific status badges (extends .status-badge from site.css) ── */
+.status-paid       { background: var(--success-light); color: #16a34a; }
+.status-inproduction { background: #fff7ed; color: var(--warning); }
+.status-processing { background: #eff6ff; color: #3b82f6; }
+.status-completed  { background: var(--success-light); color: #16a34a; }
+.status-cancelled  { background: var(--danger-light); color: var(--danger); }
+
+.status-badge i { font-size: 10px; margin-right: 4px; }
+
+/* ── Order ID link + product list cell ── */
+.order-id-link {
+    color: var(--primary);
+    font-weight: 700;
+    text-decoration: none;
+    font-size: 13px;
+}
+.order-id-link:hover { text-decoration: underline; }
+
+.order-products-cell {
+    font-size: 13px;
+    color: var(--text-main);
+    line-height: 1.5;
+}
+
+.order-date-cell {
+    font-size: 13px;
+    color: var(--text-main);
+    line-height: 1.4;
+}
+.order-date-cell .order-time {
+    display: block;
+    color: var(--text-muted);
+    font-size: 12px;
+}
+
+@media (max-width: 1100px) {
+    .stat-cards-row { grid-template-columns: repeat(3, 1fr); }
+}
+@media (max-width: 700px) {
+    .stat-cards-row { grid-template-columns: repeat(2, 1fr); }
+}

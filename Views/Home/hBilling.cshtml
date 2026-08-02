@@ -1,0 +1,221 @@
+@{
+    ViewData["Title"] = "Billing & Payment";
+
+    // ── UI PREVIEW ONLY ──────────────────────────────────────────────
+    // Everything below is hardcoded stand-in content so this page can be
+    // viewed and styled on its own, matching the reference mockups. None
+    // of it is wired up yet: the payment-method toggle is presentational
+    // JS only, the form doesn't post anywhere, and the order isn't a
+    // real cart/order record. That wiring (pulling the actual selected
+    // cart items, saving billing info, handling the real payment
+    // submission) is a separate follow-up step.
+    //
+    // Connected files:
+    //   Controller : Controllers/HomeController.cs        -> hBilling()
+    //   Styles     : wwwroot/css/home/billing-payment.css
+    //   Script     : wwwroot/js/billing-payment.js
+    //   Layout     : Views/Shared/_Layout.cshtml (navbar; footer is Home/Browse only, not here)
+}
+@section Styles {
+    <link rel="stylesheet" href="~/css/home/home-index.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/navbar.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/home/billing-payment.css" asp-append-version="true" />
+}
+
+<div class="cf-page bp-page">
+    <div class="cf-page-title">Billing &amp; Payment</div>
+    <div class="cf-page-sub">View and Manage all customer orders</div>
+
+    <div class="bp-banner">
+        <i class="fa-regular fa-circle-check"></i>
+        A 50% down payment is required to confirm your order and start production
+    </div>
+
+    <div class="bp-layout">
+        <!-- ════ LEFT: form ════ -->
+        <div class="bp-main">
+
+            <!-- Billing Information -->
+            <div class="bp-card">
+                <div class="bp-card-title">Billing Information</div>
+                <div class="bp-form-grid">
+                    <div class="bp-field">
+                        <label>Full name</label>
+                        <input type="text" placeholder="" />
+                    </div>
+                    <div class="bp-field">
+                        <label>Email Address</label>
+                        <input type="email" placeholder="" />
+                    </div>
+                    <div class="bp-field">
+                        <label>Phone number</label>
+                        <input type="tel" placeholder="" />
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payment Method -->
+            <div class="bp-card">
+                <div class="bp-card-title">Payment Method</div>
+                <div class="bp-method-row">
+                    <label class="bp-method active" data-method="gcash">
+                        <input type="radio" name="paymentMethod" value="gcash" checked onchange="bpSelectMethod('gcash')" />
+                        <span class="bp-method-icon bp-method-icon-gcash">G</span>
+                        <span class="bp-method-text">
+                            <span class="bp-method-name">Gcash</span>
+                            <span class="bp-method-desc">Pay using Gcash and submit your reference number</span>
+                        </span>
+                    </label>
+                    <label class="bp-method" data-method="cash">
+                        <input type="radio" name="paymentMethod" value="cash" onchange="bpSelectMethod('cash')" />
+                        <span class="bp-method-icon bp-method-icon-cash"><i class="fa-solid fa-money-bill-wave"></i></span>
+                        <span class="bp-method-text">
+                            <span class="bp-method-name">Cash</span>
+                            <span class="bp-method-desc">Pay in person upon pickup</span>
+                        </span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Payment Details -->
+            <div class="bp-card">
+                <div class="bp-card-title">Payment Details</div>
+
+                <!-- Gcash panel -->
+                <div class="bp-details-panel" id="bpPanelGcash">
+                    <div class="bp-gcash-grid">
+                        <div class="bp-qr-box">
+                            <div class="bp-qr-label">Scan to pay</div>
+                            <div class="bp-qr-img">
+                                <i class="fa-solid fa-qrcode"></i>
+                            </div>
+                            <div class="bp-gcash-number-row">
+                                <span class="bp-gcash-number-label">Gcash number</span>
+                                <div class="bp-gcash-number">
+                                    <span>0951 238 8661</span>
+                                    <button type="button" class="bp-copy-btn" onclick="bpCopyGcashNumber(this)">Copy</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bp-instructions-box">
+                            <div class="bp-instructions-label">Payment Instruction</div>
+                            <ol class="bp-instructions-list">
+                                <li>Open your Gcash App</li>
+                                <li>Scan the QR code or send payment our Gcash number</li>
+                                <li>Pay exact amount shown in the order summary</li>
+                                <li>Save your payment receipt</li>
+                                <li>Enter the reference number below</li>
+                                <li>Upload your payment screenshot for verification</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cash panel (hidden by default) -->
+                <div class="bp-details-panel" id="bpPanelCash" style="display:none;">
+                    <div class="bp-cash-steps">
+                        <div class="bp-cash-step">
+                            <div class="bp-cash-step-icon"><i class="fa-solid fa-shop"></i><span class="bp-cash-step-num">1</span></div>
+                            <div class="bp-cash-step-text"><strong>Visit our shop</strong><br />Go to our shop during business hours</div>
+                        </div>
+                        <div class="bp-cash-step">
+                            <div class="bp-cash-step-icon"><i class="fa-solid fa-hand-holding-dollar"></i><span class="bp-cash-step-num">2</span></div>
+                            <div class="bp-cash-step-text"><strong>Pay 50% down payment</strong><br />Pay the required 50% down payment to confirm your order</div>
+                        </div>
+                        <div class="bp-cash-step">
+                            <div class="bp-cash-step-icon"><i class="fa-solid fa-clipboard-check"></i><span class="bp-cash-step-num">3</span></div>
+                            <div class="bp-cash-step-text"><strong>Visit our shop</strong><br />We will verify your payment and start the production</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Shared fields: reference number + upload proof -->
+                <div class="bp-proof-grid">
+                    <div class="bp-field">
+                        <label id="bpRefLabel">Gcash reference number</label>
+                        <input type="text" id="bpRefInput" />
+                        <div class="bp-field-hint" id="bpRefHint">You can find this in your Gcash transaction details</div>
+                    </div>
+                    <div class="bp-field">
+                        <label id="bpUploadLabel">Upload payment screenshot</label>
+                        <div class="bp-upload-box" id="bpUploadBox">
+                            <label for="bpUploadInput" class="bp-upload-inner">
+                                <i class="fa-solid fa-cloud-arrow-up"></i>
+                                <strong>Drag &amp; drop your file here</strong>
+                                <span>PNG, JPG, SVG, PDF (Max 10MB)</span>
+                            </label>
+                            <input type="file" id="bpUploadInput" accept="image/*,.pdf" class="bp-hidden-input" onchange="bpShowFileName(this)" />
+                            <div class="bp-upload-filename" id="bpUploadFileName"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ════ RIGHT: order summary ════ -->
+        <div class="bp-sidebar">
+            <div class="bp-card">
+                <div class="bp-card-title">Order Summary</div>
+
+                <div class="bp-summary-item">
+                    <div class="bp-summary-thumb">
+                        <img src="/images/custom/cotton-tshirt/white.png" alt="Classic Cotton T-Shirt"
+                             onerror="this.style.display='none'" />
+                    </div>
+                    <div class="bp-summary-item-info">
+                        <div class="bp-summary-item-name">Classic Cotton T-Shirt</div>
+                        <div class="bp-summary-item-row">Color: <span>White</span></div>
+                        <div class="bp-summary-item-row">Size: <span>Large</span></div>
+                        <div class="bp-summary-item-row">Printing: <span>DTF Printing</span></div>
+                        <div class="bp-summary-item-row">Print Location: <span>Front</span></div>
+                        <div class="bp-summary-item-row">Quantity: <span>10</span></div>
+                    </div>
+                </div>
+
+                <div class="bp-price-rows">
+                    <div class="bp-price-row">
+                        <span>Product Price</span>
+                        <span>₱1,500.00</span>
+                    </div>
+                    <div class="bp-price-row">
+                        <span>DTF Printing</span>
+                        <span>₱500.00</span>
+                    </div>
+                    <div class="bp-price-divider"></div>
+                    <div class="bp-price-row">
+                        <span>Subtotal</span>
+                        <span>₱2,000.00</span>
+                    </div>
+                    <div class="bp-price-row bp-price-highlight">
+                        <span>Required down payment 50%</span>
+                        <span>₱1,000.00</span>
+                    </div>
+                    <div class="bp-price-row">
+                        <span>Remaining Balance</span>
+                        <span>₱1,000.00</span>
+                    </div>
+                    <div class="bp-price-divider"></div>
+                    <div class="bp-price-row bp-price-total">
+                        <span>Total Order Amount</span>
+                        <span>₱2,000.00</span>
+                    </div>
+                </div>
+
+                <button type="button" class="bp-submit-btn">Confirm &amp; Submit Payment</button>
+            </div>
+
+            <div class="bp-reminders">
+                <div class="bp-reminders-title"><i class="fa-regular fa-bell"></i> Important Reminders</div>
+                <ul>
+                    <li>Please pay the exact amount to avoid payment issues</li>
+                    <li>Ensure the reference number is correct</li>
+                    <li>Upload a clear screenshot of your payment receipt</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/billing-payment.js" asp-append-version="true"></script>
+}

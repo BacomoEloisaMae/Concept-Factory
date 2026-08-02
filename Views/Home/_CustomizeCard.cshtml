@@ -1,0 +1,55 @@
+@* Reusable "Design Your Own" promo card — appears after the product listing,
+   but ONLY when a specific category is selected AND that category isn't
+   a group's "All" view (see isGroupAllView below).
+
+   Included by: Views/Home/hIndex.cshtml and Views/Home/hProducts.cshtml
+   (both via @@await Html.PartialAsync("_CustomizeCard")).
+   Reads: ViewBag.Categories / ViewBag.SelectedCategory, set by
+   HomeController.hIndex() / hProducts().
+   Links into: CustomizeController.Custom() for the selected category.
+
+   Its photo is the SAME one the Customize category picker uses for that
+   category (wwwroot/images/custom/{key}/ — white photo preferred, falling
+   back to black, then whatever's first), so a sub-category like "Cotton
+   T-Shirts" shows its own actual photo instead of a generic shared icon.
+
+   When the shopper is on a GROUP's "All" view (e.g. browsing "T-Shirts"
+   itself, not one specific sub-type like Compression), there's no single
+   item to jump straight into customizing — so instead of guessing, the
+   card is hidden entirely there. It still shows normally for a specific
+   sub-type (Compression T-Shirts, Varsity Jackets, ...) and for
+   standalone categories with no sub-types (Polo Shirts, Tote Bags,
+   Sweaters). *@
+@using ConceptFactory.Utils
+@inject IWebHostEnvironment Environment
+@{
+    var categories = ViewBag.Categories as List<ConceptFactory.Models.Category>;
+    int? selectedCategory = ViewBag.SelectedCategory;
+    var currentCat = categories?.FirstOrDefault(c => c.CategoryID == selectedCategory);
+
+    var promoImg = CategoryImageResolver.GetDefaultThumb(Environment, currentCat?.CategoryName, "/images/categories/default.png");
+
+    // A "group" here means a top-level category that has sub-types under
+    // it (T-Shirts, Hoodies & Jackets) — selecting it directly (or its
+    // "All" subchip, which uses the same categoryId) means the shopper
+    // hasn't picked a specific sub-type yet, so there's nothing specific
+    // to customize — the card is hidden in that case (see below).
+    bool isGroupAllView = currentCat != null && currentCat.ParentCategoryID == null
+        && (categories?.Any(c => c.ParentCategoryID == currentCat.CategoryID) ?? false);
+}
+@if (currentCat != null && !isGroupAllView)
+{
+    <a asp-controller="Customize" asp-action="Custom" asp-route-categoryId="@selectedCategory"
+       class="catalog-card customize-card">
+        <div class="catalog-card-thumb">
+            <img src="@promoImg" alt="Design Your Own @(currentCat.CategoryName)" />
+            <span class="customize-card-overlay">YOUR<br>DESIGN<br>HERE</span>
+        </div>
+        <div class="catalog-card-body">
+            <span class="catalog-card-category">Custom Order</span>
+            <span class="catalog-card-name">Design Your Own</span>
+            <span class="catalog-card-desc">Have your own artwork? Upload it and we'll bring it to life on any item.</span>
+            <span class="catalog-card-btn">Get Started</span>
+        </div>
+    </a>
+}

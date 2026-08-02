@@ -1,0 +1,77 @@
+/* ============================================================
+   PRODUCT-FORM.CSS — shared by pCreate.cshtml and pEdit.cshtml
+   Additional/showcase images widget (dropzone + slot grid).
+============================================================ */
+
+/* Big dropzone shown only when zero additional images are added */
+.sc-bigbox {
+    border: 2px dashed #c7caff;
+    border-radius: 12px;
+    padding: 28px 20px;
+    text-align: center;
+    cursor: pointer;
+    background: #f7f8ff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transition: border-color .2s, background .2s;
+}
+.sc-bigbox:hover,
+.sc-bigbox.drag-over {
+    border-color: var(--primary);
+    background: var(--primary-light);
+}
+
+/* Small slot row — shown once at least one image is added */
+.sc-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+.sc-slot {
+    width: 78px;
+    height: 78px;
+    flex-shrink: 0;
+    border-radius: 8px;
+    border: 1.5px dashed #c7caff;
+    background: #f0f1ff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: border-color .2s, background .2s;
+    position: relative;
+    overflow: hidden;
+}
+.sc-slot.empty:hover { border-color: var(--primary); background: #eef0ff; }
+.sc-slot.empty .sc-slot-icon { font-size: 15px; color: #c7caff; transition: color .2s; }
+.sc-slot.empty:hover .sc-slot-icon { color: var(--primary); }
+.sc-slot.filled { border-style: solid; border-color: #c7caff; cursor: default; }
+.sc-slot.filled img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.sc-slot-add-btn {
+    position: absolute;
+    bottom: 3px; right: 3px;
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    background: var(--primary);
+    color: #fff;
+    font-size: 9px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    border: 1.5px solid #fff;
+}
+.sc-slot-add-btn:hover { background: var(--primary-dark); }
+.sc-slot-rm {
+    position: absolute;
+    top: 3px; right: 3px;
+    width: 17px; height: 17px;
+    border-radius: 50%;
+    background: rgba(229,62,62,.88);
+    color: #fff;
+    font-size: 9px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    border: 1px solid #fff;
+    font-weight: 700;
+}
+.sc-slot-rm:hover { background: #dc2626; }

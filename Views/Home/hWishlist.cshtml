@@ -1,0 +1,29 @@
+@{
+    ViewData["Title"] = "Wishlist";
+}
+@section Styles {
+    <link rel="stylesheet" href="~/css/home/home-index.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/navbar.css" asp-append-version="true" />
+}
+
+<div class="cf-page">
+    <div class="cf-page-title">My Wishlist</div>
+    <div class="cf-page-sub" id="wishlistCountLabel">Loading…</div>
+
+    <div id="wishlistGrid" class="catalog-grid"></div>
+    <div id="wishlistEmpty" class="cf-empty" style="display:none;">
+        <i class="fa-regular fa-heart"></i>
+        <p>Your wishlist is empty.</p>
+        <a asp-controller="Home" asp-action="hIndex">Browse Products</a>
+    </div>
+</div>
+
+<script>
+    window.CF_WISHLIST_PAGE = {
+        homeUrl: '@Url.Action("hIndex", "Home")',
+        detailsUrl: '@Url.Action("hDetails", "Home", new { id = 0 })'
+    };
+</script>
+@section Scripts {
+    <script src="~/js/wishlist-page.js" asp-append-version="true"></script>
+}

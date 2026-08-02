@@ -1,0 +1,358 @@
+/* ============================================================
+   BILLING-PAYMENT.CSS
+   Styles for the Billing & Payment page.
+
+   Connected to:
+     View       : Views/Home/hBilling.cshtml
+     Controller : Controllers/HomeController.cs -> hBilling()
+     Script     : wwwroot/js/billing-payment.js
+
+   Reuses the site's shared tokens (--primary etc. from navbar.css) and
+   the .cf-page/.cf-page-title/.cf-page-sub shell already used by the
+   Cart/Wishlist pages, so this reads as part of the same storefront.
+============================================================ */
+
+.bp-page { padding-bottom: 100px; }
+.bp-hidden-input { display: none; }
+
+/* ── Down-payment notice banner ── */
+.bp-banner {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    color: #15803d;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 12px 18px;
+    border-radius: var(--radius);
+    margin-bottom: 24px;
+}
+.bp-banner i { font-size: 15px; }
+
+/* ── Two-column layout ── */
+.bp-layout {
+    display: grid;
+    grid-template-columns: 1fr 360px;
+    gap: 24px;
+    align-items: start;
+}
+@media (max-width: 900px) {
+    .bp-layout { grid-template-columns: 1fr; }
+}
+
+.bp-main, .bp-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* ── Shared card shell ── */
+.bp-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 22px 24px;
+}
+.bp-card-title {
+    font-size: 15px;
+    font-weight: 800;
+    color: var(--text-main);
+    margin-bottom: 16px;
+}
+
+/* ── Form fields ── */
+.bp-form-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+}
+@media (max-width: 640px) {
+    .bp-form-grid { grid-template-columns: 1fr; }
+}
+.bp-field { display: flex; flex-direction: column; gap: 6px; }
+.bp-field label {
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--text-sub);
+}
+.bp-field input[type="text"],
+.bp-field input[type="email"],
+.bp-field input[type="tel"] {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 13.5px;
+    color: var(--text-main);
+    background: var(--white);
+    outline: none;
+    transition: border-color .15s;
+}
+.bp-field input:focus { border-color: var(--primary); }
+.bp-field-hint {
+    font-size: 11.5px;
+    color: var(--text-muted);
+    margin-top: 2px;
+}
+
+/* ── Payment method selector ── */
+.bp-method-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+}
+@media (max-width: 640px) {
+    .bp-method-row { grid-template-columns: 1fr; }
+}
+.bp-method {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    cursor: pointer;
+    transition: border-color .15s, background .15s;
+}
+.bp-method:hover { border-color: #c7c9f7; }
+.bp-method.active {
+    border-color: var(--primary);
+    background: var(--primary-light);
+}
+.bp-method input[type="radio"] {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--primary);
+    margin: 0;
+    flex-shrink: 0;
+}
+.bp-method-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 15px;
+    color: var(--white);
+    flex-shrink: 0;
+}
+.bp-method-icon-gcash { background: #0072ce; }
+.bp-method-icon-cash { background: var(--primary); font-size: 14px; }
+.bp-method-text { display: flex; flex-direction: column; gap: 2px; }
+.bp-method-name { font-size: 13.5px; font-weight: 700; color: var(--text-main); }
+.bp-method-desc { font-size: 11.5px; color: var(--text-muted); }
+
+/* ── Payment details: Gcash panel ── */
+.bp-gcash-grid {
+    display: grid;
+    grid-template-columns: 1fr 1.3fr;
+    gap: 20px;
+}
+@media (max-width: 640px) {
+    .bp-gcash-grid { grid-template-columns: 1fr; }
+}
+.bp-qr-box {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    text-align: center;
+}
+.bp-qr-label { font-size: 12.5px; font-weight: 700; color: var(--text-sub); margin-bottom: 10px; }
+.bp-qr-img {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    max-width: 170px;
+    margin: 0 auto 14px;
+    background: var(--bg);
+    border: 1px dashed var(--border);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.bp-qr-img i { font-size: 56px; color: var(--text-muted); }
+.bp-gcash-number-row { text-align: left; }
+.bp-gcash-number-label { display: block; font-size: 11.5px; color: var(--text-muted); margin-bottom: 4px; }
+.bp-gcash-number {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    font-size: 13.5px;
+    font-weight: 700;
+    color: var(--text-main);
+}
+.bp-copy-btn {
+    border: 1px solid var(--border);
+    background: var(--white);
+    color: var(--primary);
+    font-size: 11.5px;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background .15s;
+}
+.bp-copy-btn:hover { background: var(--primary-light); }
+
+.bp-instructions-box { padding: 4px 0; }
+.bp-instructions-label { font-size: 12.5px; font-weight: 700; color: var(--text-sub); margin-bottom: 10px; }
+.bp-instructions-list {
+    margin: 0;
+    padding-left: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.bp-instructions-list li { font-size: 13px; color: var(--text-main); }
+
+/* ── Payment details: Cash panel ── */
+.bp-cash-steps {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+    text-align: center;
+}
+@media (max-width: 640px) {
+    .bp-cash-steps { grid-template-columns: 1fr; }
+}
+.bp-cash-step { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.bp-cash-step-icon {
+    position: relative;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: var(--primary-light);
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+}
+.bp-cash-step-num {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--primary);
+    color: var(--white);
+    font-size: 11px;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.bp-cash-step-text { font-size: 12.5px; color: var(--text-sub); line-height: 1.5; }
+.bp-cash-step-text strong { color: var(--text-main); font-size: 13px; }
+
+/* ── Reference number + upload row (shared by both methods) ── */
+.bp-proof-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+}
+@media (max-width: 640px) {
+    .bp-proof-grid { grid-template-columns: 1fr; }
+}
+.bp-upload-box {
+    border: 1.5px dashed var(--border);
+    border-radius: 10px;
+    padding: 18px;
+    text-align: center;
+    transition: border-color .15s, background .15s;
+}
+.bp-upload-box.bp-dragover { border-color: var(--primary); background: var(--primary-light); }
+.bp-upload-inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+}
+.bp-upload-inner i { font-size: 26px; color: var(--primary); margin-bottom: 4px; }
+.bp-upload-inner strong { font-size: 12.5px; color: var(--text-main); }
+.bp-upload-inner span { font-size: 11px; color: var(--text-muted); }
+.bp-upload-filename {
+    margin-top: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--primary);
+    word-break: break-all;
+}
+
+/* ── Order summary (sidebar) ── */
+.bp-summary-item {
+    display: flex;
+    gap: 14px;
+    padding-bottom: 18px;
+    margin-bottom: 18px;
+    border-bottom: 1px solid var(--border);
+}
+.bp-summary-thumb {
+    width: 64px;
+    height: 64px;
+    flex-shrink: 0;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    background: var(--bg);
+}
+.bp-summary-thumb img { width: 100%; height: 100%; object-fit: contain; }
+.bp-summary-item-info { display: flex; flex-direction: column; gap: 3px; }
+.bp-summary-item-name { font-size: 13.5px; font-weight: 800; color: var(--text-main); margin-bottom: 2px; }
+.bp-summary-item-row { font-size: 12px; color: var(--text-muted); }
+.bp-summary-item-row span { color: var(--primary); font-weight: 700; }
+
+.bp-price-rows { display: flex; flex-direction: column; gap: 10px; }
+.bp-price-row { display: flex; justify-content: space-between; font-size: 13px; color: var(--text-sub); }
+.bp-price-row span:last-child { color: var(--text-main); font-weight: 600; }
+.bp-price-divider { border-top: 1px solid var(--border); margin: 4px 0; }
+.bp-price-highlight span { color: var(--primary) !important; font-weight: 800 !important; }
+.bp-price-total { font-size: 14.5px; }
+.bp-price-total span { font-weight: 800 !important; color: var(--text-main) !important; }
+
+.bp-submit-btn {
+    width: 100%;
+    margin-top: 20px;
+    background: var(--primary);
+    color: var(--white);
+    border: none;
+    border-radius: 8px;
+    padding: 13px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background .15s;
+}
+.bp-submit-btn:hover { background: var(--primary-dark); }
+
+/* ── Reminders box ── */
+.bp-reminders {
+    background: var(--primary-light);
+    border: 1px solid #d8d9fb;
+    border-radius: var(--radius);
+    padding: 18px 20px;
+}
+.bp-reminders-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13.5px;
+    font-weight: 800;
+    color: var(--text-main);
+    margin-bottom: 10px;
+}
+.bp-reminders ul { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 6px; }
+.bp-reminders li { font-size: 12.5px; color: var(--text-sub); }
