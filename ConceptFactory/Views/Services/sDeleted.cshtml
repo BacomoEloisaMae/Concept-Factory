@@ -1,5 +1,7 @@
 @model IEnumerable<ConceptFactory.Models.Service>
 @{
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+
     ViewData["Title"] = "Deleted Services";
     ViewData["ActivePage"] = "Services";
     int page = ViewBag.Page ?? 1;
@@ -158,30 +160,6 @@
 </div>
 
 @section Scripts {
-    <script>
-        // Open Restore Confirmation Modal
-        function confirmRestore(id, name) {
-            document.getElementById('restoreServiceName').textContent = name;
-            document.getElementById('restoreForm').action = '/Services/sRestore/' + id;
-            document.getElementById('restoreModal').style.display = 'flex';
-        }
-
-        // Open Permanent Delete Confirmation Modal
-        function confirmHardDelete(id, name) {
-            document.getElementById('hardDeleteName').textContent = name;
-            document.getElementById('hardDeleteForm').action = '/Services/sHardDelete/' + id;
-            document.getElementById('hardDeleteModal').style.display = 'flex';
-        }
-
-        // Unified Closing Engine Routine
-        function closeAllModals() {
-            document.getElementById('restoreModal').style.display = 'none';
-            document.getElementById('hardDeleteModal').style.display = 'none';
-        }
-
-        // Keeps old mapping reference safe if fallback layouts depend on it
-        function closeModal() {
-            closeAllModals();
-        }
-    </script>
+    <script src="~/js/admin/admin-live-filter.js" asp-append-version="true"></script>
+    <script src="~/js/admin/services-deleted.js" asp-append-version="true"></script>
 }

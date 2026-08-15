@@ -1,6 +1,8 @@
 @model IEnumerable<ConceptFactory.Models.Product>
 @{
-    ViewData["Title"] = "Products";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+
+    ViewData["Title"] = "Items";
     ViewData["ActivePage"] = "Products";
     int page = ViewBag.Page ?? 1;
     int totalPages = ViewBag.TotalPages ?? 1;
@@ -8,6 +10,9 @@
     int pageSize = 12;
     int startItem = totalCount == 0 ? 0 : ((page - 1) * pageSize) + 1;
     int endItem = Math.Min(page * pageSize, totalCount);
+    // Current filtered/paged URL, so Add/Edit can send the admin right
+    // back here after saving instead of resetting to page 1.
+    string currentUrl = $"{Context.Request.Path}{Context.Request.QueryString}";
 }
 
 <div class="page-container">
@@ -15,15 +20,15 @@
     <!-- Page Header -->
     <div class="page-header">
         <div>
-            <h1 class="page-title">Products</h1>
+            <h1 class="page-title">Items</h1>
             <p class="page-subtitle">Manage your store products, edit details and organize</p>
         </div>
         <div style="display:flex;gap:0.5rem;">
             <a asp-action="pDeleted" class="btn btn-outline">
                 <i class="fa-solid fa-trash-can-arrow-up"></i> Archive
             </a>
-            <a asp-action="pCreate" class="btn btn-primary">
-                <i class="fa-solid fa-plus fa-lg"></i> Add Product
+            <a asp-action="pCreate" asp-route-returnUrl="@currentUrl" class="btn btn-primary">
+                <i class="fa-solid fa-plus fa-lg"></i> Add Item
             </a>
         </div>
     </div>
@@ -34,7 +39,7 @@
             <div class="search-box">
                 <i class="fa-solid fa-magnifying-glass"></i>
                 <input type="text" name="search" value="@ViewBag.Search"
-                       placeholder="Search Products..." class="search-input" />
+                       placeholder="Search Items..." class="search-input" />
             </div>
             <select name="categoryId" asp-items="ViewBag.Categories" class="filter-select">
                 <option value="">All Categories</option>
@@ -59,6 +64,7 @@
                     <th>Category</th>
                     <th>Price</th>
                     <th>Stock</th>
+                        <th>Color</th>
                     <th>Status</th>
                     <th>Actions</th>
                 </tr>
@@ -69,8 +75,8 @@
                     <tr>
                         <td colspan="6" class="empty-state">
                             <i class="fa-solid fa-box-open"></i>
-                            <p>No products found.</p>
-                            <a asp-action="pCreate" class="btn btn-primary btn-sm">Add Your First Product</a>
+                            <p>No items found.</p>
+                            <a asp-action="pCreate" asp-route-returnUrl="@currentUrl" class="btn btn-primary btn-sm">Add Your First Item</a>
                         </td>
                     </tr>
                 }
@@ -113,6 +119,13 @@
                             <td>@product.Category?.CategoryName</td>
                             <td class="price-cell">₱@product.Price.ToString("N2")</td>
                             <td>@product.StockQuantity</td>
+                                <td>
+                                    @if (!string.IsNullOrEmpty(product.Color)) {
+                                        foreach (var hex in product.Color.Split(",").Select(c => c.Trim()).Where(c => !string.IsNullOrEmpty(c))) {
+                                            <span style="display:inline-block;width:14px;height:14px;border-radius:50%;background:@hex;border:1px solid rgba(0,0,0,.15);margin-right:2px;" title="@hex"></span>
+                                        }
+                                    } else { <span style="color:#94a3b8;">—</span> }
+                                </td>
                             <td>
                                 <span class="status-badge @(product.Status == "Active" ? "status-active" : "status-inactive")">
                                     @product.Status
@@ -120,7 +133,7 @@
                             </td>
                             <td>
                                 <div class="action-btn">
-                                    <a asp-action="pEdit" asp-route-id="@product.ProductID"
+                                    <a asp-action="pEdit" asp-route-id="@product.ProductID" asp-route-returnUrl="@currentUrl"
                                        class="btn-icon btn-edit" title="Edit">
                                         <i class="fa-solid fa-pen-to-square"></i>
                                     </a>
@@ -193,53 +206,6 @@
 </div>
 
 @section Scripts {
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    document.querySelectorAll('.thumb-canvas').forEach(function (canvas) {
-        const garmentSrc = canvas.dataset.garment;
-        const designSrc  = canvas.dataset.design;
-        const fullW = 400, fullH = 440;
-        const scaleX = canvas.width  / fullW;
-        const scaleY = canvas.height / fullH;
-        const px = parseFloat(canvas.dataset.px) * scaleX;
-        const py = parseFloat(canvas.dataset.py) * scaleY;
-        const pw = parseFloat(canvas.dataset.pw) * scaleX;
-        const ph = parseFloat(canvas.dataset.ph) * scaleY;
-        const ctx = canvas.getContext('2d');
-        const garment = new Image();
-        garment.onload = function () {
-            ctx.drawImage(garment, 0, 0, canvas.width, canvas.height);
-            if (designSrc) {
-                const design = new Image();
-                design.crossOrigin = 'anonymous';
-                design.onload = function () {
-                    ctx.save();
-                    ctx.beginPath();
-                    ctx.rect(px, py, pw, ph);
-                    ctx.clip();
-                    ctx.globalAlpha = 0.92;
-                    ctx.drawImage(design, px, py, pw, ph);
-                    ctx.globalAlpha = 1.0;
-                    ctx.restore();
-                    ctx.globalAlpha = 0.07;
-                    ctx.fillStyle = '#000';
-                    ctx.fillRect(px, py, pw, ph);
-                    ctx.globalAlpha = 1.0;
-                };
-                design.src = designSrc;
-            }
-        };
-        garment.src = garmentSrc;
-    });
-});
-
-function confirmDelete(id, name) {
-    document.getElementById('deleteProductName').textContent = name;
-    document.getElementById('deleteForm').action = '/Products/pSoftDelete/' + id;
-    document.getElementById('deleteModal').style.display = 'flex';
-}
-function closeModal() {
-    document.getElementById('deleteModal').style.display = 'none';
-}
-</script>
+<script src="~/js/admin/admin-live-filter.js" asp-append-version="true"></script>
+<script src="~/js/admin/products-index.js" asp-append-version="true"></script>
 }

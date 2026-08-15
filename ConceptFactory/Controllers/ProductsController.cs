@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using ConceptFactory.Data;
 using ConceptFactory.Models;
+using ConceptFactory.Models.ViewModels;
 
 namespace ConceptFactory.Controllers
 {
@@ -17,251 +18,183 @@ namespace ConceptFactory.Controllers
             _environment = environment;
         }
 
-        // GET: Products
         public async Task<IActionResult> pIndex(string? search, int? categoryId, string? status, int page = 1)
         {
             int pageSize = 12;
+            var query = _context.Products.Include(p => p.Category).Where(p => !p.IsDeleted).AsQueryable();
 
-            var query = _context.Products
-                .Include(p => p.Category)
-                .Where(p => !p.IsDeleted)
-                .AsQueryable();
-
-            if (!string.IsNullOrWhiteSpace(search))
-                query = query.Where(p => p.ProductName.Contains(search));
-
-            if (categoryId.HasValue)
-                query = query.Where(p => p.CategoryID == categoryId.Value);
-
-            if (!string.IsNullOrWhiteSpace(status))
-                query = query.Where(p => p.Status == status);
+            if (!string.IsNullOrWhiteSpace(search)) query = query.Where(p => p.ProductName.Contains(search));
+            if (categoryId.HasValue) query = query.Where(p => p.CategoryID == categoryId.Value);
+            if (!string.IsNullOrWhiteSpace(status)) query = query.Where(p => p.Status == status);
 
             int totalCount = await query.CountAsync();
-            int totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
+            var products = await query.OrderByDescending(p => p.DateAdded).Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
 
-            var products = await query
-                .OrderByDescending(p => p.DateAdded)
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .ToListAsync();
-
-            ViewBag.Search = search;
-            ViewBag.CategoryId = categoryId;
-            ViewBag.Status = status;
-            ViewBag.Page = page;
-            ViewBag.TotalPages = totalPages;
+            ViewBag.Search = search; ViewBag.CategoryId = categoryId; ViewBag.Status = status;
+            ViewBag.Page = page; ViewBag.TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
             ViewBag.TotalCount = totalCount;
             ViewBag.Categories = new SelectList(await _context.Categories.ToListAsync(), "CategoryID", "CategoryName", categoryId);
-
             return View(products);
         }
 
-        // GET: Products/Deleted
         public async Task<IActionResult> pDeleted(string? search, int? categoryId, int page = 1)
         {
             int pageSize = 12;
+            var query = _context.Products.Include(p => p.Category).Where(p => p.IsDeleted).AsQueryable();
 
-            var query = _context.Products
-                .Include(p => p.Category)
-                .Where(p => p.IsDeleted)
-                .AsQueryable();
-
-            if (!string.IsNullOrWhiteSpace(search))
-                query = query.Where(p => p.ProductName.Contains(search));
-
-            if (categoryId.HasValue)
-                query = query.Where(p => p.CategoryID == categoryId.Value);
+            if (!string.IsNullOrWhiteSpace(search)) query = query.Where(p => p.ProductName.Contains(search));
+            if (categoryId.HasValue) query = query.Where(p => p.CategoryID == categoryId.Value);
 
             int totalCount = await query.CountAsync();
-            int totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
+            var products = await query.OrderByDescending(p => p.DeletedAt).Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
 
-            var products = await query
-                .OrderByDescending(p => p.DeletedAt)
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .ToListAsync();
-
-            ViewBag.Search = search;
-            ViewBag.CategoryId = categoryId;
-            ViewBag.Page = page;
-            ViewBag.TotalPages = totalPages;
+            ViewBag.Search = search; ViewBag.CategoryId = categoryId;
+            ViewBag.Page = page; ViewBag.TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
             ViewBag.TotalCount = totalCount;
             ViewBag.Categories = new SelectList(await _context.Categories.ToListAsync(), "CategoryID", "CategoryName", categoryId);
-
             return View(products);
         }
 
-        // GET: Products/Details/5
-        public async Task<IActionResult> pDetails(int? id)
-        {
-            if (id == null) return NotFound();
-
-            // Updated to load additional showcase images along with the category relationship
-            var product = await _context.Products
-                .Include(p => p.Category)
-                .Include(p => p.ProductImages)
-                .FirstOrDefaultAsync(p => p.ProductID == id);
-
-            if (product == null) return NotFound();
-
-            return View(product);
-        }
-
-        // GET: Products/Create
-        public async Task<IActionResult> pCreate()
+        // GET/POST: /Products/pCreate
+        // Connected to: Views/Products/pIndex.cshtml (Add Item button passes
+        // returnUrl = the current filtered/paged URL) and Views/Products/pCreate.cshtml
+        // (carries returnUrl back through a hidden field). See RedirectToLocal() below.
+        public async Task<IActionResult> pCreate(string? returnUrl)
         {
             await PopulateCategoriesDropdown();
+            ViewBag.ReturnUrl = returnUrl;
             return View(new Product());
         }
 
-        // POST: Products/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> pCreate(Product product, IFormFile? imageFile, List<IFormFile>? additionalImageFiles)
+        public async Task<IActionResult> pCreate(Product product, IFormFile? imageFile, List<IFormFile>? showcaseFiles,
+            List<ProductColorImageInput>? ColorImages, string? returnUrl)
         {
             if (ModelState.IsValid)
             {
-                // 1. Process and save the single primary image thumbnail
                 if (imageFile != null && imageFile.Length > 0)
                     product.ImagePath = await SaveImageAsync(imageFile);
 
+                if (showcaseFiles != null && showcaseFiles.Count > 0)
+                    product.AdditionalImages = await SaveMultipleImagesAsync(showcaseFiles);
+
                 product.DateAdded = DateTime.Now;
                 _context.Add(product);
-
-                // Save here first to commit the parent row and generate its ProductID identity key
                 await _context.SaveChangesAsync();
 
-                // 2. Loop through and process incoming gallery display selections
-                if (additionalImageFiles != null && additionalImageFiles.Any())
-                {
-                    foreach (var file in additionalImageFiles)
-                    {
-                        if (file.Length > 0)
-                        {
-                            string savedPath = await SaveImageAsync(file);
-                            var newImg = new ProductImage
-                            {
-                                ProductID = product.ProductID, // Maps straight to our newly saved product record id
-                                ImagePath = savedPath
-                            };
-                            _context.ProductImages.Add(newImg);
-                        }
-                    }
-                    // Save child data properties down to database 
-                    await _context.SaveChangesAsync();
-                }
+                await SaveColorImagesAsync(product.ProductID, ColorImages);
 
-                TempData["Success"] = "Product added successfully.";
-                return RedirectToAction(nameof(pIndex));
+                TempData["Success"] = "Item added successfully.";
+                return RedirectToLocal(returnUrl);
             }
-
             await PopulateCategoriesDropdown(product.CategoryID);
+            ViewBag.ReturnUrl = returnUrl;
             return View(product);
         }
 
-        // GET: Products/Edit/5
-        public async Task<IActionResult> pEdit(int? id)
+        // GET/POST: /Products/pEdit
+        // Connected to: Views/Products/pIndex.cshtml (each row's Edit link passes
+        // returnUrl = the current filtered/paged URL) and Views/Products/pEdit.cshtml
+        // (carries returnUrl back through a hidden field). See RedirectToLocal() below.
+        public async Task<IActionResult> pEdit(int? id, string? returnUrl)
         {
             if (id == null) return NotFound();
-
             var product = await _context.Products
-                .Include(p => p.ProductImages)
+                .Include(p => p.ColorImages)
                 .FirstOrDefaultAsync(m => m.ProductID == id);
-
             if (product == null) return NotFound();
-
             await PopulateCategoriesDropdown(product.CategoryID);
+            ViewBag.ReturnUrl = returnUrl;
             return View(product);
         }
 
-        // POST: Products/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> pEdit(int id, [Bind("ProductID,ProductName,CategoryID,Size,Price,StockQuantity,ProductDescription,Status,ImagePath,DateAdded")] Product product, IFormFile? imageFile, List<IFormFile>? additionalImageFiles, List<int>? deletedImageIds)
+        public async Task<IActionResult> pEdit(int id,
+            [Bind("ProductID,ProductName,CategoryID,Size,Color,Price,StockQuantity,ProductDescription,Status,ImagePath,AdditionalImages,DateAdded")]
+            Product product,
+            IFormFile? imageFile,
+            List<IFormFile>? showcaseFiles,
+            string? removedShowcaseImages,
+            List<ProductColorImageInput>? ColorImages,
+            string? returnUrl)
         {
             if (id != product.ProductID) return NotFound();
-
             if (ModelState.IsValid)
             {
                 try
                 {
+                    // Main image
                     if (imageFile != null && imageFile.Length > 0)
                     {
                         if (!string.IsNullOrEmpty(product.ImagePath)) DeleteImage(product.ImagePath);
                         product.ImagePath = await SaveImageAsync(imageFile);
                     }
 
-                    if (deletedImageIds != null && deletedImageIds.Any())
+                    // Handle removed showcase images
+                    var existingShowcase = string.IsNullOrEmpty(product.AdditionalImages)
+                        ? new List<string>()
+                        : product.AdditionalImages.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                                                   .Select(s => s.Trim()).ToList();
+
+                    if (!string.IsNullOrEmpty(removedShowcaseImages))
                     {
-                        foreach (var imgId in deletedImageIds)
+                        var toRemove = removedShowcaseImages.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                                                             .Select(s => s.Trim()).ToList();
+                        foreach (var path in toRemove)
                         {
-                            var imgRecord = await _context.ProductImages.FindAsync(imgId);
-                            if (imgRecord != null)
-                            {
-                                DeleteImage(imgRecord.ImagePath);
-                                _context.ProductImages.Remove(imgRecord);
-                            }
+                            DeleteImage(path);
+                            existingShowcase.Remove(path);
                         }
                     }
 
-                    if (additionalImageFiles != null && additionalImageFiles.Any())
+                    // Add new showcase images
+                    if (showcaseFiles != null && showcaseFiles.Count > 0)
                     {
-                        foreach (var file in additionalImageFiles)
-                        {
-                            if (file.Length > 0)
-                            {
-                                string savedPath = await SaveImageAsync(file);
-                                var newImg = new ProductImage
-                                {
-                                    ProductID = product.ProductID,
-                                    ImagePath = savedPath
-                                };
-                                _context.ProductImages.Add(newImg);
-                            }
-                        }
+                        var newPaths = await SaveMultipleImagesAsync(showcaseFiles);
+                        if (!string.IsNullOrEmpty(newPaths))
+                            existingShowcase.AddRange(newPaths.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(s => s.Trim()));
                     }
+
+                    product.AdditionalImages = existingShowcase.Count > 0 ? string.Join(",", existingShowcase) : null;
 
                     _context.Update(product);
                     await _context.SaveChangesAsync();
+
+                    await SaveColorImagesAsync(product.ProductID, ColorImages);
                 }
                 catch (DbUpdateConcurrencyException)
                 {
                     if (!ProductExists(product.ProductID)) return NotFound();
                     else throw;
                 }
-                return RedirectToAction(nameof(pIndex));
+                TempData["Success"] = "Item updated successfully.";
+                return RedirectToLocal(returnUrl);
             }
             await PopulateCategoriesDropdown(product.CategoryID);
+            ViewBag.ReturnUrl = returnUrl;
             return View(product);
         }
 
-        // POST: Products/SoftDelete/5
-        [HttpPost]
-        [ValidateAntiForgeryToken]
+        [HttpPost][ValidateAntiForgeryToken]
         public async Task<IActionResult> pSoftDelete(int id)
         {
             var product = await _context.Products.FindAsync(id);
-            if (product != null)
-            {
-                product.IsDeleted = true;
-                product.DeletedAt = DateTime.Now;
-                await _context.SaveChangesAsync();
-                TempData["Success"] = $"\"{product.ProductName}\" moved to deleted items.";
-            }
+            if (product != null) { product.IsDeleted = true; product.DeletedAt = DateTime.Now; await _context.SaveChangesAsync(); TempData["Success"] = $"\"{product.ProductName}\" moved to deleted items."; }
             return RedirectToAction(nameof(pIndex));
         }
 
-        // POST: Products/HardDelete/5
-        [HttpPost]
-        [ValidateAntiForgeryToken]
+        [HttpPost][ValidateAntiForgeryToken]
         public async Task<IActionResult> pHardDelete(int id)
         {
             var product = await _context.Products.FindAsync(id);
             if (product != null)
             {
-                if (!string.IsNullOrEmpty(product.ImagePath))
-                    DeleteImage(product.ImagePath);
-
+                if (!string.IsNullOrEmpty(product.ImagePath)) DeleteImage(product.ImagePath);
+                if (!string.IsNullOrEmpty(product.AdditionalImages))
+                    foreach (var p in product.AdditionalImages.Split(',', StringSplitOptions.RemoveEmptyEntries))
+                        DeleteImage(p.Trim());
                 _context.Products.Remove(product);
                 await _context.SaveChangesAsync();
                 TempData["Success"] = $"\"{product.ProductName}\" permanently deleted.";
@@ -269,65 +202,183 @@ namespace ConceptFactory.Controllers
             return RedirectToAction(nameof(pDeleted));
         }
 
-        // POST: Products/Restore/5
-        [HttpPost]
-        [ValidateAntiForgeryToken]
+        [HttpPost][ValidateAntiForgeryToken]
         public async Task<IActionResult> pRestore(int id)
         {
             var product = await _context.Products.FindAsync(id);
-            if (product != null)
-            {
-                product.IsDeleted = false;
-                product.DeletedAt = null;
-                await _context.SaveChangesAsync();
-                TempData["Success"] = $"\"{product.ProductName}\" restored successfully.";
-            }
+            if (product != null) { product.IsDeleted = false; product.DeletedAt = null; await _context.SaveChangesAsync(); TempData["Success"] = $"\"{product.ProductName}\" restored successfully."; }
             return RedirectToAction(nameof(pDeleted));
         }
 
-        // POST: Products/ToggleStatus/5
         [HttpPost]
         public async Task<IActionResult> pToggleStatus(int id)
         {
             var product = await _context.Products.FindAsync(id);
             if (product == null) return NotFound();
-
             product.Status = product.Status == "Active" ? "Inactive" : "Active";
             await _context.SaveChangesAsync();
-
             return Json(new { success = true, status = product.Status });
         }
 
-        // ─── Helpers ────────────────────────────────────────────────────
+        // ── Helpers ──────────────────────────────────────────────────────
 
-        private bool ProductExists(int id) =>
-            _context.Products.Any(p => p.ProductID == id);
+        private bool ProductExists(int id) => _context.Products.Any(p => p.ProductID == id);
+
+        // Sends the admin back to wherever they came from (their filtered/
+        // paged Items view) after saving, instead of always resetting to
+        // pIndex's first page. IsLocalUrl guards against being redirected
+        // off-site by a tampered returnUrl.
+        // Used by: pCreate(POST) and pEdit(POST) above.
+        private IActionResult RedirectToLocal(string? returnUrl)
+        {
+            if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+                return Redirect(returnUrl);
+            return RedirectToAction(nameof(pIndex));
+        }
+
+        // Upserts the color-variant rows for a product: updates rows that
+        // still have their ID submitted, inserts brand-new rows (ID == 0),
+        // uploads any newly attached photo, and deletes (both the DB row
+        // and the file on disk) any existing rows that were removed by
+        // the admin on the form.
+        private async Task SaveColorImagesAsync(int productId, List<ProductColorImageInput>? submitted)
+        {
+            submitted ??= new List<ProductColorImageInput>();
+            submitted = submitted.Where(c => !string.IsNullOrWhiteSpace(c.ColorHex)).ToList();
+
+            var existingRows = await _context.ProductColorImages
+                .Where(pci => pci.ProductID == productId)
+                .ToListAsync();
+
+            var submittedIds = submitted.Where(c => c.ProductColorImageID > 0)
+                                         .Select(c => c.ProductColorImageID)
+                                         .ToHashSet();
+
+            // Remove rows the admin deleted from the form
+            foreach (var row in existingRows.Where(r => !submittedIds.Contains(r.ProductColorImageID)))
+            {
+                if (!string.IsNullOrEmpty(row.ImagePath)) DeleteImage(row.ImagePath);
+                _context.ProductColorImages.Remove(row);
+            }
+
+            for (int i = 0; i < submitted.Count; i++)
+            {
+                var input = submitted[i];
+                ProductColorImage? row = input.ProductColorImageID > 0
+                    ? existingRows.FirstOrDefault(r => r.ProductColorImageID == input.ProductColorImageID)
+                    : null;
+
+                string? imagePath = input.ExistingImagePath;
+                if (input.NewImage != null && input.NewImage.Length > 0)
+                {
+                    if (!string.IsNullOrEmpty(imagePath)) DeleteImage(imagePath);
+                    imagePath = await SaveImageAsync(input.NewImage);
+                }
+
+                if (row != null)
+                {
+                    row.ColorHex = input.ColorHex;
+                    row.ImagePath = imagePath;
+                    row.DisplayOrder = i;
+                }
+                else
+                {
+                    _context.ProductColorImages.Add(new ProductColorImage
+                    {
+                        ProductID = productId,
+                        ColorHex = input.ColorHex,
+                        ImagePath = imagePath,
+                        DisplayOrder = i
+                    });
+                }
+            }
+
+            await _context.SaveChangesAsync();
+        }
 
         private async Task PopulateCategoriesDropdown(int? selectedId = null)
         {
             var categories = await _context.Categories.OrderBy(c => c.CategoryName).ToListAsync();
-            ViewBag.CategoryID = new SelectList(categories, "CategoryID", "CategoryName", selectedId);
+            var items = new List<SelectListItem>();
+
+            var topLevel = categories.Where(c => c.ParentCategoryID == null).OrderBy(c => c.CategoryName);
+            foreach (var parent in topLevel)
+            {
+                var children = categories.Where(c => c.ParentCategoryID == parent.CategoryID)
+                                          .OrderBy(c => c.CategoryName)
+                                          .ToList();
+
+                if (children.Any())
+                {
+                    // Broader category with specific sub-types underneath (e.g.
+                    // "Jackets" -> Varsity Jackets, Jacket Zip-Up, ...): the
+                    // parent name becomes the optgroup label ONLY — it doesn't
+                    // also get its own selectable option, or it'd show up twice
+                    // in the dropdown ("Jackets" as a plain item, then "Jackets"
+                    // again as the group heading right below it).
+                    foreach (var child in children)
+                    {
+                        items.Add(new SelectListItem
+                        {
+                            Value = child.CategoryID.ToString(),
+                            Text = child.CategoryName,
+                            Selected = child.CategoryID == selectedId,
+                            Group = new SelectListGroup { Name = parent.CategoryName }
+                        });
+                    }
+                }
+                else
+                {
+                    // No sub-types (yet) — stays a plain, directly-selectable
+                    // option, same as before (e.g. "Polo Shirts", "Sweaters").
+                    items.Add(new SelectListItem
+                    {
+                        Value = parent.CategoryID.ToString(),
+                        Text = parent.CategoryName,
+                        Selected = parent.CategoryID == selectedId
+                    });
+                }
+            }
+
+            ViewBag.CategoryID = items;
         }
 
         private async Task<string> SaveImageAsync(IFormFile file)
         {
-            string uploadsFolder = Path.Combine(_environment.WebRootPath, "images", "products");
-            Directory.CreateDirectory(uploadsFolder);
-
-            string uniqueFileName = Guid.NewGuid().ToString() + Path.GetExtension(file.FileName);
-            string filePath = Path.Combine(uploadsFolder, uniqueFileName);
-
-            using var stream = new FileStream(filePath, FileMode.Create);
+            string folder = Path.Combine(GetWwwRoot(), "images", "products");
+            Directory.CreateDirectory(folder);
+            string fileName = Guid.NewGuid() + Path.GetExtension(file.FileName);
+            using var stream = new FileStream(Path.Combine(folder, fileName), FileMode.Create);
             await file.CopyToAsync(stream);
+            return "/images/products/" + fileName;
+        }
 
-            return "/images/products/" + uniqueFileName;
+        private async Task<string> SaveMultipleImagesAsync(List<IFormFile> files)
+        {
+            var paths = new List<string>();
+            foreach (var file in files)
+            {
+                if (file.Length > 0 && file.ContentType.StartsWith("image/"))
+                    paths.Add(await SaveImageAsync(file));
+            }
+            return string.Join(",", paths);
         }
 
         private void DeleteImage(string imagePath)
         {
-            string fullPath = Path.Combine(_environment.WebRootPath, imagePath.TrimStart('/'));
-            if (System.IO.File.Exists(fullPath))
-                System.IO.File.Delete(fullPath);
+            if (string.IsNullOrEmpty(imagePath)) return;
+            string full = Path.Combine(GetWwwRoot(), imagePath.TrimStart('/'));
+            if (System.IO.File.Exists(full)) System.IO.File.Delete(full);
+        }
+
+        // Resolves the real project wwwroot — not the temp obj/Debug copy.
+        // Ensures uploaded images persist across hot-reloads and restarts.
+        private string GetWwwRoot()
+        {
+            if (!string.IsNullOrEmpty(_environment.WebRootPath) &&
+                Directory.Exists(_environment.WebRootPath))
+                return _environment.WebRootPath;
+            return Path.Combine(_environment.ContentRootPath, "wwwroot");
         }
     }
 }

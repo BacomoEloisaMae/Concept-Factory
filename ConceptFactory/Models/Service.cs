@@ -33,5 +33,9 @@ namespace ConceptFactory.Models
         // Soft delete
         public bool IsDeleted { get; set; } = false;
         public DateTime? DeletedAt { get; set; }
+
+        // Navigation
+        public virtual ICollection<ProductService> ProductServices { get; set; } = new List<ProductService>();
+        public virtual ICollection<OrderDetail> OrderDetails { get; set; } = new List<OrderDetail>();
     }
 }

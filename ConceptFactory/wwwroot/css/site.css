@@ -1,5 +1,39 @@
+/* ============================================================
+   SITE.CSS — Admin Panel Global Styles
+   The Concept Factory — ConceptFactory ASP.NET Core MVC
+   
+   TABLE OF CONTENTS:
+   01. Reset & CSS Variables
+   02. Base Body
+   03. Layout (App Wrapper)
+   04. Sidebar
+   05. Main Content
+   06. Page Header & Container
+   07. Filter Bar & Search
+   08. Card
+   09. Data Table
+   10. Table Cells (Product, Service, Shared)
+   11. Status Badges
+   12. Action Buttons
+   13. Empty State
+   14. Pagination
+   15. Buttons
+   16. Alerts
+   17. Modals
+   18. Form Card & Layout
+   19. Form Controls
+   20. Image Upload / Dropzone
+   21. Mockup Canvas
+   22. Additional Images Strip
+   23. Size Dropdown Multi-Select
+   24. Color Picker Swatches
+   25. Sidebar Extras (Logout, Brand Link)
+============================================================ */
 
-/*Reset & CSS Variables*/
+
+/* ============================================================
+   01. RESET & CSS VARIABLES
+============================================================ */
 *, *::before, *::after {
     box-sizing: border-box;
     margin: 0;
@@ -28,24 +62,29 @@
 }
 
 
-/*Base Body*/
-body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    font-size: 14px;
-    color: var(--text-main);
-    background: var(--bg);
-    min-height: 100vh;
-}
+/* ============================================================
+   02. BASE BODY
+============================================================ */
+/* body {} intentionally removed — this was an exact duplicate of the
+   body rule in navbar.css, which loads right after this file on every
+   page and additionally sets display:flex/flex-direction:column (needed
+   for the sticky-footer trick). Having it in two places was harmless in
+   isolation but made the flex setup fragile to touch; navbar.css is now
+   the single source of truth for it. */
 
 
-/*Layout*/
+/* ============================================================
+   03. LAYOUT
+============================================================ */
 .app-wrapper {
     display: flex;
     min-height: 100vh;
 }
 
 
-/*Sidebar*/
+/* ============================================================
+   04. SIDEBAR
+============================================================ */
 .sidebar {
     width: var(--sidebar-w);
     background: var(--white);
@@ -148,7 +187,9 @@ body {
 }
 
 
-/*Main Content*/
+/* ============================================================
+   05. MAIN CONTENT
+============================================================ */
 .main-content {
     margin-left: var(--sidebar-w);
     flex: 1;
@@ -157,7 +198,9 @@ body {
 }
 
 
-/*Page Header & Container*/
+/* ============================================================
+   06. PAGE HEADER & CONTAINER
+============================================================ */
 .page-container {
     width: 100%;
     max-width: 1400px;
@@ -184,8 +227,11 @@ body {
 }
 
 
-/*Filter Bar & Search*/
+/* ============================================================
+   07. FILTER BAR & SEARCH
+============================================================ */
 .filter-bar {
+
     background: var(--white);
     border: 2px solid var(--border);
     border-radius: 10px 10px 0 0;
@@ -247,7 +293,9 @@ body {
 }
 
 
-/*Card*/
+/* ============================================================
+   08. CARD
+============================================================ */
 .card {
     background: var(--white);
     border: 2px solid var(--border);
@@ -257,7 +305,9 @@ body {
 }
 
 
-/*Data Table*/
+/* ============================================================
+   09. DATA TABLE
+============================================================ */
 .data-table {
     width: 100%;
     border-collapse: collapse;
@@ -269,10 +319,11 @@ body {
 
 .data-table th {
     padding: 11px 22px;
-    text-align: left;
+    text-align: center;
     font-size: 12px;
     font-weight: 600;
     color: var(--text-sub);
+    background: var(--primary-light);
     text-transform: uppercase;
     letter-spacing: .4px;
     border-bottom: 2px solid var(--border);
@@ -285,6 +336,7 @@ body {
     font-size: 15px;
     color: var(--text-main);
     vertical-align: middle;
+    text-align: center;
 }
 
 .data-table tbody tr:last-child td {
@@ -296,7 +348,9 @@ body {
 }
 
 
-/*Table Cells*/
+/* ============================================================
+   10. TABLE CELLS
+============================================================ */
 
 /* Product Cell */
 .product-cell {
@@ -367,7 +421,9 @@ body {
 }
 
 
-/*Status Badges*/
+/* ============================================================
+   11. STATUS BADGES
+============================================================ */
 .status-badge {
     display: inline-flex;
     align-items: center;
@@ -388,7 +444,9 @@ body {
 }
 
 
-/*Action Buttons*/
+/* ============================================================
+   12. ACTION BUTTONS
+============================================================ */
 .action-btn {
     display: flex;
     gap: 6px;
@@ -427,7 +485,9 @@ body {
 }
 
 
-/*Empty State*/
+/* ============================================================
+   13. EMPTY STATE
+============================================================ */
 .empty-state {
     text-align: center;
     padding: 60px 20px !important;
@@ -446,7 +506,9 @@ body {
 }
 
 
-/*Pagination*/
+/* ============================================================
+   14. PAGINATION
+============================================================ */
 .pagination {
     display: flex;
     align-items: center;
@@ -494,7 +556,9 @@ body {
 }
 
 
-/*Buttons*/
+/* ============================================================
+   15. BUTTONS
+============================================================ */
 .btn {
     display: inline-flex;
     align-items: center;
@@ -505,7 +569,6 @@ body {
     font-size: 13px;
     font-weight: 600;
     cursor: pointer;
-    border: none;
     text-decoration: none;
     transition: background .15s, box-shadow .15s, opacity .15s;
     white-space: nowrap;
@@ -513,6 +576,7 @@ body {
 
 .btn-primary {
     background: var(--primary);
+    border: none;
     color: var(--white);
 }
 
@@ -547,7 +611,9 @@ body {
 }
 
 
-/*Alerts*/
+/* ============================================================
+   16. ALERTS
+============================================================ */
 .alert {
     display: flex;
     align-items: center;
@@ -587,7 +653,9 @@ body {
 }
 
 
-/*Modals*/
+/* ============================================================
+   17. MODALS
+============================================================ */
 .modal-overlay {
     position: fixed;
     inset: 0;
@@ -638,7 +706,9 @@ body {
 }
 
 
-/*Form Card & Layout*/
+/* ============================================================
+   18. FORM CARD & LAYOUT
+============================================================ */
 .form-card {
     background: var(--white);
     border: 1px solid var(--border);
@@ -722,7 +792,9 @@ body {
 }
 
 
-/*Form Controls*/
+/* ============================================================
+   19. FORM CONTROLS
+============================================================ */
 .form-label {
     font-size: 15px;
     font-weight: 600;
@@ -806,10 +878,13 @@ body {
 }
 
 
-/*Image Upload / Dropzone*/
+/* ============================================================
+   20. IMAGE UPLOAD / DROPZONE
+============================================================ */
 .upload-dropzone {
     border: 2px dashed #c7d0e0;
     border-radius: 12px;
+    height: 400px;
     padding: 36px 20px;
     text-align: center;
     cursor: pointer;
@@ -833,8 +908,11 @@ body {
 
 .upload-dropzone-inner {
     display: flex;
+    flex: 1;
     flex-direction: column;
     align-items: center;
+    justify-content: center;
+    text-align: center;
 }
 
 .upload-icon-circle {
@@ -869,211 +947,9 @@ body {
     color: var(--text-muted);
 }
 
-.upload-file-name {
-    font-size: 12px;
-    color: var(--primary);
-    font-weight: 600;
-    text-align: center;
-    display: block;
-    margin-top: 8px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    max-width: 100%;
-}
-
-
-/*Mockup Canvas (Thumb & Preview)*/
-
-/* Small thumbnail in table rows */
-.product-thumb-canvas {
-    width: 56px;
-    height: 62px;
-    background: #1a1a2e;
-    border-radius: 8px;
-    border: 1px solid #2a2a4a;
-    overflow: hidden;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-}
-
-.product-thumb-canvas .thumb-canvas {
-    width: 56px;
-    height: 62px;
-    display: block;
-}
-
-/* Mockup preview panel in Create / Edit */
-.mockup-canvas-container {
-    background: #1a1a2e;
-    border-radius: 12px;
-    overflow: hidden;
-    border: 1px solid var(--border);
-    box-shadow: var(--shadow-md);
-    text-align: center;
-}
-
-.mockup-canvas-container canvas {
-    display: block;
-    width: 100%;
-    height: auto;
-    max-width: 340px;
-    margin: 0 auto;
-}
-
-.mockup-hint {
-    font-size: 11px;
-    color: rgba(255,255,255,0.4);
-    padding: 8px;
-    text-align: center;
-}
-
-.mockup-placeholder {
-    border: 2px dashed var(--border);
-    border-radius: 12px;
-    min-height: 220px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    color: var(--text-muted);
-    gap: 10px;
-}
-
-.mockup-placeholder i {
-    font-size: 40px;
-}
-
-.mockup-placeholder p {
-    font-size: 13px;
-    text-align: center;
-    max-width: 180px;
-}
-
-.mockup-wrapper {
-    margin-top: 12px;
-}
-
-.mockup-label {
-    font-size: 12px;
-    color: var(--text-muted);
-    margin-bottom: 8px;
-    font-style: italic;
-}
-
-
-/*Additional Images Strip (Edit page)*/
-.additional-images-strip {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    gap: 10px;
-    overflow-x: auto;
-    padding: 10px 8px;
-    min-height: 112px;
-    background: #faf9ff;
-    border: 2px dashed #c4b5e8;
-    border-radius: 10px;
-    scrollbar-width: thin;
-    scrollbar-color: #c4b5e8 transparent;
-    transition: border-color .2s;
-}
-
-.additional-images-strip.drag-over {
-    border-color: #7c5cbf;
-    background: #f0eaff;
-}
-
-.additional-images-strip::-webkit-scrollbar {
-    height: 5px;
-}
-
-.additional-images-strip::-webkit-scrollbar-thumb {
-    background: #c4b5e8;
-    border-radius: 4px;
-}
-
-.additional-img-thumb {
-    position: relative;
-    flex: 0 0 88px;
-    width: 88px;
-    height: 88px;
-    border-radius: 8px;
-    overflow: hidden;
-    border: 1.5px solid #d6c9f5;
-    background: var(--white);
-}
-
-.additional-img-thumb img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-}
-
-.remove-thumb-btn {
-    position: absolute;
-    top: 3px;
-    right: 3px;
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    border: none;
-    background: rgba(80,40,130,.78);
-    color: var(--white);
-    font-size: 14px;
-    line-height: 1;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0;
-    transition: background .15s;
-}
-
-.remove-thumb-btn:hover {
-    background: rgba(80,40,130,1);
-}
-
-.additional-img-add {
-    flex: 0 0 88px;
-    width: 88px;
-    height: 88px;
-    border-radius: 8px;
-    border: 2px dashed #9b7de0;
-    background: #f3eeff;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    gap: 4px;
-    transition: background .15s, border-color .15s;
-    user-select: none;
-}
-
-.additional-img-add:hover {
-    background: #e8deff;
-    border-color: #7c5cbf;
-}
-
-.additional-img-add .add-icon {
-    font-size: 26px;
-    color: #7c5cbf;
-    line-height: 1;
-}
-
-.additional-img-add .add-label {
-    font-size: 10px;
-    color: #7c5cbf;
-    text-align: center;
-    line-height: 1.3;
-}
-
-
-/* ── 23. Size Dropdown List Multi-Select ───────────────────── */
+/* ============================================================
+   23. SIZE DROPDOWN MULTI-SELECT
+============================================================ */
 
 .size-dropdown {
     position: relative;
@@ -1175,3 +1051,219 @@ body {
     font-size: 12px;
     color: var(--primary);
 }
+
+
+/* ============================================================
+   COLOR PICKER — Swatch picker UI
+   Applies to: Views/Products/pCreate.cshtml, pEdit.cshtml
+   Used for selecting multiple item colors via native color
+   input, rendered as clickable circular swatches.
+============================================================ */
+
+
+.color-picker-wrap { 
+    display:flex; 
+    flex-wrap:wrap; 
+    gap:8px; 
+    padding:4px; 
+    min-height:48px; 
+    align-items:center; 
+}
+
+/* Color picker box */
+.color-picker-box {
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 6px 12px;
+    background: transparent;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    min-height: 48px;
+    justify-content: space-between;
+}
+
+.color-picker-wrap {
+    display: flex;
+    flex: 1;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Center the color dots vertically */
+.color-swatch {
+    width: 28px;
+    height: 28px;
+    border: 1.5px solid var(--primary-light);
+    border-radius: 50%;
+    position: relative;
+    cursor: pointer;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+    .color-swatch .rm {
+        display: none;
+        position: absolute;
+        top: -4px;
+        right: -4px;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: #e53e3e;
+        color: #fff;
+        font-size: 9px;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        border: 1.5px solid #fff;
+        font-weight: 700;
+        line-height: 1;
+    }
+
+    .color-swatch:hover .rm {
+        display: flex;
+    }
+
+    .color-swatch-cam {
+        display: none;
+        position: absolute;
+        bottom: -4px;
+        right: -4px;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: var(--primary);
+        color: #fff;
+        font-size: 9px;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        border: 1.5px solid #fff;
+    }
+
+    .color-swatch:hover .color-swatch-cam {
+        display: flex;
+    }
+.btn-add-color {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    background: transparent;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    font-family: inherit;
+    flex-shrink: 0;
+}
+
+/* Only the icon has the border box */
+.btn-add-color-icon {
+    width: 28px;
+    height: 28px;
+    border: 1.5px dashed var(--primary);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary);
+    font-size: 13px;
+    transition: background .15s, color .15s;
+}
+
+.btn-add-color:hover .btn-add-color-icon {
+    background: var(--primary);
+    color: #fff;
+}
+
+/* Label is plain text, no border */
+.btn-add-color-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--primary);
+}
+
+.btn-add-color:hover .btn-add-color-label {
+    color: var(--primary-dark);
+}
+
+
+/* ============================================================
+   SIDEBAR EXTRAS — Logout link & logo link
+   Applies to: Views/Shared/_Layout.cshtml
+============================================================ */
+
+.sidebar-logout {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 8px 12px 12px;
+    padding: 9px 12px;
+    border-radius: 8px;
+    color: rgba(255,255,255,.7);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 600;
+    transition: background .15s;
+}
+
+.sidebar-logout:hover {
+    background: rgba(255,255,255,.1);
+}
+
+.sidebar-brand a {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+}
+
+
+/* ============================================================
+   GLOBAL — moved from inline <style> in _Layout.cshtml
+============================================================ */
+html {
+    scroll-behavior: smooth;
+}
+
+#products {
+    scroll-margin-top: 70px;
+}
+
+.cat-img-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+/* ════════════════════════════════════════
+   TOASTS (storefront.js CF.toast()) — global, every storefront page uses it
+════════════════════════════════════════ */
+.cf-toast-host {
+    position: fixed;
+    bottom: 24px; right: 24px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.cf-toast {
+    display: flex; align-items: center; gap: 10px;
+    background: #1e293b;
+    color: #fff;
+    padding: 12px 18px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    box-shadow: 0 8px 24px rgba(0,0,0,.18);
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity .25s, transform .25s;
+}
+.cf-toast.show { opacity: 1; transform: translateY(0); }
+.cf-toast i { color: #4ade80; font-size: 15px; }
+.cf-toast-error i { color: #f87171; }
+.cf-toast-info i { color: #93c5fd; }
