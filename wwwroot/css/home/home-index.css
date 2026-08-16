@@ -1,0 +1,675 @@
+/* ============================================================
+   HOME INDEX — Public-facing landing / storefront page
+   Applies to: Views/Home/Index.cshtml
+   Contains: reset, CSS variables, nav, hero, sections,
+             product cards, account dropdown, animations.
+============================================================ */
+
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+    --primary: #5B5EF4;
+    --primary-dark: #4547d4;
+    --primary-light: #EEEEFF;
+    --accent: #7C3AED;
+    --white: #ffffff;
+    --text-main: #1e293b;
+    --text-sub: #64748b;
+    --text-muted: #94a3b8;
+    --border: #e2e8f0;
+    --bg: #f8fafc;
+    --radius: 10px;
+    --shadow: 0 1px 4px rgba(0,0,0,.08);
+    --shadow-md: 0 4px 16px rgba(0,0,0,.10);
+    --bg-color: #4F46E533;
+    --border-cr: #4F46E51A;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+#products {
+    scroll-margin-top: 70px;
+}
+
+
+body {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 14px;
+    color: var(--text-main);
+    background: var(--white);
+    overflow-x: hidden;
+}
+
+/* ════════════════════════════════════════
+   HERO
+════════════════════════════════════════ */
+.hero {
+    background-image: url('/images/hero/heroBG.png');
+    background-size: cover;
+    position: relative;
+    overflow: hidden;
+    min-height: 570px;
+    display: flex;
+    align-items: center;
+    padding: 48px 74px;
+}
+
+.hero-content {
+    position: relative;
+    z-index: 2;
+    max-width: 520px;
+}
+.hero-eyebrow {
+    font-size: 15.5px;
+    font-weight: 600;
+    color: var(--primary);
+    letter-spacing: .5px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    animation: fadeSlideUp .5s .1s ease both;
+}
+.hero-title {
+    font-size: 52px;
+    font-weight: 800;
+    line-height: 1.13;
+    color: var(--text-main);
+    margin-bottom: 14px;
+    animation: fadeSlideUp .5s .2s ease both;
+}
+.hero-title .accent {
+    color: var(--primary);
+    font-style: italic;
+}
+.hero-desc {
+    font-size: 18.5px;
+    color: var(--text-sub);
+    line-height: 1.7;
+    margin-bottom: 24px;
+    max-width: 340px;
+    animation: fadeSlideUp .5s .3s ease both;
+}
+.hero-btns {
+    display: flex;
+    gap: 12px;
+    animation: fadeSlideUp .5s .4s ease both;
+}
+.btn-hero-primary {
+    padding: 11px 26px;
+    background: var(--primary);
+    color: var(--white);
+    border: none;
+    border-radius: var(--radius);
+    font-size: 13.5px;
+    font-weight: 700;
+    font-family: inherit;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background .2s, transform .15s, box-shadow .2s;
+    box-shadow: 0 4px 14px rgba(91,94,244,.35);
+}
+.btn-hero-primary:hover { background: var(--primary-dark); transform: translateY(-2px); box-shadow: 0 6px 20px rgba(91,94,244,.4); }
+
+.btn-hero-outline {
+    padding: 10px 22px;
+    background: var(--white);
+    color: var(--text-main);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    font-size: 13.5px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    text-decoration: none;
+    transition: border-color .2s, box-shadow .2s, transform .15s;
+}
+.btn-hero-outline:hover { border-color: var(--primary); color: var(--primary); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,.08); }
+
+
+/* ════════════════════════════════════════
+   FEATURE STRIP
+════════════════════════════════════════ */
+.features-strip {
+    background: var(--white);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 74px;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0;
+}
+.feature-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 20px 8px 24px;
+    border-right: 1px solid var(--border);
+}
+.feature-item:last-child { border-right: none; padding-right: 0; }
+.feature-item:first-child { padding-left: 0; }
+.feature-icon {
+    width: 48px; height: 48px;
+    background: var(--primary-light);
+    border-radius: 30px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+}
+.feature-icon img { width: 30px; height: 30px; object-fit: contain; }
+.feature-label { font-size: 14px; font-weight: 600; color: var(--text-main); margin-bottom: 2px; }
+.feature-desc  { font-size: 13.5px; color: var(--text-muted); line-height: 1.4; }
+
+/* ════════════════════════════════════════
+   CATEGORY SECTION
+════════════════════════════════════════ */
+.section {
+    padding: 48px 64px;
+}
+.section-bg-alt {
+    background: var(--bg);
+}
+.category-filter {
+    margin-bottom: 18px;
+}
+
+.cat-cards-row {
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+    justify-content:center;
+    margin-bottom: 28px;
+}
+
+.cat-img-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    text-decoration: none;
+    transition: transform .2s;
+}
+
+    .cat-img-card:hover {
+        transform: translateY(-3px);
+    }
+
+.cat-img-thumb {
+    width: 150px;
+    height: 150px;
+    border-radius: 14px;
+    border: 2px solid var(--border-cr);
+    background-color: var(--bg-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    transition: border-color .15s, box-shadow .15s;
+}
+    .cat-img-thumb img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+
+    }
+
+    .cat-img-thumb i {
+        font-size: 38px;
+        color: #c4c9e8;
+    }
+
+.cat-img-card:hover .cat-img-thumb,
+.cat-img-card.active .cat-img-thumb {
+    border-color: var(--primary);
+    box-shadow: 0 6px 20px rgba(91,94,244,.15);
+}
+
+.cat-img-card.active .cat-img-thumb {
+    background: #eef0ff;
+}
+
+    .cat-img-card.active .cat-img-thumb i {
+        color: var(--primary);
+    }
+
+.cat-img-label {
+    font-size: 13px;
+    font-weight: 700;
+    color: #1e293b;
+    text-align: center;
+}
+
+.cat-img-card.active .cat-img-label {
+    color: var(--primary);
+}
+
+.cat-subchip-label {
+    font-size: 12px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    color: var(--pd-text-muted, #94a3b8);
+    margin: 4px 0 8px;
+    padding-top: 14px;
+    border-top: 1px solid #eef0f6;
+}
+.cat-subchip-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    margin: 0 0 28px;
+}
+.cat-subchip {
+    padding: 6px 14px;
+    border-radius: 999px;
+    border: 1.5px solid #e2e8f0;
+    background: #fff;
+    color: #475569;
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all .15s ease;
+}
+.cat-subchip:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+}
+.cat-subchip.active {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: #fff;
+}
+
+
+.view-all-wrap {
+    display: flex;
+    justify-content: center;
+    margin-top: 32px;
+}
+
+/* ════════════════════════════════════════
+   ANIMATIONS
+════════════════════════════════════════ */
+@keyframes fadeSlideUp {
+    from { opacity: 0; transform: translateY(18px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+@keyframes floatY {
+    0%, 100% { transform: translateY(0); }
+    50%       { transform: translateY(-12px); }
+}
+
+/* ════════════════════════════════════════
+   RESPONSIVE (basic)
+════════════════════════════════════════ */
+@media (max-width: 1100px) {
+    .features-strip { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 860px) {
+    .navbar { padding: 0 20px; gap: 16px; }
+    .nav-links { display: none; }
+    .hero { padding: 40px 24px; min-height: auto; }
+    .section { padding: 32px 24px; }
+    .features-strip { padding: 16px 24px; grid-template-columns: repeat(2, 1fr); }
+    .hero-title { font-size: 30px; }
+}
+    
+
+/* ============================================================
+   CATALOG — Product grid, filter pills, search
+   Applies to: Views/Home/hIndex.cshtml (catalog section)
+============================================================ */
+
+.catalog-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 20px;
+}
+@media (max-width: 1100px) { .catalog-grid { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 720px)  { .catalog-grid { grid-template-columns: repeat(2, 1fr); } }
+
+.catalog-card {
+    background: #ffffff;
+    border: 2px solid var(--border-cr);
+    border-radius: 14px;
+    overflow: hidden;
+    text-decoration: none;
+    color: inherit;
+    display: flex;
+    flex-direction: column;
+    transition: box-shadow .2s, transform .2s;
+}
+.catalog-card:hover {
+    box-shadow: 0 10px 32px rgba(0,0,0,.09);
+    transform: translateY(-3px);
+}
+
+.catalog-card-thumb {
+    aspect-ratio: 1/1;
+    background-color: var(--bg-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    position: relative;
+}
+.catalog-card-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.catalog-card-placeholder { color: #c4c9e8; font-size: 52px; }
+.catalog-card-fav {
+    position: absolute;
+    top: 10px; right: 10px;
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: rgba(255,255,255,.9);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--primary);
+    font-size: 13px;
+    box-shadow: 0 2px 6px rgba(0,0,0,.08);
+}
+
+.catalog-card-body {
+    padding: 12px 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    flex: 1;
+}
+.catalog-card-category {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--primary);
+    text-transform: uppercase;
+    letter-spacing: .5px;
+}
+.catalog-card-name { font-size: 14px; font-weight: 700; color: #1e293b; }
+.catalog-card-price { font-size: 13.5px; font-weight: 700; color: #1e293b; margin-top: 2px; }
+.catalog-card-btn {
+    text-decoration: none;
+    margin-top: 10px;
+    background: var(--primary);
+    color: #fff;
+    text-align: center;
+    padding: 9px;
+    border-radius: 8px;
+    font-size: 12.5px;
+    font-weight: 700;
+}
+.catalog-card:hover .catalog-card-btn { background: var(--primary-dark); }
+
+.catalog-empty {
+    text-align: center;
+    padding: 60px 20px;
+    color: #94a3b8;
+}
+.catalog-empty i { font-size: 40px; margin-bottom: 12px; display: block; }
+.catalog-empty p { font-size: 14px; font-weight: 600; }
+
+/* ── "Design Your Own" promo card — sits after the product grid ── */
+.customize-card {
+    background: linear-gradient(160deg, var(--primary-light) 0%, #fff 70%);
+    border: 1.5px dashed var(--primary);
+    font: inherit;
+    text-align: left;
+    width: 100%;
+    padding: 0;
+    cursor: pointer;
+    outline: none;
+}
+.customize-card .catalog-card-body { align-items: center; text-align: center; }
+.customize-card .catalog-card-category { color: var(--primary); }
+.customize-card .catalog-card-name { font-size: 15px; }
+.customize-card .catalog-card-desc {
+    font-size: 12px;
+    color: #64748b;
+    margin-top: 2px;
+    line-height: 1.4;
+}
+.customize-card .catalog-card-btn { width: 100%; }
+
+/* Centered placeholder text over the garment photo — same idea as the
+   "YOUR DESIGN HERE" overlay on the actual Customize page, so this promo
+   card reads as "put your design here" rather than just a plain photo. */
+.customize-card-overlay {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 13px;
+    font-weight: 900;
+    color: #7c86d4;
+    text-align: center;
+    line-height: 1.4;
+    letter-spacing: 1px;
+    pointer-events: none;
+    text-shadow: 0 1px 2px rgba(255,255,255,.8);
+}
+
+/* ════════════════════════════════════════
+   NAV ICON BADGES (cart / wishlist counts)
+════════════════════════════════════════ */
+/* .nav-icon-badge moved to navbar.css — it's shared navbar markup
+   (_Layout.cshtml) that needs to render correctly on every page, not
+   just the ones that happen to load this file. */
+.nav-icon-btn.active-fav { border-color: var(--primary); color: var(--primary); background: var(--primary-light); }
+
+/* Wishlist (fav) button on catalog card thumb */
+.catalog-card-actions {
+    position: absolute;
+    top: 10px; right: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    z-index: 2;
+}
+.catalog-card-actions .catalog-card-fav {
+    position: static;
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: rgba(255,255,255,.95);
+    border: none;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--primary);
+    font-size: 13px;
+    box-shadow: 0 2px 6px rgba(0,0,0,.12);
+    cursor: pointer;
+    transition: transform .15s, background .15s, color .15s;
+}
+.catalog-card-actions .catalog-card-fav:hover { transform: scale(1.08); }
+.catalog-card-actions .catalog-card-fav.active { background: var(--primary); color: #fff; }
+.catalog-card-actions .catalog-card-fav.active i { animation: cfHeartPop .3s ease; }
+@keyframes cfHeartPop { 0%{ transform: scale(1);} 40%{ transform: scale(1.35);} 100%{ transform: scale(1);} }
+
+/* Toast styles moved to site.css (loaded on every page) — storefront.js's
+   CF.toast() is used from pages that never load home-index.css (e.g.
+   Views/Customize/custom.cshtml), and it was invisible there before. */
+
+/* ════════════════════════════════════════
+   CART / WISHLIST PAGES
+════════════════════════════════════════ */
+.cf-page {
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: 40px 64px 80px;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
+@media (max-width: 860px) {
+    .cf-page { padding: 40px 24px 80px; }
+}
+.cf-page-title {
+    font-size: 26px;
+    font-weight: 800;
+    color: var(--text-main);
+    margin-bottom: 4px;
+}
+.cf-page-sub { color: var(--text-sub); font-size: 13.5px; margin-bottom: 28px; }
+
+.cf-empty {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 70px 20px;
+    color: #94a3b8;
+}
+.cf-empty.js-hidden { display: none; }
+.cf-empty i { font-size: 44px; margin-bottom: 14px; display: block; }
+.cf-empty a {
+    display: inline-block;
+    margin-top: 16px;
+    background: var(--primary);
+    color: #fff;
+    padding: 10px 22px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 13px;
+}
+
+/* Wishlist grid reuses .catalog-grid / .catalog-card styles */
+.cf-wish-remove {
+    position: absolute; top: 10px; right: 10px;
+    width: 30px; height: 30px; border-radius: 50%;
+    background: rgba(255,255,255,.95); border: none;
+    display: flex; align-items: center; justify-content: center;
+    color: #ef4444; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,.12);
+    z-index: 2;
+}
+.cf-wish-addcart {
+    margin-top: 10px;
+    background: var(--primary);
+    color: #fff; border: none;
+    padding: 9px; border-radius: 8px;
+    font-size: 12.5px; font-weight: 700;
+    cursor: pointer; width: 100%;
+}
+.cf-wish-addcart:hover { background: var(--primary-dark); }
+
+/* Cart line items */
+.cf-cart-layout { display: grid; grid-template-columns: 1fr 320px; gap: 28px; align-items: start; }
+@media (max-width: 860px) { .cf-cart-layout { grid-template-columns: 1fr; } }
+
+.cf-cart-main { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+
+.cf-checkbox-wrap {
+    display: flex; align-items: center; gap: 8px;
+    cursor: pointer; font-size: 13px; font-weight: 700; color: var(--text-main);
+    user-select: none;
+}
+.cf-checkbox-wrap input[type="checkbox"] {
+    width: 18px; height: 18px; accent-color: var(--primary); cursor: pointer;
+}
+
+.cf-select-all-row {
+    display: flex; align-items: center;
+    background: #fff; border: 1px solid var(--border); border-radius: 12px;
+    padding: 12px 16px;
+}
+
+.cf-cart-list { display: flex; flex-direction: column; gap: 14px; }
+.cf-cart-item {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 16px;
+    align-items: center;
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px;
+}
+.cf-cart-check { padding: 0 2px; }
+/* Groups the thumbnail + name/options/price together as one clickable
+   area — clicking either opens the same product/customize details page
+   the item was added from (see cfViewCartItem() in cart-page.js). The
+   checkbox and the qty stepper/Remove button on the right are separate
+   sibling elements, so clicks there never trigger navigation. */
+.cf-cart-clickable {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    min-width: 0;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: background .15s;
+}
+.cf-cart-clickable:hover { background: var(--bg); }
+.cf-cart-thumb {
+    /* Sized to match the bigger product thumbnails used elsewhere in the
+       storefront (catalog cards, product details gallery) instead of the
+       small 84px box this used to be — keeps thumbnail sizing consistent
+       across pages instead of looking cramped here specifically. */
+    width: 120px; height: 120px; border-radius: 10px;
+    background: #f1f3fa; overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    position: relative;
+}
+.cf-cart-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.cf-cart-thumb i { color: #c4c9e8; font-size: 36px; }
+@media (max-width: 560px) {
+    .cf-cart-item { grid-template-columns: auto 1fr auto; }
+    .cf-cart-thumb { width: 84px; height: 84px; }
+}
+.cf-cart-info { min-width: 0; }
+/* Matches .catalog-card-category's styling (used on the catalog cards and
+   the "Design Your Own" card) so a Custom Order line item reads the same
+   way here as it does everywhere else in the storefront, instead of a
+   plain bold word buried in the middle of the size/color/location line. */
+.cf-cart-custom-tag {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--primary);
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    margin-bottom: 2px;
+}
+.cf-cart-name { font-weight: 700; font-size: 14px; color: var(--text-main); }
+.cf-cart-opts { font-size: 12px; color: var(--text-sub); margin-top: 3px; line-height: 1.5; }
+.cf-cart-price { font-weight: 700; color: var(--primary); font-size: 13.5px; margin-top: 6px; }
+.cf-cart-right { display: flex; flex-direction: column; align-items: flex-end; gap: 10px; }
+.cf-qty-stepper {
+    display: flex; align-items: center;
+    border: 1.5px solid var(--border); border-radius: 8px; overflow: hidden;
+}
+.cf-qty-stepper button {
+    width: 28px; height: 28px; border: none; background: var(--bg);
+    font-size: 15px; cursor: pointer; color: var(--text-main);
+}
+.cf-qty-stepper span { width: 30px; text-align: center; font-size: 13px; font-weight: 700; }
+.cf-qty-stepper button:disabled { cursor: not-allowed; opacity: .4; }
+.cf-cart-remove {
+    border: none; background: none; color: #ef4444;
+    font-size: 12px; cursor: pointer; display: flex; align-items: center; gap: 5px;
+    font-weight: 600;
+}
+.cf-cart-remove:hover { text-decoration: underline; }
+
+.cf-summary {
+    background: #fff; border: 1px solid var(--border); border-radius: 12px;
+    padding: 22px; position: sticky; top: 80px;
+}
+.cf-summary-title { font-weight: 800; font-size: 15px; margin-bottom: 16px; }
+.cf-summary-row { display: flex; justify-content: space-between; font-size: 13px; color: var(--text-sub); margin-bottom: 10px; }
+.cf-summary-row.js-hidden { display: none; }
+.cf-summary-total { display: flex; justify-content: space-between; font-size: 16px; font-weight: 800; color: var(--text-main); margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); }
+.cf-summary-btn {
+    margin-top: 18px; width: 100%; padding: 13px; border: none; border-radius: 9px;
+    background: var(--primary); color: #fff; font-weight: 700; font-size: 14px; cursor: pointer;
+}
+.cf-summary-btn:hover { background: var(--primary-dark); }
+.cf-summary-btn:disabled { background: #c4c9e8; cursor: not-allowed; }
+.cf-summary-clear {
+    margin-top: 10px; width: 100%; padding: 10px; border-radius: 9px;
+    background: none; border: 1.5px solid var(--border); color: var(--text-sub);
+    font-weight: 600; font-size: 12.5px; cursor: pointer;
+}
+.cf-summary-clear:hover { border-color: #ef4444; color: #ef4444; }
+
+

@@ -1,0 +1,160 @@
+@model ConceptFactory.Models.Product
+@{
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    ViewData["Title"] = "Add Item";
+    ViewData["ActivePage"] = "Products";
+    string? returnUrl = ViewBag.ReturnUrl as string;
+}
+
+<div class="page-container">
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Add New Item</h1>
+            <p class="page-subtitle">Fill in the details below to create a new item.</p>
+        </div>
+        <a href="@(string.IsNullOrEmpty(returnUrl) ? Url.Action("pIndex") : returnUrl)" class="btn btn-outline">
+            <i class="fa-solid fa-arrow-left"></i> Back to Items
+        </a>
+    </div>
+
+    <div class="form-card">
+        <form asp-action="pCreate" method="post" enctype="multipart/form-data">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="returnUrl" value="@returnUrl" />
+
+            <div class="form-grid">
+                <div class="form-col left">
+                    <div class="form-header"><h2>Basic Information</h2></div>
+
+                    <div class="form-group">
+                        <label asp-for="ProductName" class="form-label">Item Name</label>
+                        <input asp-for="ProductName" class="form-control" placeholder="e.g. Basic Cotton T-Shirt" />
+                        <span asp-validation-for="ProductName" class="field-error"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label asp-for="CategoryID" class="form-label">Category</label>
+                        <select asp-for="CategoryID" asp-items="ViewBag.CategoryID" class="form-control">
+                            <option value="">-- Select Category --</option>
+                        </select>
+                        <span asp-validation-for="CategoryID" class="field-error"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Size</label>
+                        <div class="size-dropdown" id="sizeDropdown">
+                            <button type="button" class="size-dropdown-trigger" id="sizeTrigger" onclick="toggleSizeDropdown()">
+                                <span id="sizeTriggerText">Select Size</span>
+                                <i class="fa-solid fa-chevron-down size-chevron" id="sizeChevron"></i>
+                            </button>
+                            <div class="size-dropdown-panel" id="sizePanel">
+                                <div class="size-list" id="sizeList">
+                                    <div class="size-list-item" data-size="XS">XS</div>
+                                    <div class="size-list-item" data-size="S">S</div>
+                                    <div class="size-list-item" data-size="M">M</div>
+                                    <div class="size-list-item" data-size="L">L</div>
+                                    <div class="size-list-item" data-size="XL">XL</div>
+                                    <div class="size-list-item" data-size="XXL">XXL</div>
+                                    <div class="size-list-item" data-size="One Size">One Size</div>
+                                </div>
+                            </div>
+                        </div>
+                        <input type="hidden" id="sizeHidden" name="Size" value="@Model.Size" />
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Color Options</label>
+                        <p class="form-sublabel">Click a swatch's camera icon to attach a photo for that color — the storefront will show it when a customer picks that color.</p>
+                        <div class="color-picker-box">
+                            <div class="color-picker-wrap" id="colorPickerWrap"></div>
+                            <button type="button" class="btn-add-color" onclick="openColorPicker()">
+                                <span class="btn-add-color-icon"><i class="fa-solid fa-plus"></i></span>
+                                <span class="btn-add-color-label">Add Color</span>
+                            </button>
+                            <input type="color" id="nativeColorPicker"
+                                   class="native-color-picker"
+                                   onchange="addColor(this.value)" oninput="addColor(this.value)"/>
+                        </div>
+                        <input type="hidden" id="colorHidden" name="Color" value="@Model.Color" />
+                        <div id="colorImageInputs"></div>
+                    </div>
+
+                    <div class="form-row-2">
+                        <div class="form-group">
+                            <label asp-for="Price" class="form-label"></label>
+                            <div class="input-prefix">
+                                <span class="prefix-text">₱</span>
+                                <input asp-for="Price" type="number" step="0.01" min="0" class="form-control prefix-input" placeholder="Enter price" />
+                            </div>
+                            <span asp-validation-for="Price" class="field-error"></span>
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="StockQuantity" class="form-label"></label>
+                            <input asp-for="StockQuantity" type="number" min="0" class="form-control" placeholder="Enter stock quantity" />
+                            <span asp-validation-for="StockQuantity" class="field-error"></span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label asp-for="ProductDescription" class="form-label"></label>
+                        <textarea asp-for="ProductDescription" class="form-control form-textarea" placeholder="Describe the item..."></textarea>
+                    </div>
+                </div>
+
+                <div class="form-col">
+                    <div class="form-group">
+                        <label class="form-label">Item Image</label>
+                        <div class="upload-dropzone" id="uploadArea"
+                             onclick="document.getElementById('imageFile').click()"
+                             ondragover="handleDragOver(event)"
+                             ondragleave="handleDragLeave(event)"
+                             ondrop="handleDrop(event)">
+                            <div class="upload-dropzone-inner" id="uploadPlaceholder">
+                                <div class="upload-icon-circle"><i class="fa-solid fa-arrow-up-from-bracket"></i></div>
+                                <p class="upload-main-text">Drag and drop your item image here<br>or click to browse</p>
+                                <p class="upload-sub-text">PNG, JPEG, WEBP up to 5MB</p>
+                            </div>
+                            <div id="imagePreviewContainer" class="image-preview-container js-hidden">
+                                <img id="primaryImagePreview" src="#" alt="Preview" class="image-preview-img" />
+                                <p id="uploadedFileName" class="uploaded-filename-label"></p>
+                            </div>
+                        </div>
+                        <input type="file" id="imageFile" name="imageFile" accept="image/*" class="js-hidden" onchange="handleImageUpload(this)" />
+                    </div>
+
+                    <!-- ── Additional Images ── -->
+                    <div class="form-group form-group-spaced">
+                        <label class="form-label">Additional Images</label>
+                        <p class="form-sublabel">Optional — up to 6 extra showcase photos</p>
+                        <input type="file" id="showcaseFiles" name="showcaseFiles" accept="image/*" multiple class="js-hidden" />
+
+                        <!-- Shown when no additional images have been added yet -->
+                        <div class="sc-bigbox" id="scBigBox"
+                             onclick="pickShowcaseFiles()"
+                             ondragover="handleShowcaseDragOver(event)"
+                             ondragleave="handleShowcaseDragLeave(event)"
+                             ondrop="handleShowcaseDrop(event)">
+                            <div class="upload-icon-circle"><i class="fa-solid fa-images"></i></div>
+                            <p class="upload-main-text">Drag and drop additional images here<br>or click to browse</p>
+                            <p class="upload-sub-text">PNG, JPEG, WEBP up to 5MB each — up to 6 images</p>
+                        </div>
+
+                        <!-- Shown once at least one image has been added -->
+                        <div class="sc-grid js-hidden" id="showcaseGrid"></div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">Save Item</button>
+                        <a asp-action="pIndex" class="btn btn-outline">Cancel</a>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+<partial name="_ValidationScriptsPartial" />
+<link rel="stylesheet" href="~/css/admin/product-form.css" asp-append-version="true" />
+<script src="~/js/admin/product-create.js" asp-append-version="true"></script>
+}

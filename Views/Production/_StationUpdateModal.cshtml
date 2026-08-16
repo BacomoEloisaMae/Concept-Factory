@@ -1,0 +1,113 @@
+@model ConceptFactory.Models.Order
+@using ConceptFactory.Models
+@{
+    int stage = ViewBag.Stage;
+    string stationName = ViewBag.StationName;
+    string stationVerbBase = ViewBag.StationVerbBase;     // "Cut" / "Print" / "Sew" / "Trim" / "Check"
+    string stationVerbPast = ViewBag.StationVerbPast;     // "Cut" / "Printed" / "Sewn" / "Trimmed" / "Checked"
+    string stationVerbGerund = ViewBag.StationVerbGerund; // "Cutting" / "Printing" / "Sewing" / "Trimming" / "Checking"
+    string nextStationName = ViewBag.NextStationName;
+    bool isReadyForPickup = stage == ProductionWorkflow.ReadyForPickupIndex;
+
+    int target = Model.OrderDetails.Where(d => d.IsCustomOrder).Sum(d => d.Quantity);
+    string productSummary = string.Join(", ", Model.OrderDetails
+        .Where(d => d.IsCustomOrder)
+        .Select(d => $"{d.Quantity}x {(string.IsNullOrEmpty(d.ProductNameSnapshot) ? "Item" : d.ProductNameSnapshot)}"));
+    if (string.IsNullOrEmpty(productSummary)) { productSummary = "—"; }
+}
+<div class="bvp-header">
+    <div class="bvp-header-icon"><i class="fa-solid fa-industry"></i></div>
+    <div class="bvp-header-text">
+        <div class="bvp-title">@(isReadyForPickup ? "Confirm Pickup" : $"Update {stationName} Progress")</div>
+        <div class="bvp-subtitle">#ORD-@Model.OrderID.ToString("D5") — @Model.CustomerName</div>
+    </div>
+    <button type="button" class="bvp-close-btn" onclick="closeStationModal()"><i class="fa-solid fa-xmark"></i> Close</button>
+</div>
+
+<div class="om-modal-body">
+    <div class="prod-card">
+        <div class="prod-card-title"><i class="fa-solid fa-circle-info"></i> Order Information</div>
+        <div class="station-info-grid">
+            <div class="station-info-item">
+                <label>Customer</label>
+                <span>@Model.CustomerName</span>
+            </div>
+            <div class="station-info-item">
+                <label>Product</label>
+                <span>@productSummary</span>
+            </div>
+            <div class="station-info-item">
+                <label>Quantity</label>
+                <span>@target pcs</span>
+            </div>
+            <div class="station-info-item">
+                <label>Received Date</label>
+                <span>@Model.OrderDate.ToString("MMM d, yyyy | h:mm tt")</span>
+            </div>
+        </div>
+    </div>
+
+    @if (isReadyForPickup)
+    {
+        <div class="prod-step-card prod-step-card-success">
+            <div class="prod-step-card-text">
+                <i class="fa-solid fa-box-open"></i>
+                Production is complete. Once the customer has picked up their order, confirm below.
+            </div>
+        </div>
+
+        <form id="stationForm" data-mode="mark-completed" data-id="@Model.OrderID">
+            @Html.AntiForgeryToken()
+            <button type="submit" class="btn btn-primary station-submit-btn">
+                <i class="fa-solid fa-circle-check"></i> Mark as Picked Up
+            </button>
+        </form>
+    }
+    else
+    {
+        <div class="prod-card">
+            <div class="prod-card-title"><i class="fa-solid fa-shirt"></i> @stationName Progress</div>
+
+            <div class="station-qty-row">
+                <span>Quantity to @stationVerbBase</span>
+                <strong>@target pcs</strong>
+            </div>
+
+            <div class="station-field">
+                <label for="stationQtyInput">Quantity @stationVerbPast <span class="station-required">*</span></label>
+                <div class="station-qty-input-wrap">
+                    <input type="number" id="stationQtyInput" min="0" max="@target" step="1" value="@target" />
+                    <span>/ @target pcs</span>
+                </div>
+            </div>
+
+            <div class="station-progress">
+                <div class="station-progress-label">
+                    <span>Progress</span>
+                    <span id="stationProgressPct">100%</span>
+                </div>
+                <div class="station-progress-bar">
+                    <div class="station-progress-fill" id="stationProgressFill" style="width:100%"></div>
+                </div>
+            </div>
+
+            <div class="station-field">
+                <label for="stationRemarks">Remarks (Optional)</label>
+                <textarea id="stationRemarks" maxlength="200" rows="3" placeholder="Add any notes about this stage…">@Model.ProductionRemarks</textarea>
+                <div class="station-char-count"><span id="stationRemarksCount">@(Model.ProductionRemarks?.Length ?? 0)</span> / 200 characters</div>
+            </div>
+        </div>
+
+        <form id="stationForm" data-mode="complete-station" data-id="@Model.OrderID" data-stage="@stage" data-target="@target">
+            @Html.AntiForgeryToken()
+            <button type="submit" class="btn btn-primary station-submit-btn" id="stationSubmitBtn">
+                <i class="fa-solid fa-check"></i> Mark as Done @stationVerbGerund
+            </button>
+        </form>
+
+        <div class="station-lock-note">
+            <i class="fa-solid fa-lock"></i>
+            After marking as done, the order will proceed to the <strong>@nextStationName</strong> station and you will not be able to edit this progress.
+        </div>
+    }
+</div>

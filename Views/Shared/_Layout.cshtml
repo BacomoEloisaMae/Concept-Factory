@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] – The Concept Factory</title>
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/navbar.css" asp-append-version="true" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    @RenderSection("Styles", required: false)
+</head>
+<body>
+    @{
+        string currentController = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
+        string currentAction = ViewContext.RouteData.Values["action"]?.ToString() ?? "";
+
+        bool IsActive(string controller, params string[] actions) =>
+        string.Equals(currentController, controller, StringComparison.OrdinalIgnoreCase)
+        && actions.Any(a => string.Equals(currentAction, a, StringComparison.OrdinalIgnoreCase));
+    }
+    <!-- ═══ NAVBAR ═══ -->
+    <nav class="navbar">
+        <a asp-controller="Home" asp-action="hIndex" class="nav-brand">
+            <img src="/images/logo/Nlogo.png" alt="ConceptFactory" />
+            <span class="nav-brand-name">Concept Factory</span>
+        </a>
+        <div class="nav-links">
+            <a asp-controller="Home" asp-action="hIndex"
+               class="nav-link @(IsActive("Home", "hIndex") ? "active" : "")">Home</a>
+            <a asp-controller="Home" asp-action="hProducts"
+               class="nav-link @(IsActive("Home", "hProducts") ? "active" : "")">Products</a>
+            <a asp-controller="Customize" asp-action="Index"
+               class="nav-link @(IsActive("Customize", "Index", "Custom") ? "active" : "")">Customize</a>
+			@* asp-controller="Home" asp-action="hTrackOrder" *@
+			<a href="#"
+            class="nav-link @(IsActive("Home", "hTrackOrder") ? "active" : "")">Track Order</a>
+            <a href="#" class="nav-link">About Us</a>
+        </div>
+        <div class="nav-right">
+            <div class="search-bar">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" id="navSearchInput" placeholder="Search products..." />
+            </div>
+            <a asp-controller="Home" asp-action="hWishlist" class="nav-icon-btn" title="Wishlist">
+                <i class="fa-regular fa-heart"></i>
+                <span class="nav-icon-badge" data-cf-wishlist-badge></span>
+            </a>
+            <a asp-controller="Home" asp-action="hCart" class="nav-icon-btn" title="Cart">
+                <i class="fa-solid fa-cart-shopping"></i>
+                <span class="nav-icon-badge" data-cf-cart-badge></span>
+            </a>
+            <div class="nav-account-wrap" id="navAccountWrap">
+                <button type="button" class="btn-nav-account" onclick="toggleAccountMenu()">
+                    <i class="fa-regular fa-user"></i>
+                    My Account
+                    <i class="fa-solid fa-chevron-down"></i>
+                </button>
+                <div class="nav-account-menu" id="navAccountMenu">
+                    <a asp-controller="Products" asp-action="pIndex" class="nav-account-item admin-item">
+                        <i class="fa-solid fa-gauge-high"></i> Admin Panel
+                    </a>
+                    <div class="nav-account-divider"></div>
+                    <a href="#" class="nav-account-item"><i class="fa-regular fa-user"></i> My Profile</a>
+					@* asp-controller="Home" asp-action="hTrackOrder" *@
+                    <a href="#" class="nav-account-item"><i class="fa-solid fa-box"></i> My Orders</a>
+                    <a asp-controller="Auth" asp-action="Login" class="nav-account-item">
+                        <i class="fa-solid fa-arrow-right-to-bracket"></i> Login
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+    @RenderBody()
+
+    @* Footer intentionally NOT here — it's only meant to show on the Home
+       Index and Browse (Products) pages, not site-wide. See the
+       "footer-strip" div in Views/Home/hIndex.cshtml and
+       Views/Home/hProducts.cshtml. Styled by .footer-strip in
+       wwwroot/css/navbar.css (loaded above). *@
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="~/js/storefront.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

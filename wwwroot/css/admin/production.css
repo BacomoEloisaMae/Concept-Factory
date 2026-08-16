@@ -1,0 +1,589 @@
+/* ============================================================
+   PRODUCTION.CSS — Production Monitoring admin page
+   Built on top of design tokens from site.css and shared classes
+   from orders.css/billing.css (stat-card, status-badge, od-stepper,
+   bvp-* modal chrome, etc.)
+============================================================ */
+
+/* ── Production Workflow Monitoring — top-of-page shared stepper.
+   Neutral/grey by default; selectProdRow() in production-progress.js
+   recolors it to match whichever order row was last clicked. ── */
+.prod-monitor-card {
+    margin-bottom: 20px;
+    border-radius: 10px;
+    padding: 20px 24px;
+}
+.prod-monitor-title h2 {
+    font-size: 16px;
+    font-weight: 800;
+    color: var(--text-main);
+    margin: 0 0 2px;
+}
+.prod-monitor-title p {
+    font-size: 12.5px;
+    color: var(--text-sub);
+    margin: 0 0 18px;
+}
+.prod-monitor-stepper {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+}
+.prod-monitor-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    width: 108px;
+    flex-shrink: 0;
+}
+.prod-monitor-icon {
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 17px;
+    border: 2px solid var(--border);
+    background: var(--white);
+    color: var(--text-muted);
+    transition: background .15s, border-color .15s, color .15s;
+}
+.prod-monitor-check-icon { display: none; }
+.prod-monitor-step.done .prod-monitor-orig-icon { display: none; }
+.prod-monitor-step.done .prod-monitor-check-icon { display: block; }
+.prod-monitor-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-main);
+    margin-top: 8px;
+}
+.prod-monitor-sublabel {
+    font-size: 10.5px;
+    font-weight: 600;
+    color: var(--text-muted);
+    margin-top: 2px;
+}
+.prod-monitor-line {
+    flex: 1;
+    height: 2px;
+    background: var(--border);
+    margin-top: 23px;
+    transition: background .15s;
+}
+
+/* Neutral (nothing selected) — everything grey, handled by the base
+   .prod-monitor-icon/.prod-monitor-line rules above already; this class
+   just makes that state explicit / easy to re-apply from JS. */
+.prod-monitor-step.neutral .prod-monitor-icon {
+    background: var(--white);
+    border-color: var(--border);
+    color: var(--text-muted);
+}
+.prod-monitor-step.neutral .prod-monitor-sublabel { color: var(--text-muted); }
+
+/* Done */
+.prod-monitor-step.done .prod-monitor-icon {
+    background: var(--success);
+    border-color: var(--success);
+    color: #fff;
+}
+.prod-monitor-step.done .prod-monitor-sublabel { color: var(--success); }
+.prod-monitor-line.done { background: var(--success); }
+
+/* Current / in progress */
+.prod-monitor-step.current .prod-monitor-icon {
+    background: var(--primary-light);
+    border-color: var(--primary);
+    color: var(--primary);
+    box-shadow: 0 0 0 4px var(--primary-light);
+}
+.prod-monitor-step.current .prod-monitor-label { color: var(--primary); }
+.prod-monitor-step.current .prod-monitor-sublabel { color: var(--primary); }
+
+/* Pending (selected order, stage not reached yet) */
+.prod-monitor-step.pending .prod-monitor-icon {
+    background: var(--white);
+    border-color: var(--border);
+    color: var(--text-muted);
+}
+.prod-monitor-step.pending .prod-monitor-sublabel { color: var(--text-muted); }
+
+@media (max-width: 900px) {
+    .prod-monitor-stepper { flex-wrap: wrap; row-gap: 20px; }
+    .prod-monitor-line { display: none; }
+    .prod-monitor-step { width: 30%; }
+}
+
+/* ── Mini progress bar in the orders table ── */
+.prod-progress-bar {
+    width: 100%;
+    max-width: 140px;
+    height: 6px;
+    background: #f1f2f6;
+    border-radius: 999px;
+    overflow: hidden;
+}
+.prod-progress-clickable {
+    cursor: pointer;
+    height: 8px;
+    transition: transform .1s;
+}
+.prod-progress-clickable:hover {
+    transform: scaleY(1.4);
+}
+.prod-progress-fill {
+    height: 100%;
+    width: var(--pct, 0%);
+    background: var(--primary);
+    border-radius: 999px;
+    transition: width .2s;
+}
+.prod-progress-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 4px;
+}
+
+/* ── Card wrapping the interactive stepper inside the modal ── */
+.prod-card {
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 16px;
+    margin-bottom: 16px;
+}
+.prod-card-title {
+    font-size: 13.5px;
+    font-weight: 700;
+    color: var(--text-main);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+.prod-card-title i { color: var(--primary); }
+
+/* ── Prompt cards for manual transitions (Start Design Review / Mark Completed) ── */
+.prod-step-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    background: #f8f9fb;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-bottom: 16px;
+}
+.prod-step-card-success { background: var(--success-light); border-color: #bbf7d0; }
+
+/* Overview's read-only banner — see pDetailsPanel(readOnly=true) */
+.prod-readonly-banner {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #eff6ff;
+    color: #1d4ed8;
+    border: 1px solid #bfdbfe;
+    border-radius: 8px;
+    padding: 10px 24px;
+    margin: 0 24px 16px;
+    font-size: 13px;
+    font-weight: 500;
+}
+.prod-step-card-text {
+    font-size: 13px;
+    color: var(--text-sub);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+    min-width: 220px;
+}
+.prod-step-card-text i { color: var(--primary); font-size: 16px; }
+.prod-step-card-success .prod-step-card-text i { color: #16a34a; }
+
+@media (max-width: 600px) {
+    .prod-step-card { flex-direction: column; align-items: stretch; }
+    .prod-step-card form { display: flex; }
+    .prod-step-card button { width: 100%; }
+}
+
+/* ── "Items in Production" list inside the modal ── */
+.prod-items-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.prod-items-empty {
+    font-size: 13px;
+    color: var(--text-muted);
+    text-align: center;
+    padding: 10px 0;
+}
+.prod-item-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 12px;
+}
+.prod-item-row-untracked {
+    opacity: 0.7;
+    background: var(--bg);
+}
+.prod-item-tracked-tag {
+    display: inline-block;
+    margin-left: 6px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    color: var(--primary);
+    background: var(--primary-light);
+    border-radius: 999px;
+    padding: 2px 8px;
+    vertical-align: middle;
+}
+.prod-item-untracked-tag {
+    display: inline-block;
+    margin-left: 6px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    color: var(--text-muted);
+    background: #f1f2f6;
+    border-radius: 999px;
+    padding: 2px 8px;
+    vertical-align: middle;
+}
+.prod-item-thumb {
+    width: 48px;
+    height: 48px;
+    flex-shrink: 0;
+    border-radius: 8px;
+    overflow: hidden;
+    background: var(--bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+}
+.prod-item-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.prod-item-info {
+    flex: 1;
+    min-width: 0;
+}
+.prod-item-name {
+    font-size: 13.5px;
+    font-weight: 700;
+    color: var(--text-main);
+}
+.prod-item-meta {
+    font-size: 12px;
+    color: var(--text-sub);
+    margin-top: 2px;
+}
+
+/* ── Per-item detail popup — sits above the production modal, built
+   client-side from the View button's data-* attributes (see
+   production-progress.js showProdItemDetail). ── */
+.prod-item-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, .55);
+    z-index: 1100;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+.prod-item-modal-backdrop.open { display: flex; }
+.prod-item-modal {
+    background: var(--white);
+    border-radius: 14px;
+    max-width: 420px;
+    width: 100%;
+    max-height: 85vh;
+    overflow-y: auto;
+    box-shadow: var(--shadow-md);
+}
+.prod-item-modal-img {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    object-fit: contain;
+    background: var(--bg);
+    display: block;
+    border-radius: 14px 14px 0 0;
+}
+.prod-item-modal-img-placeholder {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    background: var(--bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+    font-size: 40px;
+    border-radius: 14px 14px 0 0;
+}
+.prod-item-modal-body {
+    padding: 18px 20px 20px;
+}
+.prod-item-modal-title {
+    font-size: 16px;
+    font-weight: 800;
+    color: var(--text-main);
+    margin-bottom: 12px;
+}
+.prod-item-modal-field {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 7px 0;
+    border-bottom: 1px dashed var(--border);
+    font-size: 13px;
+}
+.prod-item-modal-field:last-of-type { border-bottom: none; }
+.prod-item-modal-field label { color: var(--text-sub); font-weight: 600; }
+.prod-item-modal-field span { color: var(--text-main); text-align: right; }
+.prod-item-modal-notes {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+    font-size: 12.5px;
+    color: var(--text-sub);
+    line-height: 1.6;
+}
+.prod-item-modal-close {
+    width: 100%;
+    margin-top: 16px;
+}
+
+/* ============================================================
+   STATION UPDATE POPUP — pStation.cshtml "Mark as Done" modal
+   (Views/Production/_StationUpdateModal.cshtml, station-update.js).
+   Reuses .billing-modal-backdrop/.billing-modal chrome and .bvp-*
+   header/.prod-card/.prod-step-card from above — this block only
+   covers what's new: the info grid, quantity field, and progress bar.
+============================================================ */
+.station-modal { max-width: 520px; }
+
+.station-info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px 20px;
+}
+.station-info-item label {
+    display: block;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: .02em;
+    margin-bottom: 3px;
+}
+.station-info-item span {
+    font-size: 13.5px;
+    color: var(--text-main);
+    font-weight: 500;
+}
+
+.station-qty-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 13.5px;
+    color: var(--text-sub);
+    margin-bottom: 14px;
+}
+.station-qty-row strong { color: var(--text-main); }
+
+.station-field { margin-bottom: 16px; }
+.station-field label {
+    display: block;
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--text-main);
+    margin-bottom: 6px;
+}
+.station-required { color: var(--danger); }
+
+.station-qty-input-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.station-qty-input-wrap input[type="number"] {
+    width: 90px;
+    padding: 8px 10px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    font-size: 14px;
+    font-weight: 600;
+    text-align: center;
+}
+.station-qty-input-wrap span {
+    font-size: 12.5px;
+    color: var(--text-muted);
+}
+
+.station-progress { margin-bottom: 16px; }
+.station-progress-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11.5px;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+}
+.station-progress-label span:last-child { color: var(--success); font-weight: 700; }
+.station-progress-bar {
+    width: 100%;
+    height: 8px;
+    background: #f1f2f6;
+    border-radius: 999px;
+    overflow: hidden;
+}
+.station-progress-fill {
+    height: 100%;
+    background: var(--success);
+    border-radius: 999px;
+    transition: width .15s;
+}
+
+.station-field textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    font-size: 13px;
+    font-family: inherit;
+    resize: vertical;
+}
+.station-char-count {
+    text-align: right;
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 4px;
+}
+
+.station-submit-btn {
+    width: 100%;
+    justify-content: center;
+    background: var(--success);
+    border-color: var(--success);
+}
+.station-submit-btn:disabled {
+    opacity: .55;
+    cursor: not-allowed;
+}
+
+.station-lock-note {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin-top: 14px;
+    padding: 12px 14px;
+    background: #fffbeb;
+    border: 1px solid #fde68a;
+    border-radius: var(--radius);
+    font-size: 12px;
+    color: #92400e;
+    line-height: 1.5;
+}
+.station-lock-note i { margin-top: 1px; color: #d97706; }
+
+/* ============================================================
+   ORDER TIMELINE — the dated per-station history card added to
+   _ProductionPanel.cshtml (Overview's "View Progress" popup).
+   Reconstructed from ActivityLogs, see ProductionController.
+   pDetailsPanel. Lives inside .prod-card like everything else here.
+============================================================ */
+.prod-timeline {
+    display: flex;
+    flex-direction: column;
+}
+.prod-timeline-item {
+    display: flex;
+    gap: 14px;
+    position: relative;
+    padding-bottom: 20px;
+}
+.prod-timeline-item:last-child { padding-bottom: 0; }
+/* Connecting vertical line between markers */
+.prod-timeline-item:not(:last-child)::before {
+    content: "";
+    position: absolute;
+    left: 11px;
+    top: 24px;
+    bottom: 0;
+    width: 2px;
+    background: var(--border);
+}
+.prod-timeline-marker {
+    flex-shrink: 0;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    z-index: 1;
+}
+.prod-timeline-item-done .prod-timeline-marker {
+    background: var(--success);
+    color: #fff;
+}
+.prod-timeline-item-active .prod-timeline-marker {
+    background: #fff;
+    border: 3px solid #f59e0b;
+}
+.prod-timeline-item-pending .prod-timeline-marker {
+    background: #fff;
+    border: 2px solid var(--border);
+}
+.prod-timeline-content { flex: 1; padding-top: 2px; }
+.prod-timeline-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+}
+.prod-timeline-title {
+    font-size: 13.5px;
+    font-weight: 700;
+    color: var(--text-main);
+}
+.prod-timeline-item-pending .prod-timeline-title { color: var(--text-muted); font-weight: 600; }
+.prod-timeline-date {
+    font-size: 11px;
+    color: var(--text-muted);
+    white-space: nowrap;
+}
+.prod-timeline-desc {
+    font-size: 12px;
+    color: var(--text-sub);
+    margin-top: 3px;
+    line-height: 1.5;
+}
+.prod-timeline-tag {
+    font-size: 10.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .02em;
+    color: var(--text-muted);
+    background: #f1f2f6;
+    padding: 2px 8px;
+    border-radius: 999px;
+    white-space: nowrap;
+}
+.prod-timeline-tag-active { color: #b45309; background: #fef3c7; }

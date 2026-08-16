@@ -1,0 +1,87 @@
+@model List<ConceptFactory.Models.Order>
+@{
+    ViewData["Title"] = "Track Order";
+
+    string StatusBadgeClass(string status) => status switch
+    {
+        "Pending Down Payment" => "cot-badge-gray",
+        "Pending Cash Payment" => "cot-badge-orange",
+        "Pending Payment Verification" => "cot-badge-orange",
+        "Confirmed" => "cot-badge-purple",
+        "Design Review" => "cot-badge-blue",
+        "In Production" => "cot-badge-orange",
+        "Ready for Pickup" => "cot-badge-teal",
+        "Completed" => "cot-badge-green",
+        "Cancelled" => "cot-badge-red",
+        _ => "cot-badge-gray"
+    };
+}
+@section Styles {
+    <link rel="stylesheet" href="~/css/home/home-index.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/navbar.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/home/order-details.css" asp-append-version="true" />
+}
+<div class="cf-page cot-page">
+    <form id="cfAntiForgeryForm" class="js-hidden">@Html.AntiForgeryToken()</form>
+    <div class="cf-page-title">Track Order</div>
+    <div class="cf-page-sub">Everything you've ordered, with live status and production progress.</div>
+
+    @if (!Model.Any())
+    {
+        <div class="cf-empty">
+            <i class="fa-solid fa-box-open"></i>
+            <p>You haven't placed any orders yet.</p>
+            <a asp-controller="Home" asp-action="hIndex">Browse Products</a>
+        </div>
+    }
+    else
+    {
+        <div class="cot-orders-list">
+            @foreach (var o in Model)
+            {
+                var firstItem = o.OrderDetails.FirstOrDefault();
+                var thumbPath = firstItem == null ? null
+                    : (!string.IsNullOrEmpty(firstItem.ImageSnapshotPath) ? firstItem.ImageSnapshotPath
+                        : (firstItem.Product != null ? firstItem.Product.ImagePath : null));
+                var extraCount = o.OrderDetails.Count - 1;
+                <div class="cot-order-card" onclick="loadMyOrderDetails(@o.OrderID)">
+                    <div class="cot-order-card-thumb">
+                        @if (!string.IsNullOrEmpty(thumbPath))
+                        {
+                            <img src="@thumbPath" alt="" onerror="this.style.display='none'" />
+                        }
+                        else
+                        {
+                            <i class="fa-solid fa-shirt"></i>
+                        }
+                    </div>
+                    <div class="cot-order-card-main">
+                        <div class="cot-order-card-id">#ORD-@o.OrderID.ToString("D5")</div>
+                        <div class="cot-order-card-date">@o.OrderDate.ToString("MMMM d, yyyy h:mm tt")</div>
+                        @if (extraCount > 0)
+                        {
+                            <div class="cot-order-card-extra">+@extraCount more item@(extraCount > 1 ? "s" : "")</div>
+                        }
+                    </div>
+                    <div class="cot-order-card-right">
+                        <span class="cot-order-card-total">₱@o.TotalAmount.ToString("N2")</span>
+                        <span class="cot-badge @StatusBadgeClass(o.Status)">@o.Status</span>
+                        <i class="fa-solid fa-chevron-right cot-order-card-chevron"></i>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+<!-- Order details popup (customer-facing: no admin actions, just the
+     read-only order info + production progress). -->
+<div class="cot-modal-backdrop" id="myOrderModalBackdrop" onclick="if(event.target===this) closeMyOrderModal()">
+    <div class="cot-modal" id="myOrderModal">
+        <div class="cot-modal-loading"><i class="fa-solid fa-spinner fa-spin"></i> Loading order details…</div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/track-order.js" asp-append-version="true"></script>
+}

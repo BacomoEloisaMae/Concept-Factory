@@ -1,0 +1,122 @@
+@model List<ConceptFactory.Models.Category>
+@using ConceptFactory.Models
+@{
+    ViewData["Title"] = "Customize Your Product";
+}
+@section Styles {
+    <link rel="stylesheet" href="~/css/customize/customize-index.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/navbar.css" asp-append-version="true" />
+}
+
+<div class="cz-wrap">
+    <div class="cz-header">
+        <h1>Customize <span>Your Product</span></h1>
+        <p>Choose the item you want to personalize</p>
+    </div>
+
+    <div class="cz-grid-groups">
+        @{
+            var thumbs = ViewBag.CategoryThumbs as Dictionary<int, string>;
+
+            // Same top-level/children split hProducts.cshtml uses for its
+            // category pills — Model is the full flat category list, so no
+            // extra DB round-trip is needed to group it here.
+            var topLevelCategories = Model.Where(c => c.ParentCategoryID == null).OrderBy(c => c.CategoryName).ToList();
+
+            string ThumbFor(Category cat) =>
+                (thumbs != null && thumbs.ContainsKey(cat.CategoryID)) ? thumbs[cat.CategoryID] : "/images/categories/default.png";
+
+            void RenderCard(Category cat)
+            {
+                var activeProducts = cat.Products.Where(p => !p.IsDeleted && p.Status == "Active").ToList();
+                <div class="cz-card">
+                    <div class="cz-card-thumb">
+                        <img src="@ThumbFor(cat)" alt="@cat.CategoryName" />
+                    </div>
+                    <div class="cz-card-name">@cat.CategoryName</div>
+                    @if (activeProducts.Any())
+                    {
+                        var startingPrice = activeProducts.Min(p => p.Price);
+                        <div class="cz-card-price">Starting at ₱@startingPrice.ToString("N2")</div>
+                    }
+                    else
+                    {
+                        <div class="cz-card-price">Custom pricing</div>
+                    }
+                    <a href="@Url.Action("Custom", "Customize", new { categoryId = cat.CategoryID })" class="cz-card-btn">
+                        Customize <i class="fa-solid fa-pen-to-square"></i>
+                    </a>
+                </div>
+            }
+        }
+        @foreach (var parent in topLevelCategories)
+        {
+            var children = Model.Where(c => c.ParentCategoryID == parent.CategoryID).OrderBy(c => c.CategoryName).ToList();
+
+            if (children.Any())
+            {
+                // A broader category with specific sub-types underneath
+                // (e.g. "Hoodies & Jackets" -> Varsity Jackets, Jacket
+                // Zip-Up, ...): show it as a section heading, with one
+                // card per sub-type so the shopper picks the exact one
+                // to customize.
+                <div class="cz-group" id="cz-group-@parent.CategoryID">
+                    <h2 class="cz-group-title">@parent.CategoryName</h2>
+                    <div class="cz-grid">
+                        @foreach (var child in children)
+                        {
+                            RenderCard(child);
+                        }
+                    </div>
+                </div>
+            }
+            else
+            {
+                // No sub-types (e.g. "Polo Shirts", "Sweaters", "Tote
+                // Bags") — each still gets its own labeled section (just
+                // with a single card in it), so it reads as its own
+                // category rather than being lumped in anonymously with
+                // the others.
+                <div class="cz-group" id="cz-group-@parent.CategoryID">
+                    <h2 class="cz-group-title">@parent.CategoryName</h2>
+                    <div class="cz-grid">
+                        @{ RenderCard(parent); }
+                    </div>
+                </div>
+            }
+        }
+    </div>
+
+    <div class="cz-features">
+        <div class="cz-feature">
+            <div class="cz-feature-icon"><i class="fa-solid fa-medal"></i></div>
+            <div>
+                <div class="cz-feature-label">Premium Quality</div>
+                <div class="cz-feature-desc">High quality materials for the best results</div>
+            </div>
+        </div>
+        <div class="cz-feature">
+            <div class="cz-feature-icon"><i class="fa-solid fa-droplet"></i></div>
+            <div>
+                <div class="cz-feature-label">Vibrant Printing</div>
+                <div class="cz-feature-desc">Advanced printing technology for long-lasting designs</div>
+            </div>
+        </div>
+        <div class="cz-feature">
+            <div class="cz-feature-icon"><i class="fa-solid fa-truck-fast"></i></div>
+            <div>
+                <div class="cz-feature-label">Fast Production</div>
+                <div class="cz-feature-desc">2-3 business days production time</div>
+            </div>
+        </div>
+        <div class="cz-feature">
+            <div class="cz-feature-icon"><i class="fa-solid fa-shield-heart"></i></div>
+            <div>
+                <div class="cz-feature-label">Satisfaction Guaranteed</div>
+                <div class="cz-feature-desc">We ensure you'll love your custom product</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+

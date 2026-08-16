@@ -1,0 +1,132 @@
+/* ============================================================
+   CUSTOMIZE-INDEX.CSS
+   Styles for Views/Customize/Index.cshtml — the item picker
+   page shown when the shopper clicks "Customize Now" in the
+   hero. Self-contained (own :root), page uses Layout = null.
+============================================================ */
+:root {
+    --primary: #5B5EF4;
+    --primary-dark: #4547d4;
+    --primary-light: #EEEEFF;
+    --text-main: #1e293b;
+    --text-sub: #64748b;
+    --text-muted: #94a3b8;
+    --border: #e2e8f0;
+    --bg: #f8fafc;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text-main);
+}
+
+/* ── Header ── */
+.cz-wrap {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 40px 24px 60px;
+}
+.cz-header { text-align: center; margin-bottom: 30px; }
+.cz-header h1 { font-size: 26px; font-weight: 800; }
+.cz-header h1 span { color: var(--primary); }
+.cz-header p { font-size: 13px; color: var(--text-sub); margin-top: 6px; }
+
+/* ── Grid ── */
+.cz-grid-groups {
+    display: flex;
+    flex-direction: column;
+    gap: 36px;
+}
+/* Anchor target for Views/Home/_CustomizeCard.cshtml's "All" link
+   (#cz-group-{CategoryID}, set on this same element in Index.cshtml) —
+   keeps the jumped-to heading from landing under the sticky navbar. */
+.cz-group { scroll-margin-top: 90px; }
+.cz-group-title {
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--text-main);
+    margin-bottom: 14px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--border);
+}
+
+.cz-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 18px;
+}
+@media (max-width: 900px) { .cz-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 520px) { .cz-grid { grid-template-columns: 1fr; } }
+
+.cz-card {
+    background: #fff;
+    border: 1.5px solid var(--border);
+    border-radius: 14px;
+    padding: 20px 16px 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    transition: box-shadow .2s, transform .2s, border-color .2s;
+}
+.cz-card:hover {
+    box-shadow: 0 8px 24px rgba(91,94,244,.13);
+    transform: translateY(-3px);
+    border-color: #c7caff;
+}
+.cz-card-thumb {
+    width: 148px; height: 148px;
+    border-radius: 50%;
+    background: var(--primary-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 14px;
+    overflow: hidden;
+}
+.cz-card-thumb img { width: 70%; height: 70%; object-fit: contain; }
+.cz-card-name { font-size: 15px; font-weight: 700; color: var(--text-main); }
+.cz-card-price { font-size: 13px; color: var(--text-muted); margin-top: 2px; margin-bottom: 14px; }
+.cz-card-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 9px;
+    background: var(--primary);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 12.5px;
+    font-weight: 700;
+    text-decoration: none;
+    transition: background .15s;
+}
+.cz-card-btn:hover { background: var(--primary-dark); }
+
+/* ── Feature strip ── */
+.cz-features {
+    margin-top: 32px;
+    background: #fff;
+    border: 1.5px solid var(--border);
+    border-radius: 14px;
+    padding: 24px 28px;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+}
+@media (max-width: 760px) { .cz-features { grid-template-columns: repeat(2, 1fr); } }
+.cz-feature { display: flex; align-items: flex-start; gap: 12px; }
+.cz-feature-icon {
+    width: 34px; height: 34px;
+    border-radius: 10px;
+    background: var(--primary-light);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+}
+.cz-feature-icon i { font-size: 14px; color: var(--primary); }
+.cz-feature-label { font-size: 12.5px; font-weight: 700; color: var(--text-main); margin-bottom: 2px; }
+.cz-feature-desc { font-size: 11px; color: var(--text-muted); line-height: 1.4; }
+

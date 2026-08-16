@@ -1,0 +1,266 @@
+@model IEnumerable<ConceptFactory.Models.Order>
+@using ConceptFactory.Models
+@{
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    ViewData["Title"] = "Production";
+    ViewData["ActivePage"] = "Production";
+    ViewData["ActiveStation"] = "Overview";
+
+    int page = ViewBag.Page ?? 1;
+    int totalPages = ViewBag.TotalPages ?? 1;
+    int totalCount = ViewBag.TotalCount ?? 0;
+    int pageSize = 10;
+    int startItem = totalCount == 0 ? 0 : ((page - 1) * pageSize) + 1;
+    int endItem = Math.Min(page * pageSize, totalCount);
+    string currentTab = ViewBag.Tab ?? "All";
+
+    int ProgressPercent(ConceptFactory.Models.Order o) => o.Status switch
+    {
+        "Completed" => 100,
+        "Confirmed" or "Design Review" => 0,
+        _ => (int)Math.Round((o.ProductionStage + 1) / 6.0 * 100)
+    };
+    string ProgressLabel(ConceptFactory.Models.Order o) => o.Status switch
+    {
+        "Completed" => "Done",
+        "Confirmed" => "Not started",
+        "Design Review" => "In review",
+        _ => $"Stage {o.ProductionStage + 1} of 6"
+    };
+}
+@section Styles {
+    <link rel="stylesheet" href="~/css/admin/orders.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/admin/billing.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/admin/production.css" asp-append-version="true" />
+}
+<div class="page-container">
+
+    <!-- Page Header -->
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Production Monitoring</h1>
+            <p class="page-subtitle">Track and advance every confirmed order through production</p>
+        </div>
+        <a href="@Url.Action("hTrackOrder", "Home")" target="_blank" class="btn btn-outline">
+            <i class="fa-solid fa-arrow-up-right-from-square"></i> Preview Customer Tracking Page
+        </a>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
+
+    <!-- Production Workflow Monitoring — shared stepper, reflects whichever
+         order row below was last clicked. Starts neutral/grey until a row
+         is picked (see selectProdRow in production-progress.js). -->
+    <div class="card prod-monitor-card">
+        <div class="prod-monitor-title">
+            <h2>Production Workflow Monitoring</h2>
+            <p id="prodMonitorSubtitle">Click any order below to see its progress here</p>
+        </div>
+        <div class="prod-monitor-stepper" id="prodMonitorStepper">
+            <div class="prod-monitor-step" data-node="confirm">
+                <div class="prod-monitor-icon"><i class="fa-solid fa-check prod-monitor-orig-icon"></i><i class="fa-solid fa-check prod-monitor-check-icon"></i></div>
+                <div class="prod-monitor-label">Order Confirm</div>
+                <div class="prod-monitor-sublabel">—</div>
+            </div>
+            <div class="prod-monitor-line"></div>
+            <div class="prod-monitor-step" data-node="0">
+                <div class="prod-monitor-icon"><i class="fa-solid fa-scissors prod-monitor-orig-icon"></i><i class="fa-solid fa-check prod-monitor-check-icon"></i></div>
+                <div class="prod-monitor-label">Cutting</div>
+                <div class="prod-monitor-sublabel">—</div>
+            </div>
+            <div class="prod-monitor-line"></div>
+            <div class="prod-monitor-step" data-node="2">
+                <div class="prod-monitor-icon"><i class="fa-solid fa-shirt prod-monitor-orig-icon"></i><i class="fa-solid fa-check prod-monitor-check-icon"></i></div>
+                <div class="prod-monitor-label">Sewing</div>
+                <div class="prod-monitor-sublabel">—</div>
+            </div>
+            <div class="prod-monitor-line"></div>
+            <div class="prod-monitor-step" data-node="3">
+                <div class="prod-monitor-icon"><i class="fa-solid fa-ruler-combined prod-monitor-orig-icon"></i><i class="fa-solid fa-check prod-monitor-check-icon"></i></div>
+                <div class="prod-monitor-label">Trimming</div>
+                <div class="prod-monitor-sublabel">—</div>
+            </div>
+            <div class="prod-monitor-line"></div>
+            <div class="prod-monitor-step" data-node="1">
+                <div class="prod-monitor-icon"><i class="fa-solid fa-print prod-monitor-orig-icon"></i><i class="fa-solid fa-check prod-monitor-check-icon"></i></div>
+                <div class="prod-monitor-label">Printing</div>
+                <div class="prod-monitor-sublabel">—</div>
+            </div>
+            <div class="prod-monitor-line"></div>
+            <div class="prod-monitor-step" data-node="4">
+                <div class="prod-monitor-icon"><i class="fa-solid fa-shield-halved prod-monitor-orig-icon"></i><i class="fa-solid fa-check prod-monitor-check-icon"></i></div>
+                <div class="prod-monitor-label">Quality Check</div>
+                <div class="prod-monitor-sublabel">—</div>
+            </div>
+            <div class="prod-monitor-line"></div>
+            <div class="prod-monitor-step" data-node="5">
+                <div class="prod-monitor-icon"><i class="fa-solid fa-box-open prod-monitor-orig-icon"></i><i class="fa-solid fa-check prod-monitor-check-icon"></i></div>
+                <div class="prod-monitor-label">Ready for Pickup</div>
+                <div class="prod-monitor-sublabel">—</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stat Cards -->
+    <div class="stat-cards-row">
+        <div class="stat-card">
+            <span class="stat-card-label">Confirmed</span>
+            <div class="stat-card-body">
+                <div class="stat-icon stat-icon-purple"><i class="fa-solid fa-thumbs-up"></i></div>
+                <span class="stat-value">@ViewBag.ConfirmedCount</span>
+            </div>
+        </div>
+        <div class="stat-card">
+            <span class="stat-card-label">In Production</span>
+            <div class="stat-card-body">
+                <div class="stat-icon stat-icon-orange"><i class="fa-solid fa-gear"></i></div>
+                <span class="stat-value">@ViewBag.InProductionCount</span>
+            </div>
+        </div>
+        <div class="stat-card">
+            <span class="stat-card-label">Ready for Pickup</span>
+            <div class="stat-card-body">
+                <div class="stat-icon stat-icon-teal"><i class="fa-solid fa-box-open"></i></div>
+                <span class="stat-value">@ViewBag.ReadyForPickupCount</span>
+            </div>
+        </div>
+        <div class="stat-card">
+            <span class="stat-card-label">Completed</span>
+            <div class="stat-card-body">
+                <div class="stat-icon stat-icon-green"><i class="fa-solid fa-circle-check"></i></div>
+                <span class="stat-value">@ViewBag.CompletedCount</span>
+            </div>
+        </div>
+    </div>
+
+
+        <!-- Tabs -->
+        <div class="order-tabs">
+            <a asp-action="pIndex" asp-route-search="@ViewBag.Search" class="order-tab @(currentTab == "All" ? "active" : "")">All In Production</a>
+            <a asp-action="pIndex" asp-route-tab="Confirmed" asp-route-search="@ViewBag.Search" class="order-tab @(currentTab == "Confirmed" ? "active" : "")">Confirmed</a>
+            <a asp-action="pIndex" asp-route-tab="InProduction" asp-route-search="@ViewBag.Search" class="order-tab @(currentTab == "InProduction" ? "active" : "")">In Production</a>
+            <a asp-action="pIndex" asp-route-tab="ReadyForPickup" asp-route-search="@ViewBag.Search" class="order-tab @(currentTab == "ReadyForPickup" ? "active" : "")">Ready for Pickup</a>
+            <a asp-action="pIndex" asp-route-tab="Completed" asp-route-search="@ViewBag.Search" class="order-tab @(currentTab == "Completed" ? "active" : "")">Completed</a>
+        </div>
+
+        <!-- Filters -->
+        <div class="filter-bar">
+            <form method="get" asp-action="pIndex"  class="filter-form">
+				<input type="hidden" name="tab" value="@ViewBag.Tab" />
+				<div class="search-box">
+					<i class="fa-solid fa-magnifying-glass"></i>
+					<input type="text" name="search" value="@ViewBag.Search" placeholder="Search Order ID, customer, product..." class="search-input" />
+				</div>
+				<button type="submit" class="btn btn-outline">
+					<i class="fa-solid fa-filter"></i> Search
+				</button>
+			</form>
+		</div>
+
+    <!-- Table Card -->
+    <div class="card">
+        <!-- Production Table -->
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Order ID</th>
+                    <th>Customer</th>
+                    <th>Products</th>
+                    <th>Status</th>
+                    <th>Progress</th>
+                    <th>Order Date</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Any())
+                {
+                    <tr>
+                        <td colspan="7">
+                            <div class="orders-empty-state">
+                                <i class="fa-solid fa-industry"></i>
+                                <p>No confirmed orders in production yet.</p>
+                            </div>
+                        </td>
+                    </tr>
+                }
+                @foreach (var o in Model)
+                {
+                    <tr id="prod-row-@o.OrderID" class="order-row-clickable"
+                        data-stage="@o.ProductionStage" data-status="@o.Status"
+                        onclick="selectProdRow(this, @o.OrderID)">
+                        <td><span class="order-id-link id-link-static">#ORD-@o.OrderID.ToString("D3")</span></td>
+                        <td>@o.CustomerName</td>
+                        <td class="order-products-cell">
+                            @Html.Raw(string.Join("<br />", o.OrderDetails.Select(d => $"{d.Quantity}x {(string.IsNullOrEmpty(d.ProductNameSnapshot) ? "Item" : d.ProductNameSnapshot)}{(d.IsCustomOrder ? "" : " (pre-designed)")}")))
+                        </td>
+                        <td>
+                            <span class="status-badge @OrderStatusDisplay.BadgeClass(o.Status)">@o.Status</span>
+                        </td>
+                        <td>
+                            <div class="prod-progress-bar prod-progress-clickable" title="View production progress"><div class="prod-progress-fill" style="--pct:@(ProgressPercent(o))%"></div></div>
+                            <div class="prod-progress-label">@ProgressLabel(o)</div>
+                        </td>
+                        <td class="order-date-cell">
+                            @o.OrderDate.ToString("MMMM d, yyyy")
+                            <span class="order-time">@o.OrderDate.ToString("h:mm tt")</span>
+                        </td>
+                        <td onclick="event.stopPropagation()">
+                            <button type="button" class="btn btn-outline btn-sm" onclick="loadProductionDetails(@o.OrderID, true)">
+                                <i class="fa-solid fa-eye"></i> View
+                            </button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        <!-- Pagination -->
+        @if (totalPages > 1)
+        {
+            <div class="pagination">
+                <span class="page-info">Showing @startItem–@endItem of @totalCount orders</span>
+                <div class="page-btns">
+                    @if (page > 1)
+                    {
+                        <a asp-action="pIndex" asp-route-page="@(page-1)" asp-route-tab="@ViewBag.Tab" asp-route-search="@ViewBag.Search" class="page-btn">‹</a>
+                    }
+                    @for (int i = 1; i <= totalPages; i++)
+                    {
+                        <a asp-action="pIndex" asp-route-page="@i" asp-route-tab="@ViewBag.Tab" asp-route-search="@ViewBag.Search"
+                           class="page-btn @(i == page ? "active" : "")">@i</a>
+                    }
+                    @if (page < totalPages)
+                    {
+                        <a asp-action="pIndex" asp-route-page="@(page+1)" asp-route-tab="@ViewBag.Tab" asp-route-search="@ViewBag.Search" class="page-btn">›</a>
+                    }
+                </div>
+            </div>
+        }
+        else if (totalCount > 0)
+        {
+            <div class="pagination">
+                <span class="page-info">Showing @startItem–@endItem of @totalCount orders</span>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Production Progress modal -->
+<div class="billing-modal-backdrop" id="prodModalBackdrop" onclick="if(event.target===this) closeProductionModal()">
+    <div class="billing-modal om-modal" id="prodModal">
+        <div class="billing-modal-loading"><i class="fa-solid fa-spinner fa-spin"></i> Loading production details…</div>
+    </div>
+</div>
+
+<!-- Per-item detail popup (opened from a "View" button inside the panel above) -->
+<div class="prod-item-modal-backdrop" id="prodItemModalBackdrop" onclick="if(event.target===this) closeProdItemModal()">
+    <div class="prod-item-modal" id="prodItemModal"></div>
+</div>
+
+@section Scripts {
+    <script src="~/js/admin/production-progress.js" asp-append-version="true"></script>
+}

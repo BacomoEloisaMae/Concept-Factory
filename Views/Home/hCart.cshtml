@@ -1,0 +1,57 @@
+@{
+    ViewData["Title"] = "Cart";
+}
+@section Styles {
+    <link rel="stylesheet" href="~/css/home/home-index.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/navbar.css" asp-append-version="true" />
+}
+<div class="cf-page page-fill">
+    <div class="cf-page-title">My Cart</div>
+    <div class="cf-page-sub" id="cartCountLabel">Loading…</div>
+
+    <div id="cartLayout" class="cf-cart-layout">
+        <div class="cf-cart-main">
+            <div class="cf-select-all-row">
+                <label class="cf-checkbox-wrap">
+                    <input type="checkbox" id="cartSelectAll" onchange="cfToggleSelectAll(this.checked)" />
+                    <span>Select All</span>
+                </label>
+            </div>
+            <div id="cartList" class="cf-cart-list"></div>
+        </div>
+
+        <div class="cf-summary">
+            <div class="cf-summary-row js-hidden" id="cartProductPriceRow">
+                <span>Product Price</span><span id="cartProductPrice">₱0.00</span>
+            </div>
+            <div class="cf-summary-row js-hidden" id="cartServiceFeeRow">
+                <span>Printing / Service Fee</span><span id="cartServiceFee">₱0.00</span>
+            </div>
+            <div class="cf-summary-total"><span>Total</span><span id="cartTotal">₱0.00</span></div>
+            <button class="cf-summary-btn" id="cartCheckoutBtn" onclick="cfCheckout()">Proceed to Checkout</button>
+            <button class="cf-summary-clear" onclick="cfClearCart()">Clear Cart</button>
+        </div>
+    </div>
+
+    <div id="cartEmpty" class="cf-empty js-hidden">
+        <i class="fa-solid fa-cart-shopping"></i>
+        <p>Your cart is empty.</p>
+        <a asp-controller="Home" asp-action="hIndex">Browse Products</a>
+    </div>
+</div>
+
+<script>
+    window.CF_CART_PAGE = {
+        homeUrl: '@Url.Action("hIndex", "Home")',
+        // Templates with a placeholder id/categoryId of 0 — cart-page.js
+        // swaps in the real id before navigating, same pattern as
+        // hWishlist.cshtml's detailsUrl.
+        detailsUrl: '@Url.Action("hDetails", "Home", new { id = 0 })',
+        customizeUrl: '@Url.Action("Custom", "Customize", new { categoryId = 0 })',
+        customizeIndexUrl: '@Url.Action("Index", "Customize")',
+        billingUrl: '@Url.Action("hBilling", "Home")'
+    };
+</script>
+@section Scripts {
+    <script src="~/js/cart-page.js" asp-append-version="true"></script>
+}

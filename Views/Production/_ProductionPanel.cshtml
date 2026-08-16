@@ -1,0 +1,260 @@
+@model ConceptFactory.Models.Order
+@using ConceptFactory.Models
+@{
+    string[] stages =
+{
+    "Cutting",
+    "Printing",
+    "Sewing",
+    "Trimming",
+    "Quality Check",
+    "Completed"
+};
+    bool readOnly = ViewBag.ReadOnly == true;
+}
+<div class="bvp-header">
+    <div class="bvp-header-icon"><i class="fa-solid fa-bars-progress"></i></div>
+    <div class="bvp-header-text">
+        <div class="bvp-title">Production Progress</div>
+        <div class="bvp-subtitle">#ORD-@Model.OrderID.ToString("D5") — @Model.CustomerName</div>
+    </div>
+    <button type="button" class="bvp-close-btn" onclick="closeProductionModal()"><i class="fa-solid fa-xmark"></i> Close</button>
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success om-modal-alert">@TempData["Success"]</div>
+}
+
+@if (readOnly)
+{
+    <div class="prod-readonly-banner">
+        <i class="fa-solid fa-eye"></i>
+        Overview is view-only. To update production status, use the order's station page from the Production menu.
+    </div>
+}
+
+<div class="om-modal-body">
+
+    <div class="bvp-summary-row bvp-summary-row-3col">
+        <div class="bvp-summary-item">
+            <label>Order Status</label>
+            <span class="status-badge @OrderStatusDisplay.BadgeClass(Model.Status)">@Model.Status</span>
+        </div>
+        <div class="bvp-summary-item">
+            <label>Items</label>
+            <span>@Model.OrderDetails.Count() item(s) — @Model.OrderDetails.Count(d => d.IsCustomOrder) tracked</span>
+        </div>
+        <div class="bvp-summary-item">
+            <label>Order Date</label>
+            <span>@Model.OrderDate.ToString("MMM d, yyyy")</span>
+        </div>
+    </div>
+
+    <div class="prod-card">
+        <div class="prod-card-title">
+            <i class="fa-solid fa-shirt"></i> Order Items
+            <span class="od-readonly-tag">Only customize items are tracked here</span>
+        </div>
+        <div class="prod-items-list">
+            @foreach (var d in Model.OrderDetails)
+            {
+                <div class="prod-item-row @(d.IsCustomOrder ? "" : "prod-item-row-untracked")">
+                    <div class="prod-item-thumb">
+                        @if (!string.IsNullOrEmpty(d.ImageSnapshotPath))
+                        {
+                            <img src="@d.ImageSnapshotPath" alt="@d.ProductNameSnapshot" />
+                        }
+                        else
+                        {
+                            <i class="fa-solid fa-shirt"></i>
+                        }
+                    </div>
+                    <div class="prod-item-info">
+                        <div class="prod-item-name">
+                            @d.Quantity x @(string.IsNullOrEmpty(d.ProductNameSnapshot) ? "Item" : d.ProductNameSnapshot)
+                            @if (d.IsCustomOrder)
+                            {
+                                <span class="prod-item-tracked-tag">Tracked</span>
+                            }
+                            else
+                            {
+                                <span class="prod-item-untracked-tag">Pre-designed — not tracked</span>
+                            }
+                        </div>
+                        <div class="prod-item-meta">
+                            @(string.IsNullOrEmpty(d.SelectedSize) ? "" : $"Size: {d.SelectedSize}")
+                            @(string.IsNullOrEmpty(d.SelectedColor) ? "" : $" · Color: {d.SelectedColor}")
+                            @(string.IsNullOrEmpty(d.PrintLocation) ? "" : $" · {d.PrintLocation}")
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-outline btn-sm"
+                            onclick="showProdItemDetail(this)"
+                            data-name="@(string.IsNullOrEmpty(d.ProductNameSnapshot) ? "Item" : d.ProductNameSnapshot)"
+                            data-image="@d.ImageSnapshotPath"
+                            data-qty="@d.Quantity"
+                            data-size="@d.SelectedSize"
+                            data-color="@d.SelectedColor"
+                            data-location="@d.PrintLocation"
+                            data-service="@d.ServiceNameSnapshot"
+                            data-notes="@d.DesignNotes">
+                        <i class="fa-solid fa-eye"></i> View
+                    </button>
+                </div>
+            }
+            @if (!Model.OrderDetails.Any())
+            {
+                <p class="prod-items-empty">No items on this order.</p>
+            }
+        </div>
+    </div>
+
+
+    @if (Model.Status == "Confirmed")
+    {
+        <span>Waiting to Start Production</span>
+    }
+    else if (Model.Status == "In Production")
+    {
+        <span>Started</span>
+    }
+    else if (Model.Status == "Ready for Pickup")
+    {
+        <span>Completed</span>
+    }
+    else if (Model.Status == "Completed")
+    {
+        <span>Completed</span>
+    }
+
+
+    @if (Model.Status == "Cancelled")
+    {
+        <div class="od-cancelled-note"><i class="fa-solid fa-circle-xmark"></i> This order was cancelled — production is not tracked.</div>
+    }
+    else
+    {
+        <div class="prod-card">
+            <div class="prod-card-title">
+                <i class="fa-solid fa-industry"></i> Production Stages
+                @if (readOnly)
+                {
+                    <span class="od-readonly-tag">View only</span>
+                }
+                else
+                {
+                    <span class="od-readonly-tag">Click a stage to mark it done</span>
+                }
+            </div>
+            <div class="od-stepper">
+                @for (int i = 0; i < stages.Length; i++)
+                {
+                    bool done = Model.Status != "Confirmed" && i <= Model.ProductionStage;
+                    bool current = done && i == Model.ProductionStage;
+                    bool clickable = !readOnly && Model.Status != "Completed";
+                    @if (clickable)
+                    {
+                        <form asp-controller="Production" asp-action="pSetStage" method="post" class="od-stepper-step-form" data-prod-form="1">
+                            <input type="hidden" name="id" value="@Model.OrderID" />
+                            <input type="hidden" name="stage" value="@i" />
+                            <button type="submit" class="od-stepper-step @(done ? "done" : "") @(current ? "current" : "")" title="Mark up to '@stages[i]' as done">
+                                <span class="od-stepper-dot">@(done ? "✓" : (i + 1).ToString())</span>
+                                <span class="od-stepper-label">@stages[i]</span>
+                            </button>
+                        </form>
+                    }
+                    else
+                    {
+                        <div class="od-stepper-step @(done ? "done" : "") @(current ? "current" : "")">
+                            <span class="od-stepper-dot">@(done ? "✓" : (i + 1).ToString())</span>
+                            <span class="od-stepper-label">@stages[i]</span>
+                        </div>
+                    }
+                    @if (i < stages.Length - 1)
+                    {
+                        <div class="od-stepper-line @(i < Model.ProductionStage && Model.Status != "Confirmed" ? "done" : "")"></div>
+                    }
+                }
+            </div>
+        </div>
+    }
+
+    @if (Model.Status != "Cancelled")
+    {
+        List<ActivityLog> timelineLogs = ViewBag.TimelineLogs ?? new List<ActivityLog>();
+        // Stations the order hasn't reached yet — rendered as gray
+        // "Pending"/orange "In Progress" placeholders after the real,
+        // dated log entries above. currentStage is the one actively being
+        // worked (Status == "In Production"); everything past it is still
+        // waiting.
+        int currentStage = Model.Status == "Confirmed" ? -1 : Model.ProductionStage;
+        bool hasActiveStage = Model.Status == "In Production";
+        <div class="prod-card">
+            <div class="prod-card-title"><i class="fa-solid fa-clock-rotate-left"></i> Order Timeline</div>
+            <div class="prod-timeline">
+                @foreach (var log in timelineLogs)
+                {
+                    <div class="prod-timeline-item prod-timeline-item-done">
+                        <div class="prod-timeline-marker"><i class="fa-solid fa-check"></i></div>
+                        <div class="prod-timeline-content">
+                            <div class="prod-timeline-row">
+                                <span class="prod-timeline-title">@log.Action</span>
+                                <span class="prod-timeline-date">@log.Timestamp.ToString("MMM d, yyyy | h:mm tt")</span>
+                            </div>
+                            @if (!string.IsNullOrEmpty(log.Details))
+                            {
+                                <div class="prod-timeline-desc">@log.Details</div>
+                            }
+                        </div>
+                    </div>
+                }
+                @for (int i = 0; i < stages.Length; i++)
+                {
+                    bool alreadyDone = Model.Status != "Confirmed" && i <= currentStage && !(hasActiveStage && i == currentStage);
+                    if (alreadyDone) { continue; } // already represented by a real log entry above
+                    bool isActive = hasActiveStage && i == currentStage;
+                    <div class="prod-timeline-item @(isActive ? "prod-timeline-item-active" : "prod-timeline-item-pending")">
+                        <div class="prod-timeline-marker"></div>
+                        <div class="prod-timeline-content">
+                            <div class="prod-timeline-row">
+                                <span class="prod-timeline-title">@stages[i]</span>
+                                <span class="prod-timeline-tag @(isActive ? "prod-timeline-tag-active" : "")">@(isActive ? "In Progress" : "Pending")</span>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+
+    @if (Model.Status == "Ready for Pickup")
+    {
+        @if (readOnly)
+        {
+            <div class="prod-step-card prod-step-card-success">
+                <div class="prod-step-card-text">
+                    <i class="fa-solid fa-box-open"></i>
+                    Production is complete — waiting for the customer to pick up. Mark it Completed from the Quality Check station page.
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="prod-step-card prod-step-card-success">
+                <div class="prod-step-card-text">
+                    <i class="fa-solid fa-box-open"></i>
+                    Production is complete. Once the customer has picked up their order, mark it Completed.
+                </div>
+                <form asp-controller="Production" asp-action="pMarkCompleted" method="post" data-prod-form="1">
+                    <input type="hidden" name="id" value="@Model.OrderID" />
+                    <button type="submit" class="btn btn-primary"><i class="fa-solid fa-circle-check"></i> Mark Completed</button>
+                </form>
+            </div>
+        }
+    }
+
+    @if (Model.Status == "Completed")
+    {
+        <div class="bvp-already-decided"><i class="fa-solid fa-circle-check"></i> This order has been completed.</div>
+    }
+</div>

@@ -1,0 +1,199 @@
+@model IEnumerable<ConceptFactory.Models.Order>
+@using ConceptFactory.Models
+@{
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    int stationIndex = ViewBag.StationIndex;
+    string stationName = ViewBag.StationName;
+    ViewData["Title"] = $"Production — {stationName}";
+
+    int page = ViewBag.Page ?? 1;
+    int totalPages = ViewBag.TotalPages ?? 1;
+    int totalCount = ViewBag.TotalCount ?? 0;
+    int pageSize = 10;
+    int startItem = totalCount == 0 ? 0 : ((page - 1) * pageSize) + 1;
+    int endItem = Math.Min(page * pageSize, totalCount);
+    bool isReadyForPickup = stationIndex == ConceptFactory.Models.ProductionWorkflow.ReadyForPickupIndex;
+    bool isCutting = stationIndex == 0;
+
+    string RowStatusLabel(ConceptFactory.Models.Order o) => o.Status == "Confirmed"
+        ? "Ready to Start"
+        : o.Status == "Ready for Pickup"
+            ? "Ready for Pickup"
+            : $"In {stationName}";
+    string RowStatusClass(ConceptFactory.Models.Order o) => o.Status == "Confirmed"
+        ? "status-confirmed"
+        : o.Status == "Ready for Pickup"
+            ? "status-readypickup"
+            : "status-inproduction";
+    int RowQuantity(ConceptFactory.Models.Order o) => o.OrderDetails.Where(d => d.IsCustomOrder).Sum(d => d.Quantity);
+}
+@section Styles {
+    <link rel="stylesheet" href="~/css/admin/orders.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/admin/billing.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/admin/production.css" asp-append-version="true" />
+}
+<div class="page-container">
+
+    <!-- Page Header -->
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Production — @stationName</h1>
+            <p class="page-subtitle">
+                @if (isReadyForPickup)
+                {
+                    <text>Orders whose production is finished and are waiting for the customer to pick up.</text>
+                }
+                else if (isCutting)
+                {
+                    <text>Orders Billing has approved and are queued or currently at the Cutting stage.</text>
+                }
+                else
+                {
+                    <text>Orders currently at the @stationName stage.</text>
+                }
+            </p>
+        </div>
+        <a asp-action="pIndex" class="btn btn-outline">
+            <i class="fa-solid fa-gauge"></i> Back to Overview
+        </a>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
+
+    <!-- Stat Cards -->
+    <div class="stat-cards-row">
+        <div class="stat-card">
+            <span class="stat-card-label">Total in @stationName</span>
+            <div class="stat-card-body">
+                <div class="stat-icon stat-icon-gray"><i class="fa-solid fa-layer-group"></i></div>
+                <span class="stat-value">@totalCount</span>
+            </div>
+        </div>
+        <div class="stat-card">
+            <span class="stat-card-label">In Progress</span>
+            <div class="stat-card-body">
+                <div class="stat-icon stat-icon-orange"><i class="fa-solid fa-gear"></i></div>
+                <span class="stat-value">@ViewBag.InProgressCount</span>
+            </div>
+        </div>
+        <div class="stat-card">
+            <span class="stat-card-label">Completed Today</span>
+            <div class="stat-card-body">
+                <div class="stat-icon stat-icon-green"><i class="fa-solid fa-circle-check"></i></div>
+                <span class="stat-value">@ViewBag.CompletedTodayCount</span>
+            </div>
+        </div>
+        <div class="stat-card">
+            <span class="stat-card-label">Pending from Previous</span>
+            <div class="stat-card-body">
+                <div class="stat-icon stat-icon-gray"><i class="fa-solid fa-clock"></i></div>
+                <span class="stat-value">@ViewBag.PendingFromPreviousCount</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Table Card -->
+    <div class="card">
+
+        <!-- Filters -->
+        <form method="get" asp-action="pStation" class="filter-bar">
+            <input type="hidden" name="stage" value="@stationIndex" />
+            <div class="search-box">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" name="search" value="@ViewBag.Search" placeholder="Search Order ID, customer, product..." class="search-input" />
+            </div>
+            <button type="submit" class="btn btn-outline">
+                <i class="fa-solid fa-filter"></i> Search
+            </button>
+        </form>
+
+        <!-- Station Table -->
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Order ID</th>
+                    <th>Customer</th>
+                    <th>Product</th>
+                    <th>Quantity</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Any())
+                {
+                    <tr>
+                        <td colspan="6">
+                            <div class="orders-empty-state">
+                                <i class="fa-solid fa-industry"></i>
+                                <p>No orders currently at @stationName.</p>
+                            </div>
+                        </td>
+                    </tr>
+                }
+                @foreach (var o in Model)
+                {
+                    <tr class="order-row-clickable" onclick="openStationModal(@o.OrderID, @stationIndex)">
+                        <td><span class="order-id-link id-link-static">#ORD-@o.OrderID.ToString("D5")</span></td>
+                        <td>@o.CustomerName</td>
+                        <td class="order-products-cell">
+                            @Html.Raw(string.Join("<br />", o.OrderDetails.Select(d => $"{d.Quantity}x {(string.IsNullOrEmpty(d.ProductNameSnapshot) ? "Item" : d.ProductNameSnapshot)}{(d.IsCustomOrder ? "" : " (pre-designed)")}")))
+                        </td>
+                        <td>@RowQuantity(o) pcs</td>
+                        <td>
+                            <span class="status-badge @RowStatusClass(o)">@RowStatusLabel(o)</span>
+                        </td>
+                        <td onclick="event.stopPropagation()">
+                            <button type="button" class="btn btn-primary btn-sm" onclick="openStationModal(@o.OrderID, @stationIndex)">
+                                <i class="fa-solid fa-pen-to-square"></i> Update
+                            </button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        <!-- Pagination -->
+        @if (totalPages > 1)
+        {
+            <div class="pagination">
+                <span class="page-info">Showing @startItem–@endItem of @totalCount orders</span>
+                <div class="page-btns">
+                    @if (page > 1)
+                    {
+                        <a asp-action="pStation" asp-route-stage="@stationIndex" asp-route-page="@(page-1)" asp-route-search="@ViewBag.Search" class="page-btn">‹</a>
+                    }
+                    @for (int i = 1; i <= totalPages; i++)
+                    {
+                        <a asp-action="pStation" asp-route-stage="@stationIndex" asp-route-page="@i" asp-route-search="@ViewBag.Search"
+                           class="page-btn @(i == page ? "active" : "")">@i</a>
+                    }
+                    @if (page < totalPages)
+                    {
+                        <a asp-action="pStation" asp-route-stage="@stationIndex" asp-route-page="@(page+1)" asp-route-search="@ViewBag.Search" class="page-btn">›</a>
+                    }
+                </div>
+            </div>
+        }
+        else if (totalCount > 0)
+        {
+            <div class="pagination">
+                <span class="page-info">Showing @startItem–@endItem of @totalCount orders</span>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Station "Mark as Done" popup -->
+<div class="billing-modal-backdrop" id="stationModalBackdrop" onclick="if(event.target===this) closeStationModal()">
+    <div class="billing-modal station-modal" id="stationModal">
+        <div class="billing-modal-loading"><i class="fa-solid fa-spinner fa-spin"></i> Loading…</div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/admin/station-update.js" asp-append-version="true"></script>
+}
