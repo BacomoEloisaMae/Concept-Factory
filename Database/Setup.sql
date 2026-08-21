@@ -674,6 +674,49 @@ IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID(N'[dbo].[Or
 -- admin/customer order screens can show it as its own line item.
 IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID(N'[dbo].[OrderDetails]') AND name = 'ServicePriceSnapshot')
     ALTER TABLE [dbo].[OrderDetails] ADD ServicePriceSnapshot DECIMAL(10,2) NULL;
+-- Per-item station progress (Cutting/Printing/Sewing/Trimming/Quality
+-- Check autosave) — replaces the old single Orders.ProductionStageQuantityDone
+-- number, which lumped every color/size line into one count. Reset to 0
+-- by ProductionWorkflow.SetStage whenever the order moves to the next
+-- station. See ProductionController.pSaveStationProgress/pCompleteStation.
+IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID(N'[dbo].[OrderDetails]') AND name = 'ProductionQuantityDone')
+    ALTER TABLE [dbo].[OrderDetails] ADD ProductionQuantityDone INT NOT NULL DEFAULT 0;
+GO
+
+IF NOT EXISTS (
+    SELECT 1
+    FROM sys.columns
+    WHERE object_id = OBJECT_ID(N'[dbo].[Orders]')
+      AND name = 'ProductionStageQuantityDone'
+)
+BEGIN
+    ALTER TABLE [dbo].[Orders]
+    ADD ProductionStageQuantityDone INT NOT NULL DEFAULT 0;
+
+    PRINT 'ProductionStageQuantityDone added.';
+END
+GO
+
+USE ConceptFactoryDB;
+GO
+
+IF NOT EXISTS (
+    SELECT 1
+    FROM sys.columns
+    WHERE object_id = OBJECT_ID(N'[dbo].[Orders]')
+      AND name = 'ProductionStageQuantityDone'
+)
+BEGIN
+    ALTER TABLE [dbo].[Orders]
+    ADD ProductionStageQuantityDone INT NOT NULL
+        CONSTRAINT DF_Orders_ProductionStageQuantityDone DEFAULT 0;
+
+    PRINT 'ProductionStageQuantityDone added successfully.';
+END
+ELSE
+BEGIN
+    PRINT 'ProductionStageQuantityDone already exists.';
+END
 GO
 
 
@@ -684,10 +727,10 @@ GO
 
 
 
-SELECT
-    OrderDetailID,
-    ServiceID,
-    ServiceNameSnapshot,
-    ServicePriceSnapshot,
-    UnitPrice
-FROM OrderDetails;
+--SELECT
+--    OrderDetailID,
+--    ServiceID,
+--    ServiceNameSnapshot,
+--    ServicePriceSnapshot,
+--    UnitPrice
+--FROM OrderDetails;

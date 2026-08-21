@@ -1,0 +1,313 @@
+/* ============================================================
+   TRACK-ORDER-DETAILS.CSS
+   Loaded AFTER order-details.css, only on the Track Order ->
+   Order Details view (hOrderDetails.cshtml, fromTrack == true).
+
+   order-details.css itself stays untouched (still used by the
+   "Order Placed" confirmation page and the Track Order list),
+   this file only overrides the .cot-* sizing/spacing so the
+   Track Order details page reads at a normal, comfortable scale
+   instead of the compact one order-details.css defines.
+   ============================================================ */
+
+
+/* ============================================================
+   CARD HEADER
+   ============================================================ */
+
+.cot-card-header {
+    padding: 18px 22px;
+}
+
+.cot-card-title {
+    font-size: 17px;
+    gap: 10px;
+}
+
+.cot-card-subtitle {
+    font-size: 12.5px;
+    margin-top: 4px;
+}
+
+.cot-view-details-btn {
+    padding: 8px 16px;
+    font-size: 12px;
+}
+
+
+/* ============================================================
+   INFOBAR (Customer / Product / Quantity / Total / Payment)
+   ============================================================ */
+.cot-infobar {
+    padding: 15px 0;
+}
+
+
+    .cot-infobar-item label {
+        font-size: 12px;
+    }
+
+    .cot-infobar-item span {
+        font-size: 15px;
+    }
+
+
+/* ============================================================
+   SECTION TITLES / CARDS
+   ============================================================ */
+
+.cot-card {
+    padding: 16px;
+}
+
+.cot-section-title {
+    font-size: 15px;
+    gap: 9px;
+    margin-bottom: 16px;
+}
+
+    .cot-section-title i {
+        font-size: 15px;
+    }
+.cot-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+}
+/*    status-bage*/
+.cot-pendingdp     { background: #f1f5f9; color: var(--text-muted); }
+.cot-pendingcash   { background: #fff7ed; color: var(--warning); }
+.cot-pendingverif  { background: #fff7ed; color: var(--warning); }
+.cot-confirmed     { background: var(--primary-light); color: var(--primary); }
+.cot-pending       { background: var(--pending-light); color: var(--pending); }
+.cot-inproduction  { background: #fff7ed; color: var(--warning); }
+.cot-readypickup   { background: #ecfeff; color: #0891b2; }
+.cot-completed     { background: var(--success-light); color: #16a34a; }
+.cot-cancelled     { background: var(--danger-light); color: var(--danger); }
+/*payment-verfication*/
+.cot-waiting        { background: #fff7ed; color: var(--warning); }
+.cot-partiallypaid  { background: var(--primary-light); color: var(--primary); }
+.cot-fullypaid      { background: var(--primary-light); color: var(--primary); }
+.cot-approved       { background: var(--success-light); color: var(--success); }
+.cot-rejected       { background: var(--danger-light); color: var(--danger);}
+
+
+/* ============================================================
+   HORIZONTAL PRODUCTION PROGRESS
+   ============================================================ */
+.cot-progress-card {
+    padding: 20px 22px 24px;
+}
+
+.cot-icon-stepper {
+    padding: 10px 5px 5px;
+}
+
+.cot-icon-step {
+    flex: 0 0 118px;
+    width: 118px;
+}
+
+.cot-icon-step-dot {
+    width: 52px;
+    height: 52px;
+    font-size: 19px;
+    border-width: 2.5px;
+    margin-bottom: 8px;
+}
+
+.cot-icon-step-label {
+    font-size: 13px;
+}
+
+.cot-icon-step-sub {
+    font-size: 11px;
+    margin-top: 3px;
+}
+
+.cot-icon-step-line {
+    margin-top: 26px;
+    min-width: 16px;
+}
+
+
+/* ============================================================
+   cot BANNER (below the stepper)
+   ============================================================ */
+
+.cot-note-banner {
+    font-size: 13px;
+    padding: 13px 15px;
+    margin-top: 10px;
+    gap: 10px;
+}
+
+
+/* ============================================================
+   PRODUCT ROWS
+   ============================================================ */
+
+.cot-product-thumb {
+    width: 84px;
+    height: 84px;
+    border-radius: 8px;
+}
+
+.cot-product-row {
+    gap: 16px;
+    padding-bottom: 18px;
+}
+
+.cot-product-name {
+    font-size: 14px;
+    margin-bottom: 5px;
+}
+
+.cot-product-attr {
+    font-size: 12px;
+    line-height: 1.6;
+}
+
+.cot-product-price {
+    font-size: 14px;
+}
+
+
+/* ============================================================
+   UPLOADED DESIGN
+   ============================================================ */
+
+.cot-design-thumb {
+    width: 64px;
+    height: 64px;
+}
+
+.cot-design-name {
+    font-size: 12px;
+}
+
+.cot-empty-note {
+    font-size: 13px;
+    padding: 20px 0;
+}
+
+
+/* ============================================================
+   PAYMENT SUMMARY
+   ============================================================ */
+
+.cot-total-row {
+    margin-top: 3px;
+    font-size: 13px;
+    padding: 2px 0;
+    color: var(--text-sub);
+}
+
+    .cot-total-row.cot-total-final {
+        font-size: 15px;
+        padding-top: 10px;
+    }
+
+        .cot-total-row.cot-total-final span:last-child {
+            font-size: 14px;
+            color: var(--danger);
+        }
+
+
+/* ============================================================
+   ORDER TIMELINE
+   ============================================================ */
+
+.cot-timeline-marker {
+    width: 24px;
+    height: 24px;
+    font-size: 10px;
+}
+
+    .cot-timeline-item:not(:last-child)::before {
+        left: 11px;
+    }
+
+.cot-timeline-title {
+    font-size: 13.5px;
+}
+
+.cot-timeline-date {
+    font-size: 11.5px;
+}
+
+.cot-timeline-desc {
+    font-size: 12.5px;
+    margin-top: 4px;
+    line-height: 1.5;
+}
+
+.cot-timeline-item {
+    gap: 14px;
+    padding-bottom: 22px;
+}
+.cot-total-row span{
+    color: var(--sub-muted);
+    font-size: 12px;
+    font-weight: 600;
+}
+..cot-info-row label {
+    color: var(--sub-muted);
+    font-size: 12px;
+    font-weight: 600;
+}
+.cot-info-row {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    color: var(--sub-muted);
+    font-size: 11px;
+    gap: 0;
+}
+
+
+.cots-bottom-grid {
+    display: grid;
+    grid-template-columns: 1fr 250px;
+}
+
+.cots-bottom-grid .cot-card {
+    border: none;
+    padding: 8px 8px;
+}
+.cots-bottom-grid .cot-card:first-child {
+    border-right: 1px solid var(--border);
+}
+
+
+.cot-paid {
+    color: var(--success);
+    border-bottom: 1px solid var(--border);
+}
+.cot-paid span {
+    margin-bottom: 10px; 
+}
+/* ============================================================
+   RESPONSIVE — MOBILE
+   Scale back down closer to the base sizing so the layout still
+   fits on small screens.
+   ============================================================ */
+@media (max-width: 720px) {
+    .cot-icon-step {
+        flex-basis: 96px;
+        width: 96px;
+    }
+
+    .cot-icon-step-dot {
+        width: 42px;
+        height: 42px;
+        font-size: 16px;
+    }
+
+    .cot-infobar-item span {
+        font-size: 13px;
+    }
+}

@@ -83,7 +83,6 @@
                     Quantity: <strong>@d.Quantity </strong>
 				</div>
                 @if (!string.IsNullOrEmpty(d.DesignNotes)) { <div class="od-product-attr">Custom Note: @d.DesignNotes</div> }
-                @if (d.IsCustomOrder && string.IsNullOrEmpty(d.DesignNotes)) { <div class="od-product-attr">Custom Note: None</div> }
             </div>
             <div class="od-product-prices">
                 <div class="od-product-attr">Product Price</div>
@@ -104,19 +103,19 @@
     <!-- Uploaded Design -->
     <div class="od-card">
         <div class="od-card-title"><i class="fa-regular fa-image"></i> Uploaded Design</div>
-        @{ var linesWithDesign = Model.OrderDetails.Where(d => !string.IsNullOrEmpty(d.ImageSnapshotPath)).ToList(); }
+        @{ var linesWithDesign = Model.OrderDetails.Where(d => !string.IsNullOrEmpty(d.DesignFilePath)).ToList(); }
         @if (linesWithDesign.Any())
         {
             @foreach (var d in linesWithDesign)
             {
-                var fileName = System.IO.Path.GetFileName(d.ImageSnapshotPath);
+                var fileName = System.IO.Path.GetFileName(d.DesignFilePath);
                 <div class="od-design-row">
-                    <div class="od-design-thumb"><img src="@d.ImageSnapshotPath" alt="Uploaded design" /></div>
+                    <div class="od-design-thumb"><img src="@d.DesignFilePath" alt="Uploaded design" /></div>
                     <div class="od-design-info">
                         <div class="od-design-name">@fileName</div>
                         <div class="od-design-actions">
-                            <a href="@d.ImageSnapshotPath" target="_blank" class="od-design-link"><i class="fa-solid fa-magnifying-glass"></i> Preview</a>
-                            <a href="@d.ImageSnapshotPath" download class="od-design-link"><i class="fa-solid fa-download"></i> Download</a>
+                            <a href="@d.DesignFilePath" target="_blank" class="od-design-link"><i class="fa-solid fa-magnifying-glass"></i> Preview</a>
+                            <a href="@d.DesignFilePath" download class="od-design-link"><i class="fa-solid fa-download"></i> Download</a>
                         </div>
                     </div>
                 </div>

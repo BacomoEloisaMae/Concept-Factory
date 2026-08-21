@@ -13,12 +13,22 @@ namespace ConceptFactory.Models
         public const int ReadyForPickupIndex = TotalStages - 1;
 
         // Sets (or advances/reverts) the production stage and keeps
-        // Status in lockstep with it.
+        // Status in lockstep with it.   
         public static void SetStage(Order order, int stage)
         {
             stage = Math.Clamp(stage, 0, TotalStages - 1);
             order.ProductionStage = stage;
             order.ProductionStageUpdatedAt = DateTime.Now;
+            // Progress typed in at the previous station doesn't carry
+            // over — reset both the per-item counts (the real source of
+            // truth) and the cached order-level total (kept only as a
+            // cheap "any progress at all" flag for the station list's
+            // stat-card queries; see ProductionController.pStation).
+            order.ProductionStageQuantityDone = 0;
+            foreach (var detail in order.OrderDetails)
+            {
+                detail.ProductionQuantityDone = 0;
+            }
 
             // Any real production stage means the order is already being produced.
             if (stage < ReadyForPickupIndex)

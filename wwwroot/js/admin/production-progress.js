@@ -97,7 +97,7 @@ function selectProdRow(rowEl, orderId) {
     const status = rowEl.dataset.status;
 
     const subtitle = document.getElementById('prodMonitorSubtitle');
-    if (subtitle) subtitle.textContent = 'Order #ORD-' + String(orderId).padStart(5, '0') + ' — ' + status;
+    if (subtitle) subtitle.textContent = 'Order#' + String(orderId).padStart(3, '0') + ' — ' + status;
 
     const steps = Array.from(stepper.querySelectorAll('.prod-monitor-step'));
     const lines = Array.from(stepper.querySelectorAll('.prod-monitor-line'));

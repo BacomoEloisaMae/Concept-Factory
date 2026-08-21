@@ -9,105 +9,198 @@
     string nextStationName = ViewBag.NextStationName;
     bool isReadyForPickup = stage == ProductionWorkflow.ReadyForPickupIndex;
 
-    int target = Model.OrderDetails.Where(d => d.IsCustomOrder).Sum(d => d.Quantity);
-    string productSummary = string.Join(", ", Model.OrderDetails
-        .Where(d => d.IsCustomOrder)
-        .Select(d => $"{d.Quantity}x {(string.IsNullOrEmpty(d.ProductNameSnapshot) ? "Item" : d.ProductNameSnapshot)}"));
+    // One row per line item, NOT one lump sum — different color/size
+    // combinations need to be cut/printed/sewn separately, so lumping
+    // "5x Red-Small + 3x Blue-Large" into a single "8 pcs" field gave
+    // staff no way to know how many of each variant to actually make.
+    // Each row is preloaded from that item's own autosaved progress
+    // (OrderDetail.ProductionQuantityDone), not a shared order-wide number.
+    var customItems = Model.OrderDetails.Where(d => d.IsCustomOrder).ToList();
+    int target = customItems.Sum(d => d.Quantity);
+    int savedQty = customItems.Sum(d => Math.Clamp(d.ProductionQuantityDone, 0, d.Quantity));
+    int savedPct = target > 0 ? (int)Math.Round(savedQty / (double)target * 100) : 0;
+    bool allItemsComplete = customItems.All(d => Math.Clamp(d.ProductionQuantityDone, 0, d.Quantity) >= d.Quantity);
+
+    string ItemLabel(OrderDetail d)
+    {
+        string name = string.IsNullOrEmpty(d.ProductNameSnapshot) ? "Item" : d.ProductNameSnapshot;
+        var attrs = new List<string>();
+        if (!string.IsNullOrEmpty(d.SelectedColor)) attrs.Add(d.SelectedColor);
+        if (!string.IsNullOrEmpty(d.SelectedSize)) attrs.Add(d.SelectedSize);
+        return attrs.Any() ? $"{name} ({string.Join(" / ", attrs)})" : name;
+    }
+
+    string productSummary = string.Join(", ", customItems.Select(d => $"{d.Quantity}x {(string.IsNullOrEmpty(d.ProductNameSnapshot) ? "Item" : d.ProductNameSnapshot)}"));
     if (string.IsNullOrEmpty(productSummary)) { productSummary = "—"; }
 }
-<div class="bvp-header">
-    <div class="bvp-header-icon"><i class="fa-solid fa-industry"></i></div>
-    <div class="bvp-header-text">
-        <div class="bvp-title">@(isReadyForPickup ? "Confirm Pickup" : $"Update {stationName} Progress")</div>
-        <div class="bvp-subtitle">#ORD-@Model.OrderID.ToString("D5") — @Model.CustomerName</div>
-    </div>
-    <button type="button" class="bvp-close-btn" onclick="closeStationModal()"><i class="fa-solid fa-xmark"></i> Close</button>
-</div>
 
-<div class="om-modal-body">
+
+<div class="prod-body-grid">
     <div class="prod-card">
-        <div class="prod-card-title"><i class="fa-solid fa-circle-info"></i> Order Information</div>
-        <div class="station-info-grid">
-            <div class="station-info-item">
-                <label>Customer</label>
-                <span>@Model.CustomerName</span>
-            </div>
-            <div class="station-info-item">
-                <label>Product</label>
-                <span>@productSummary</span>
-            </div>
-            <div class="station-info-item">
-                <label>Quantity</label>
-                <span>@target pcs</span>
-            </div>
-            <div class="station-info-item">
-                <label>Received Date</label>
-                <span>@Model.OrderDate.ToString("MMM d, yyyy | h:mm tt")</span>
-            </div>
+		<div class="bvp-header">
+			<div class="bvp-header-text prod-ord-num">
+				<div class="bvp-title">@(isReadyForPickup ? "Confirm Pickup" : $"Update {stationName} Progress")</div>
+				<div class="prod-ord-name">#ORD-@Model.OrderID.ToString("D3") — @Model.CustomerName</div>
+			</div>
+		</div>
+
+		<div class="station-item-info">
+			<div class="prod-card-title"><i class="fa-solid fa-circle-info"></i> Order Information</div>
+			<div class="station-info-grid">
+				<div class="station-info-item">
+					<label>Customer</label>
+					<span>@Model.CustomerName</span>
+				</div>
+				<div class="station-info-item">
+					<label>Quantity</label>
+					<span>@target pcs</span>
+				</div>
+				<div class="station-info-item">
+					<label>Items</label>
+					<div class="station-product-list">
+						@foreach (var item in Model.OrderDetails.Where(d => d.IsCustomOrder))
+						{
+							<span>
+								@item.Quantity x @(string.IsNullOrEmpty(item.ProductNameSnapshot) ? "Item" : item.ProductNameSnapshot)
+							</span>
+						}
+					</div>
+				</div>
+				<div class="station-info-item">
+					<label>Received Date</label>
+					<span>@Model.OrderDate.ToString("MMM d, yyyy | h:mm tt")</span>
+				</div>
+				@if (stationName == "Printing")
+				{
+					<div class="station-info-item">
+						<label>Design / Artwork</label>
+						@foreach (var detail in Model.OrderDetails)
+						{
+							if (!string.IsNullOrEmpty(detail.DesignFilePath))
+							{
+								<a href="@detail.DesignFilePath" target="_blank" class="design-file-link">
+									<i class="fa-regular fa-file"></i>
+									@System.IO.Path.GetFileName(detail.DesignFilePath)
+								</a>
+							}
+						}
+					</div>
+
+					<div class="station-info-item">
+						<label>Printing Method</label>
+						<span>
+							@string.Join(", ", Model.OrderDetails
+								.Where(d => !string.IsNullOrEmpty(d.ServiceNameSnapshot))
+								.Select(d => d.ServiceNameSnapshot)
+								.Distinct())
+						</span>
+					</div>
+				}
+			</div>
         </div>
+	</div>
+
+		<div class="prod-card">
+		@if (isReadyForPickup)
+		{
+			<div class="prod-step-card prod-step-card-success">
+				<div class="prod-step-card-text">
+					<i class="fa-solid fa-box-open"></i>
+					Production is complete. Once the customer has picked up their order, confirm below.
+				</div>
+			</div>
+
+			<form id="stationForm" data-mode="mark-completed" data-id="@Model.OrderID">
+				@Html.AntiForgeryToken()
+				<button type="submit" class="btn btn-primary station-submit-btn">
+					<i class="fa-solid fa-circle-check"></i> Mark as Picked Up
+				</button>
+			</form>
+		}
+		else
+		{
+			<div class="station-item-info">
+				<div class="prod-card-title"><i class="fa-solid fa-shirt"></i> @stationName Progress</div>
+				@if (customItems.Count > 1)
+				{
+					<p class="station-item-hint">This order has @customItems.Count different items — confirm the @stationVerbPast.ToLower() quantity for each one below.</p>
+				}
+
+				<div class="station-item-list">
+					@foreach (var item in customItems)
+					{
+						int itemSaved = Math.Clamp(item.ProductionQuantityDone, 0, item.Quantity);
+						<div class="station-item-row">
+							<span class="station-item-name">@ItemLabel(item)</span>
+							<div class="station-qty-input-wrap">
+								<input type="number" class="station-item-qty-input" id="stationQtyInput-@item.OrderDetailID"
+									   data-detail-id="@item.OrderDetailID" min="0" max="@item.Quantity" step="1" value="@itemSaved" />
+								<span>/ @item.Quantity pcs</span>
+							</div>
+						</div>
+					}
+				</div>
+
+				<div class="station-progress">
+					<div class="station-progress-bar">
+						<div class="station-progress-fill" id="stationProgressFill" style="width:@(savedPct)%"></div>
+					</div>					
+					<div class="station-progress-label">
+						<span>Progress</span>
+						<span id="stationProgressPct">@(savedPct)%</span>
+					</div>
+				</div>
+			</div>
+
+			@if (stationName == "Printing")
+			{
+				<div class="station-item-info">
+					<div class="prod-card-title"><i class="fa-solid fa-paint-roller"></i>Ink / Material Used (Optional)</div>
+
+					<select id="stationMaterial" class="station-select">
+						<option value="">Select ink or material</option>
+						<option value="DTF Ink - Black, DTF Film A3">
+							DTF Ink - Black, DTF Film A3
+						</option>
+						<option value="DTF Ink - White, DTF Film A3">
+							DTF Ink - White, DTF Film A3
+						</option>
+						<option value="Sublimation Ink">
+							Sublimation Ink
+						</option>
+						<option value="Sublimation Paper">
+							Sublimation Paper
+						</option>
+					</select>
+				</div>
+			}
+		}
     </div>
 
-    @if (isReadyForPickup)
-    {
-        <div class="prod-step-card prod-step-card-success">
-            <div class="prod-step-card-text">
-                <i class="fa-solid fa-box-open"></i>
-                Production is complete. Once the customer has picked up their order, confirm below.
-            </div>
-        </div>
+	@if (stationName != "Ready for Pickup")
+	{
+		<div class="prod-card">
+		<div class="station-item-info">
+			<div class="station-field-notes">
+				<div class="prod-card-title"><i class="fa-solid fa-note-sticky"></i> Remarks (Optional)</div>
+				<textarea id="stationRemarks" maxlength="200" rows="3" placeholder="Add any notes about this stage…">@Model.ProductionRemarks</textarea>
+				<div class="station-char-count"><span id="stationRemarksCount">@(Model.ProductionRemarks?.Length ?? 0)</span> / 200 characters</div>
+			</div>
+		</div>
 
-        <form id="stationForm" data-mode="mark-completed" data-id="@Model.OrderID">
-            @Html.AntiForgeryToken()
-            <button type="submit" class="btn btn-primary station-submit-btn">
-                <i class="fa-solid fa-circle-check"></i> Mark as Picked Up
-            </button>
-        </form>
-    }
-    else
-    {
-        <div class="prod-card">
-            <div class="prod-card-title"><i class="fa-solid fa-shirt"></i> @stationName Progress</div>
+		<form id="stationForm" data-mode="complete-station" data-id="@Model.OrderID" data-stage="@stage" data-target="@target" data-station-name="@stationName">
+			@Html.AntiForgeryToken()
+			<button type="submit" class="btn btn-primary station-submit-btn" id="stationSubmitBtn" @(allItemsComplete ? "" : "disabled")>
+				<i class="fa-solid fa-check"></i> Mark as Done @stationVerbGerund
+			</button>
+		</form>
+	</div>	
 
-            <div class="station-qty-row">
-                <span>Quantity to @stationVerbBase</span>
-                <strong>@target pcs</strong>
-            </div>
+	}
 
-            <div class="station-field">
-                <label for="stationQtyInput">Quantity @stationVerbPast <span class="station-required">*</span></label>
-                <div class="station-qty-input-wrap">
-                    <input type="number" id="stationQtyInput" min="0" max="@target" step="1" value="@target" />
-                    <span>/ @target pcs</span>
-                </div>
-            </div>
 
-            <div class="station-progress">
-                <div class="station-progress-label">
-                    <span>Progress</span>
-                    <span id="stationProgressPct">100%</span>
-                </div>
-                <div class="station-progress-bar">
-                    <div class="station-progress-fill" id="stationProgressFill" style="width:100%"></div>
-                </div>
-            </div>
-
-            <div class="station-field">
-                <label for="stationRemarks">Remarks (Optional)</label>
-                <textarea id="stationRemarks" maxlength="200" rows="3" placeholder="Add any notes about this stage…">@Model.ProductionRemarks</textarea>
-                <div class="station-char-count"><span id="stationRemarksCount">@(Model.ProductionRemarks?.Length ?? 0)</span> / 200 characters</div>
-            </div>
-        </div>
-
-        <form id="stationForm" data-mode="complete-station" data-id="@Model.OrderID" data-stage="@stage" data-target="@target">
-            @Html.AntiForgeryToken()
-            <button type="submit" class="btn btn-primary station-submit-btn" id="stationSubmitBtn">
-                <i class="fa-solid fa-check"></i> Mark as Done @stationVerbGerund
-            </button>
-        </form>
-
-        <div class="station-lock-note">
-            <i class="fa-solid fa-lock"></i>
-            After marking as done, the order will proceed to the <strong>@nextStationName</strong> station and you will not be able to edit this progress.
-        </div>
-    }
+	<div class="station-lock-note">
+		<i class="fa-solid fa-lock"></i>
+		After marking as done, the order will proceed to the <strong>@nextStationName</strong> station and you will not be able to edit this progress.
+	</div>
 </div>

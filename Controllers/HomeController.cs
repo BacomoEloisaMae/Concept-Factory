@@ -173,17 +173,18 @@ namespace ConceptFactory.Controllers
         }
 
         // GET: /Home/hOrderDetails/5 — customer-facing single-order status
-        // page (reached from the "View Order Status" button after
-        // checkout). This is intentionally just the one-order view for
-        // now, not a full "My Orders" list/dashboard — there's no
-        // customer login yet to know which orders belong to who, so
-        // there's nothing to list. Once accounts exist, a "My Orders"
-        // index can link into this same page per order.
+        // page. Reached two ways, distinguished by the "from" query
+        // param: (1) the "View Order Status" button right after checkout
+        // (no "from"), and (2) clicking an order card on the Track Order
+        // list (from=track — see hTrackOrder.cshtml), which used to open
+        // this same content in a popup modal and now navigates here as a
+        // full page instead. The view adjusts its heading/back-link/
+        // bottom actions based on which flow it came from.
         //
         // Connected to:
         //   View   : Views/Home/hOrderDetails.cshtml
         //   Styles : wwwroot/css/home/order-details.css
-        public async Task<IActionResult> hOrderDetails(int id)
+        public async Task<IActionResult> hOrderDetails(int id, string? from)
         {
             var order = await _context.Orders
                 .Include(o => o.OrderDetails).ThenInclude(d => d.Product)
@@ -192,6 +193,16 @@ namespace ConceptFactory.Controllers
                 .FirstOrDefaultAsync(o => o.OrderID == id);
 
             if (order == null) return NotFound();
+
+            // Same ActivityLogs-based history hOrderDetailsPanel used to
+            // load for the popup — needed here now too so "Order
+            // Timeline" is populated on this page as well.
+            ViewBag.TimelineLogs = await _context.ActivityLogs
+                .Where(l => l.OrderID == id && (l.Category == "Billing" || l.Category == "Production"))
+                .OrderBy(l => l.Timestamp)
+                .ToListAsync();
+
+            ViewBag.From = from;
 
             return View(order);
         }
@@ -203,19 +214,34 @@ namespace ConceptFactory.Controllers
         // matches that record's email/phone is listed here. Once real
         // accounts exist, swap the match below for the actual logged-in
         // user's ID and this keeps working unchanged.
-        public async Task<IActionResult> hTrackOrder()
+        public async Task<IActionResult> hTrackOrder(int page = 1)
         {
             ViewData["Title"] = "Track Order";
+            const int pageSize = 10;
 
             var billingInfo = await _context.AdminUsers.AsNoTracking().FirstOrDefaultAsync();
             var email = billingInfo?.Email;
             var phone = billingInfo?.Phone;
 
-            var orders = await _context.Orders
-                .Include(o => o.OrderDetails).ThenInclude(d => d.Product)
+            var query = _context.Orders
                 .Where(o => (email != null && o.CustomerEmail != null && o.CustomerEmail.ToLower() == email.ToLower())
                          || (phone != null && o.CustomerPhone != null && o.CustomerPhone == phone))
-                .OrderByDescending(o => o.OrderDate)
+                .OrderByDescending(o => o.OrderDate);
+
+            int totalCount = await query.CountAsync();
+            int totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
+            if (page < 1) page = 1;
+
+            ViewBag.Page = page;
+            ViewBag.TotalPages = totalPages;
+            ViewBag.TotalCount = totalCount;
+            ViewBag.StartItem = totalCount == 0 ? 0 : (page - 1) * pageSize + 1;
+            ViewBag.EndItem = Math.Min(page * pageSize, totalCount);
+
+            var orders = await query
+                .Include(o => o.OrderDetails).ThenInclude(d => d.Product)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
                 .ToListAsync();
 
             return View(orders);
@@ -407,7 +433,8 @@ namespace ConceptFactory.Controllers
                     ProductNameSnapshot = line.Name,
                     ServiceNameSnapshot = line.Service,
                     ServicePriceSnapshot = line.ServicePrice,
-                    ImageSnapshotPath = SaveImageSnapshotIfPresent(line.Image)
+                    ImageSnapshotPath = SaveImageSnapshotIfPresent(line.Image),
+                    DesignFilePath = SaveImageSnapshotIfPresent(line.DesignImage, "order-designs")
                 };
 
                 var customMatch = System.Text.RegularExpressions.Regex.Match(line.ProductId ?? "", @"^custom-(\d+)$");
@@ -459,16 +486,34 @@ namespace ConceptFactory.Controllers
             // plain product photo) as a base64 data URL — saved to disk in
             // SubmitOrder() so admin Order Details has a real image to show.
             public string? Image { get; set; }
+
+            // Raw uploaded design file (no garment behind it) as a base64
+            // data URL — set only for Customize-page lines. Saved to disk
+            // in SubmitOrder() and stored on OrderDetail.DesignFilePath,
+            // separate from Image/ImageSnapshotPath above.
+            public string? DesignImage { get; set; }
         }
 
         // Decodes a "data:image/...;base64,...." string and saves it under
         // wwwroot/uploads/order-items/, returning the relative path to store
         // on the OrderDetail row. Returns null for anything that isn't a
         // data URL (e.g. already a server-relative path, or missing).
-        private string? SaveImageSnapshotIfPresent(string? dataUrl)
+        // Decodes a "data:image/...;base64,...." string and saves it under
+        // wwwroot/uploads/order-items/, returning the relative path to store
+        // on the OrderDetail row. Custom (Customize-page) orders send a
+        // composited canvas thumbnail this way. Pre-designed catalog items
+        // never do — their cart image is just the product photo's normal
+        // server path (e.g. "/images/categories/t-shirt.png") — so that
+        // path is stored directly instead of being discarded, which is why
+        // pre-designed line items previously showed no thumbnail at all in
+        // the admin production panel.
+        private string? SaveImageSnapshotIfPresent(string? dataUrl, string subfolder = "order-items")
         {
-            if (string.IsNullOrWhiteSpace(dataUrl) || !dataUrl.StartsWith("data:image", StringComparison.OrdinalIgnoreCase))
+            if (string.IsNullOrWhiteSpace(dataUrl))
                 return null;
+
+            if (!dataUrl.StartsWith("data:image", StringComparison.OrdinalIgnoreCase))
+                return dataUrl; // already a real, servable path — use as-is
 
             try
             {
@@ -481,12 +526,12 @@ namespace ConceptFactory.Controllers
 
                 string ext = header.Contains("png") ? ".png" : header.Contains("webp") ? ".webp" : ".jpg";
 
-                string folder = Path.Combine(GetWwwRoot(), "uploads", "order-items");
+                string folder = Path.Combine(GetWwwRoot(), "uploads", subfolder);
                 Directory.CreateDirectory(folder);
                 string fileName = Guid.NewGuid() + ext;
                 System.IO.File.WriteAllBytes(Path.Combine(folder, fileName), bytes);
 
-                return "/uploads/order-items/" + fileName;
+                return "/uploads/" + subfolder + "/" + fileName;
             }
             catch
             {

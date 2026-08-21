@@ -6,26 +6,38 @@
     string stationName = ViewBag.StationName;
     ViewData["Title"] = $"Production — {stationName}";
 
+    string currentTab = ViewBag.Tab ?? "All";
     int page = ViewBag.Page ?? 1;
     int totalPages = ViewBag.TotalPages ?? 1;
     int totalCount = ViewBag.TotalCount ?? 0;
+    int stationTotalCount = ViewBag.StationTotalCount ?? 0;
     int pageSize = 10;
     int startItem = totalCount == 0 ? 0 : ((page - 1) * pageSize) + 1;
     int endItem = Math.Min(page * pageSize, totalCount);
     bool isReadyForPickup = stationIndex == ConceptFactory.Models.ProductionWorkflow.ReadyForPickupIndex;
     bool isCutting = stationIndex == 0;
 
-    string RowStatusLabel(ConceptFactory.Models.Order o) => o.Status == "Confirmed"
-        ? "Ready to Start"
-        : o.Status == "Ready for Pickup"
-            ? "Ready for Pickup"
-            : $"In {stationName}";
-    string RowStatusClass(ConceptFactory.Models.Order o) => o.Status == "Confirmed"
-        ? "status-confirmed"
-        : o.Status == "Ready for Pickup"
-            ? "status-readypickup"
-            : "status-inproduction";
+    string RowStatusLabel(ConceptFactory.Models.Order o) => currentTab == "CompletedToday"
+        ? "Completed"
+        : o.Status == "Confirmed"
+            ? "Ready to Start"
+            : o.Status == "Ready for Pickup"
+                ? "Ready for Pickup"
+                : $"In {stationName}";
+    string RowStatusClass(ConceptFactory.Models.Order o) => currentTab == "CompletedToday"
+        ? "status-completed"
+        : o.Status == "Confirmed"
+            ? "status-pending"
+            : o.Status == "Ready for Pickup"
+                ? "status-readypickup"
+                : "status-inproduction";
     int RowQuantity(ConceptFactory.Models.Order o) => o.OrderDetails.Where(d => d.IsCustomOrder).Sum(d => d.Quantity);
+    // "Pending" tracks whether any progress has been entered yet at THIS
+    // station (ProductionStageQuantityDone == 0) — mirrors
+    // pendingFromPreviousQuery in ProductionController for every station
+    // except Ready for Pickup, which has no quantity to track and instead
+    // goes by how long the order's been waiting there.
+    bool RowIsPendingFromPrevious(ConceptFactory.Models.Order o) => !isReadyForPickup && o.ProductionStageQuantityDone == 0;
 }
 @section Styles {
     <link rel="stylesheet" href="~/css/admin/orders.css" asp-append-version="true" />
@@ -37,7 +49,7 @@
     <!-- Page Header -->
     <div class="page-header">
         <div>
-            <h1 class="page-title">Production — @stationName</h1>
+            <h1 class="page-title">Production — @stationName Station</h1>
             <p class="page-subtitle">
                 @if (isReadyForPickup)
                 {
@@ -53,9 +65,6 @@
                 }
             </p>
         </div>
-        <a asp-action="pIndex" class="btn btn-outline">
-            <i class="fa-solid fa-gauge"></i> Back to Overview
-        </a>
     </div>
 
     @if (TempData["Success"] != null)
@@ -65,42 +74,61 @@
 
     <!-- Stat Cards -->
     <div class="stat-cards-row">
-        <div class="stat-card">
+        <div class="stat-card stat-card-purple">
             <span class="stat-card-label">Total in @stationName</span>
             <div class="stat-card-body">
-                <div class="stat-icon stat-icon-gray"><i class="fa-solid fa-layer-group"></i></div>
-                <span class="stat-value">@totalCount</span>
+                <div class="prod-monitor-icon stat-icon-purple"><img src="@Url.Content((string)ViewBag.StationImage)" alt="@stationName" /></div>
+                <span class="stat-value">@stationTotalCount</span>
             </div>
         </div>
-        <div class="stat-card">
-            <span class="stat-card-label">In Progress</span>
-            <div class="stat-card-body">
-                <div class="stat-icon stat-icon-orange"><i class="fa-solid fa-gear"></i></div>
-                <span class="stat-value">@ViewBag.InProgressCount</span>
+        @if (!isReadyForPickup)
+        {
+            <div class="stat-card stat-card-orange">
+                <span class="stat-card-label">In @stationName</span>
+                <div class="stat-card-body">
+                    <div class="prod-monitor-icon stat-icon-orange"><img src="~/images/logo/production.png" alt="Alternate Text" /></div>
+                    <span class="stat-value" id="stationStatInProgress">@ViewBag.InProgressCount</span>
+                </div>
             </div>
-        </div>
-        <div class="stat-card">
+        }
+        <div class="stat-card stat-card-green">
             <span class="stat-card-label">Completed Today</span>
             <div class="stat-card-body">
-                <div class="stat-icon stat-icon-green"><i class="fa-solid fa-circle-check"></i></div>
+                <div class="prod-monitor-icon stat-icon-green"><img src="~/images/logo/image 24.png" alt="Alternate Text" /></div>
                 <span class="stat-value">@ViewBag.CompletedTodayCount</span>
             </div>
         </div>
-        <div class="stat-card">
-            <span class="stat-card-label">Pending from Previous</span>
-            <div class="stat-card-body">
-                <div class="stat-icon stat-icon-gray"><i class="fa-solid fa-clock"></i></div>
-                <span class="stat-value">@ViewBag.PendingFromPreviousCount</span>
+        @if (!isReadyForPickup)
+        {
+            <div class="stat-card stat-card-yellow">
+                <span class="stat-card-label">Pending</span>
+                <div class="stat-card-body">
+                    <div class="prod-monitor-icon stat-icon-yellow"><img src="~/images/logo/pending 1.png" alt="Alternate Text" /></div>
+                    <span class="stat-value" id="stationStatPending">@ViewBag.PendingFromPreviousCount</span>
+                </div>
             </div>
-        </div>
+        }
     </div>
 
-    <!-- Table Card -->
-    <div class="card">
+    <!-- Tabs — each one matches exactly one stat card above -->
+    <div class="order-tabs">
+        <a asp-action="pStation" asp-route-stage="@stationIndex" asp-route-search="@ViewBag.Search" class="order-tab @(currentTab == "All" ? "active" : "")">All in @stationName</a>
+        @if (!isReadyForPickup)
+        {
+            <a asp-action="pStation" asp-route-stage="@stationIndex" asp-route-tab="InProgress" asp-route-search="@ViewBag.Search" class="order-tab @(currentTab == "InProgress" ? "active" : "")">In Progress</a>
+        }
+        <a asp-action="pStation" asp-route-stage="@stationIndex" asp-route-tab="CompletedToday" asp-route-search="@ViewBag.Search" class="order-tab @(currentTab == "CompletedToday" ? "active" : "")">Completed Today</a>
+        @if (!isReadyForPickup)
+        {
+            <a asp-action="pStation" asp-route-stage="@stationIndex" asp-route-tab="PendingFromPrevious" asp-route-search="@ViewBag.Search" class="order-tab @(currentTab == "PendingFromPrevious" ? "active" : "")">Pending from Previous</a>
+        }
+    </div>
 
-        <!-- Filters -->
-        <form method="get" asp-action="pStation" class="filter-bar">
+    <!-- Filters -->
+    <div class="filter-bar">
+        <form method="get" asp-action="pStation" class="filter-form">
             <input type="hidden" name="stage" value="@stationIndex" />
+            <input type="hidden" name="tab" value="@currentTab" />
             <div class="search-box">
                 <i class="fa-solid fa-magnifying-glass"></i>
                 <input type="text" name="search" value="@ViewBag.Search" placeholder="Search Order ID, customer, product..." class="search-input" />
@@ -110,6 +138,10 @@
             </button>
         </form>
 
+    </div>
+
+    <!-- Table Card -->
+    <div class="card">
         <!-- Station Table -->
         <table class="data-table">
             <thead>
@@ -129,14 +161,14 @@
                         <td colspan="6">
                             <div class="orders-empty-state">
                                 <i class="fa-solid fa-industry"></i>
-                                <p>No orders currently at @stationName.</p>
+                                <p>No orders in this view.</p>
                             </div>
                         </td>
                     </tr>
                 }
                 @foreach (var o in Model)
                 {
-                    <tr class="order-row-clickable" onclick="openStationModal(@o.OrderID, @stationIndex)">
+                    <tr id="station-row-@o.OrderID" class="order-row-clickable" data-pending="@(RowIsPendingFromPrevious(o) ? "true" : "false")" onclick="openStationModal(@o.OrderID, @stationIndex)">
                         <td><span class="order-id-link id-link-static">#ORD-@o.OrderID.ToString("D5")</span></td>
                         <td>@o.CustomerName</td>
                         <td class="order-products-cell">
@@ -164,16 +196,16 @@
                 <div class="page-btns">
                     @if (page > 1)
                     {
-                        <a asp-action="pStation" asp-route-stage="@stationIndex" asp-route-page="@(page-1)" asp-route-search="@ViewBag.Search" class="page-btn">‹</a>
+                        <a asp-action="pStation" asp-route-stage="@stationIndex" asp-route-tab="@currentTab" asp-route-page="@(page - 1)" asp-route-search="@ViewBag.Search" class="page-btn">‹</a>
                     }
                     @for (int i = 1; i <= totalPages; i++)
                     {
-                        <a asp-action="pStation" asp-route-stage="@stationIndex" asp-route-page="@i" asp-route-search="@ViewBag.Search"
+                        <a asp-action="pStation" asp-route-stage="@stationIndex" asp-route-tab="@currentTab" asp-route-page="@i" asp-route-search="@ViewBag.Search"
                            class="page-btn @(i == page ? "active" : "")">@i</a>
                     }
                     @if (page < totalPages)
                     {
-                        <a asp-action="pStation" asp-route-stage="@stationIndex" asp-route-page="@(page+1)" asp-route-search="@ViewBag.Search" class="page-btn">›</a>
+                        <a asp-action="pStation" asp-route-stage="@stationIndex" asp-route-tab="@currentTab" asp-route-page="@(page + 1)" asp-route-search="@ViewBag.Search" class="page-btn">›</a>
                     }
                 </div>
             </div>
@@ -189,7 +221,7 @@
 
 <!-- Station "Mark as Done" popup -->
 <div class="billing-modal-backdrop" id="stationModalBackdrop" onclick="if(event.target===this) closeStationModal()">
-    <div class="billing-modal station-modal" id="stationModal">
+    <div class="billing-modal" id="stationModal">
         <div class="billing-modal-loading"><i class="fa-solid fa-spinner fa-spin"></i> Loading…</div>
     </div>
 </div>

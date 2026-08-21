@@ -591,6 +591,15 @@
             // design, same spot — as one image instead of a separate square.
             extras.image = buildCompositeThumbnail();
 
+            // The raw design file the customer uploaded (no garment behind
+            // it) — separate from extras.image above, which is the
+            // composited "design on the shirt" thumbnail. This is what
+            // Order Details / Production "Uploaded Design" should show,
+            // since staff need the actual artwork, not a mockup photo.
+            // Front design (uploadedFiles[0]) is used since only one
+            // design is shown per order line today.
+            if (uploadedFiles[0]) extras.designImage = uploadedFiles[0].dataUrl;
+
             // Kept for informational text only (e.g. the "Design: Front +
             // Back" note in the cart's item details) — no longer rendered
             // as its own square image. In Front/Back with only one upload,

@@ -245,24 +245,24 @@ else
             @{
                 decimal totalServiceFees = Model.OrderDetails.Sum(d => (d.ServicePriceSnapshot ?? 0) * d.Quantity);
             }
-            @foreach (var d in Model.OrderDetails)
-            {
-                var name = !string.IsNullOrEmpty(d.ProductNameSnapshot) ? d.ProductNameSnapshot : "Item";
-                var sName = !string.IsNullOrEmpty(d.ServiceNameSnapshot) ? d.ServiceNameSnapshot : "Item";
-                var lineServiceFee = d.ServicePriceSnapshot ?? 0;
-                var lineProductPrice = d.UnitPrice - lineServiceFee;
-                <div class="bvp-breakdown-row " >
-					<span><strong>@name</strong> (@d.Quantity x ₱@lineProductPrice.ToString("N2"))</span>
-                    <span>₱@((lineProductPrice * d.Quantity).ToString("N2"))</span>
-                </div>
-                @if (lineServiceFee > 0)
+                @foreach (var d in Model.OrderDetails)
                 {
-                    <div class="bvp-breakdown-row bvp-breakdown-row-highlight">
-                        <span>@sName — Service Fee (@d.Quantity x ₱@lineServiceFee.ToString("N2"))</span>
-                        <span>₱@((lineServiceFee * d.Quantity).ToString("N2"))</span>
+                    var name = !string.IsNullOrEmpty(d.ProductNameSnapshot) ? d.ProductNameSnapshot : "Item";
+                    var sName = !string.IsNullOrEmpty(d.ServiceNameSnapshot) ? d.ServiceNameSnapshot : "Item";
+                    var lineServiceFee = d.ServicePriceSnapshot ?? 0;
+                    var lineProductPrice = d.UnitPrice - lineServiceFee;
+                    <div class="bvp-breakdown-row " >
+					    <span><strong>@name</strong> (@d.Quantity x ₱@lineProductPrice.ToString("N2"))</span>
+                        <span>₱@((lineProductPrice * d.Quantity).ToString("N2"))</span>
                     </div>
+                    @if (lineServiceFee > 0)
+                    {
+                        <div class="bvp-breakdown-row bvp-breakdown-row-highlight">
+                            <span>@sName — Service Fee (@d.Quantity x ₱@lineServiceFee.ToString("N2"))</span>
+                            <span>₱@((lineServiceFee * d.Quantity).ToString("N2"))</span>
+                        </div>
+                    }
                 }
-            }
             <div class="bvp-breakdown-highlight">
                 <div class="bvp-breakdown-row bvp-bd-divider payment-required">
                     <span>Total Amount</span>

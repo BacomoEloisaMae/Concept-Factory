@@ -41,24 +41,27 @@
 }
 
 :root {
-    --primary:        #5B5EF4;
-    --primary-dark:   #4547d4;
-    --primary-light:  #EEEEFF;
-    --danger:         #ef4444;
-    --danger-light:   #fef2f2;
-    --success:        #22c55e;
-    --success-light:  #f0fdf4;
-    --warning:        #f59e0b;
-    --text-main:      #1e293b;
-    --text-sub:       #64748b;
-    --text-muted:     #94a3b8;
-    --border:         #e2e8f0;
-    --bg:             #f8fafc;
-    --white:          #ffffff;
-    --sidebar-w:      220px;
-    --radius:         10px;
-    --shadow:         0 1px 4px rgba(0,0,0,.08);
-    --shadow-md:      0 4px 16px rgba(0,0,0,.10);
+    --primary: #5B5EF4;
+    --primary-dark: #4547d4;
+    --primary-light: #EEEEFF;
+    --danger: #ef4444;
+    --danger-light: #fef2f2;
+    --success: #22c55e;
+    --success-light: #f0fdf4;
+    --success-dark: #16a34a;
+    --warning: #f59e0b;
+    --pending: #fdd703;
+    --pending-light: #f9f7e3;
+    --text-main: #1e293b;
+    --text-sub: #64748b;
+    --text-muted: #94a3b8;
+    --border: #e2e8f0;
+    --bg: #f8fafc;
+    --white: #ffffff;
+    --sidebar-w: 220px;
+    --radius: 10px;
+    --shadow: 0 1px 4px rgba(0,0,0,.08);
+    --shadow-md: 0 4px 16px rgba(0,0,0,.10);
 }
 
 
@@ -386,18 +389,17 @@
 .data-table th {
     padding: 11px 22px;
     text-align: center;
-    font-size: 12px;
+    font-size: 15px;
     font-weight: 600;
     color: var(--text-sub);
     background: var(--primary-light);
-    text-transform: uppercase;
     letter-spacing: .4px;
     border-bottom: 2px solid var(--border);
     white-space: nowrap;
 }
 
 .data-table td {
-    padding: 11px 22px;
+    padding: 11px 12px;
     border-bottom: 2px solid var(--border);
     font-size: 15px;
     color: var(--text-main);
@@ -538,6 +540,7 @@
 ============================================================ */
 .action-btn {
     display: flex;
+    justify-content: center;
     gap: 6px;
 }
 

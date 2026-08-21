@@ -72,7 +72,8 @@
     border-radius: var(--radius);
     box-shadow: 0 20px 60px rgba(15, 23, 42, 0.25);
     width: 100%;
-    max-width: 900px;
+    max-width: 900px; 
+    max-height: calc(100vh - 80px);
 }
 
 .billing-modal-loading {
@@ -137,9 +138,9 @@
 /* ── Payment Verification panel content (bvp-*) ── */
 .bvp-header {
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     gap: 14px;
-    padding: 12px 24px;
+    padding: 10px;
     border-bottom: 1px solid var(--border);
 }
 .bvp-header-icon {

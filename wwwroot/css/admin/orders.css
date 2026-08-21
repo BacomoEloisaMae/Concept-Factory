@@ -50,10 +50,15 @@
     border: 2px solid rgba(239, 68, 68, 0.30);
     background: rgba(239, 68, 68, 0.10);
 }
+.stat-card-yellow {
+    color: var(--pending);
+    border: 2px solid rgb(255, 221, 0, 0.40);
+    background: rgb(255, 221, 0, 0.10);
+}
 
 
 .stat-card-label {
-    font-size: 15px;
+    font-size: 17px;
     font-weight: 800;
     color: var(--text-main);
 }
@@ -81,6 +86,7 @@
 .stat-icon-blue   { background: #eff6ff; color: #3b82f6; }
 .stat-icon-red    { background: var(--danger-light); color: var(--danger); }
 .stat-icon-gray   { background: #f1f5f9; color: var(--text-muted); }
+.stat-icon-yellow { background: var(--pending-light); var(--pending); }
 .stat-icon-teal   { background: #ecfeff; color: #0891b2; }
 
 .stat-value {
@@ -131,6 +137,7 @@
 .status-pendingcash   { background: #fff7ed; color: var(--warning); }
 .status-pendingverif  { background: #fff7ed; color: var(--warning); }
 .status-confirmed     { background: var(--primary-light); color: var(--primary); }
+.status-pending       { background: var(--pending-light); color: var(--pending); }
 .status-designreview  { background: #eff6ff; color: #3b82f6; }
 .status-inproduction  { background: #fff7ed; color: var(--warning); }
 .status-readypickup   { background: #ecfeff; color: #0891b2; }
@@ -492,7 +499,7 @@
 
 .od-product-row {
     display: grid;
-    grid-template-columns: 64px 1fr auto;
+    grid-template-columns: auto 1fr auto;
     gap: 16px;
     align-items: start;
     padding: 14px 0;
@@ -500,7 +507,7 @@
 }
 .od-product-row:last-child { border-bottom: none; }
 .od-product-thumb {
-    width: 64px; height: 64px;
+    width: 134px; height: 134px;
     border-radius: 10px;
     background: #f8f9fb;
     border: 1px solid var(--border);
@@ -560,6 +567,7 @@
 .od-stepper {
     display: flex;
     align-items: flex-start;
+    justify-content: center;
     overflow-x: auto;
     padding: 6px 0;
 }
@@ -588,8 +596,8 @@
 }
 .od-stepper-step.done .od-stepper-dot {
     background: var(--success-light);
-    color: #16a34a;
-    border-color: #16a34a;
+    color: var(--success-dark);
+    border-color: var(--success-dark);
 }
 .od-stepper-step.current .od-stepper-dot {
     background: #fff7ed;
@@ -671,7 +679,7 @@
 /* ── Order Details popup modal (reuses .billing-modal-backdrop/.billing-modal chrome) ── */
 .om-modal { max-width: 920px; }
 .om-modal-body {
-    padding: 20px 24px 24px;
+    padding: 20px 12px;
     max-height: 65vh;
     overflow-y: auto;
 }

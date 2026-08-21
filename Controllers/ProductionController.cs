@@ -39,29 +39,32 @@ namespace ConceptFactory.Controllers
         };
 
         // GET: /Production/pIndex
-        public async Task<IActionResult> pIndex(string? tab, string? search, int page = 1)
+        public async Task<IActionResult> pIndex(string? tab, string? search, int? stage, int page = 1)
         {
             int pageSize = 10;
 
             var baseQuery = _context.Orders
                 .Include(o => o.OrderDetails)
                 .Where(o => TrackedStatuses.Contains(o.Status))
-                // Production only tracks Customize-page orders — a
-                // pre-designed/catalog item has nothing to cut, print, or
-                // sew, so an order made up entirely of catalog items never
-                // shows up here even once Billing has confirmed it.
                 .Where(o => o.OrderDetails.Any(d => d.IsCustomOrder))
                 .AsQueryable();
 
-            ViewBag.ConfirmedCount      = await _context.Orders.CountAsync(o => o.Status == "Confirmed" && o.OrderDetails.Any(d => d.IsCustomOrder));
-            ViewBag.InProductionCount   = await _context.Orders.CountAsync(o => o.Status == "In Production" && o.OrderDetails.Any(d => d.IsCustomOrder));
+            ViewBag.ConfirmedCount = await _context.Orders.CountAsync(o => o.Status == "Confirmed" && o.OrderDetails.Any(d => d.IsCustomOrder));
+            ViewBag.InProductionCount = await _context.Orders.CountAsync(o => o.Status == "In Production" && o.OrderDetails.Any(d => d.IsCustomOrder));
             ViewBag.ReadyForPickupCount = await _context.Orders.CountAsync(o => o.Status == "Ready for Pickup" && o.OrderDetails.Any(d => d.IsCustomOrder));
-            ViewBag.CompletedCount      = await _context.Orders.CountAsync(o => o.Status == "Completed" && o.OrderDetails.Any(d => d.IsCustomOrder));
+            ViewBag.CompletedCount = await _context.Orders.CountAsync(o => o.Status == "Completed" && o.OrderDetails.Any(d => d.IsCustomOrder));
+            ViewBag.TotalOrders = await _context.Orders.CountAsync(o => TrackedStatuses.Contains(o.Status) && o.OrderDetails.Any(d => d.IsCustomOrder));
 
             var query = baseQuery;
 
             if (!string.IsNullOrWhiteSpace(tab) && TabToStatus.TryGetValue(tab, out var statusValue))
                 query = query.Where(o => o.Status == statusValue);
+
+            // Stage filter � only meaningful for orders "In Production"; picking a
+            // specific stage from the dropdown implicitly narrows to that status
+            // too, regardless of which tab is selected.
+            if (stage.HasValue)
+                query = query.Where(o => o.Status == "In Production" && o.ProductionStage == stage.Value);
 
             if (!string.IsNullOrWhiteSpace(search))
             {
@@ -74,7 +77,7 @@ namespace ConceptFactory.Controllers
 
             int totalCount = await query.CountAsync();
             var orders = await query
-                .OrderBy(o => o.Status == "Completed" ? 1 : 0) // active orders float to the top
+                .OrderBy(o => o.Status == "Completed" ? 1 : 0)
                 .ThenByDescending(o => o.OrderDate)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
@@ -82,6 +85,7 @@ namespace ConceptFactory.Controllers
 
             ViewBag.Tab = tab ?? "All";
             ViewBag.Search = search;
+            ViewBag.Stage = stage;
             ViewBag.Page = page;
             ViewBag.TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
             ViewBag.TotalCount = totalCount;
@@ -104,6 +108,18 @@ namespace ConceptFactory.Controllers
         private static readonly string[] StationKeys =
         {
             "Cutting", "Printing", "Sewing", "Trimming", "QualityCheck", "ReadyForPickup"
+        };
+
+        // Icon per station for the "Total in [Station]" stat card — same
+        // ordering as StationNames/StationKeys (0-5).
+        private static readonly string[] StationImages =
+        {
+            "~/images/logo/cutt.png",
+            "~/images/logo/print blue 2.png",
+            "~/images/logo/sewing 1.png",
+            "~/images/logo/blue trim 3.png",
+            "~/images/logo/quality check 1.png",
+            "~/images/logo/ready 1.png"
         };
         // Verb forms shown on each station's "Mark as Done" popup — only
         // meaningful for stages 0-4; Ready for Pickup uses the separate
@@ -131,12 +147,13 @@ namespace ConceptFactory.Controllers
         // haven't started yet (ProductionStage still -1), since they're
         // queued to start there next.
         [HttpGet]
-        public async Task<IActionResult> pStation(int stage, string? search, int page = 1)
+        public async Task<IActionResult> pStation(int stage, string? tab, string? search, int page = 1)
         {
             stage = Math.Clamp(stage, 0, ProductionWorkflow.ReadyForPickupIndex);
             int pageSize = 10;
             bool isReadyForPickup = stage == ProductionWorkflow.ReadyForPickupIndex;
             bool isCutting = stage == 0;
+            DateTime todayStart = DateTime.Today;
 
             var baseQuery = _context.Orders.Include(o => o.OrderDetails).AsQueryable();
             baseQuery = isReadyForPickup
@@ -147,7 +164,82 @@ namespace ConceptFactory.Controllers
             // Same Customize-only rule as pIndex — see comment there.
             baseQuery = baseQuery.Where(o => o.OrderDetails.Any(d => d.IsCustomOrder));
 
-            var query = baseQuery;
+            // Stat cards always reflect the FULL station set, regardless of
+            // whichever tab is currently selected below — same pattern as oIndex.
+            int totalCount = await baseQuery.CountAsync();
+
+            // "Pending from Previous" / "In Progress" / "Completed Today" — each
+            // tab below maps to exactly one of these three queries, so the table
+            // always matches whatever number the matching stat card shows.
+            IQueryable<Order> pendingFromPreviousQuery;
+            IQueryable<Order> inProgressQuery;
+            IQueryable<Order> completedTodayQuery;
+
+            if (isCutting)
+            {
+                // Same quantity-driven definition as the middle stations
+                // below — "pending" means nothing's been cut yet, whether
+                // the order was confirmed today or last week. Previously
+                // this was gated on OrderDate < today too, which meant an
+                // order confirmed THIS morning with 0 pcs cut was already
+                // counted as "In Progress".
+                pendingFromPreviousQuery = baseQuery.Where(o => o.ProductionStageQuantityDone == 0);
+                inProgressQuery = baseQuery.Where(o => o.ProductionStageQuantityDone > 0);
+                completedTodayQuery = _context.Orders.Include(o => o.OrderDetails)
+                    .Where(o => o.OrderDetails.Any(d => d.IsCustomOrder)
+                             && o.ProductionStage == stage + 1
+                             && o.ProductionStageUpdatedAt != null
+                             && o.ProductionStageUpdatedAt >= todayStart);
+            }
+            else if (isReadyForPickup)
+            {
+                pendingFromPreviousQuery = baseQuery.Where(o =>
+                    o.ProductionStageUpdatedAt == null || o.ProductionStageUpdatedAt < todayStart);
+                inProgressQuery = baseQuery.Where(o =>
+                    o.ProductionStageUpdatedAt != null && o.ProductionStageUpdatedAt >= todayStart);
+                completedTodayQuery = _context.Orders.Include(o => o.OrderDetails)
+                    .Where(o => o.OrderDetails.Any(d => d.IsCustomOrder)
+                             && o.Status == "Completed"
+                             && o.ProductionStageUpdatedAt != null
+                             && o.ProductionStageUpdatedAt >= todayStart);
+            }
+            else
+            {
+                // Unlike Cutting (where "pending" means the order hasn't
+                // been touched at all) or Ready for Pickup (a binary
+                // pickup wait), these middle stations need to distinguish
+                // "just arrived from the previous station, nothing done
+                // here yet" from "work has actually started here" — that's
+                // ProductionStageQuantityDone, not when the order arrived.
+                // SetStage() resets it to 0 on handoff, so a fresh arrival
+                // reads 0 until someone types a quantity in this station's
+                // modal, regardless of what day it arrived.
+                pendingFromPreviousQuery = baseQuery.Where(o => o.ProductionStageQuantityDone == 0);
+                inProgressQuery = baseQuery.Where(o => o.ProductionStageQuantityDone > 0);
+                completedTodayQuery = _context.Orders.Include(o => o.OrderDetails)
+                    .Where(o => o.OrderDetails.Any(d => d.IsCustomOrder)
+                             && o.ProductionStage == stage + 1
+                             && o.ProductionStageUpdatedAt != null
+                             && o.ProductionStageUpdatedAt >= todayStart);
+            }
+
+            int pendingFromPreviousCount = await pendingFromPreviousQuery.CountAsync();
+            int completedTodayCount = await completedTodayQuery.CountAsync();
+            int inProgressCount = Math.Max(0, totalCount - pendingFromPreviousCount);
+
+            // Which query backs the actual table depends on the selected tab.
+            // Ready for Pickup only has "All" and "Completed Today" — no
+            // partial state exists between waiting and picked up, so a
+            // stray ?tab=InProgress/PendingFromPrevious there just falls
+            // back to the full list.
+            IQueryable<Order> query = tab switch
+            {
+                "InProgress" when !isReadyForPickup => inProgressQuery,
+                "PendingFromPrevious" when !isReadyForPickup => pendingFromPreviousQuery,
+                "CompletedToday" => completedTodayQuery,
+                _ => baseQuery
+            };
+
             if (!string.IsNullOrWhiteSpace(search))
             {
                 bool hasOrderIdMatch = ConceptFactory.Utils.OrderSearchHelper.TryParseOrderId(search, out int parsedOrderId);
@@ -157,7 +249,7 @@ namespace ConceptFactory.Controllers
                     o.OrderDetails.Any(d => (d.ProductNameSnapshot ?? "").Contains(search)));
             }
 
-            int totalCount = await query.CountAsync();
+            int tabCount = await query.CountAsync();
             var orders = await query
                 .OrderBy(o => o.OrderDate)
                 .Skip((page - 1) * pageSize)
@@ -166,55 +258,20 @@ namespace ConceptFactory.Controllers
 
             ViewBag.StationIndex = stage;
             ViewBag.StationName = StationNames[stage];
+            ViewBag.StationImage = StationImages[stage];
+            ViewBag.Tab = tab ?? "All";
             ViewBag.Search = search;
             ViewBag.Page = page;
-            ViewBag.TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
-            ViewBag.TotalCount = totalCount;
-
-            // Stat cards: Total (totalCount, above) / In Progress /
-            // Completed Today / Pending from Previous. "Pending from
-            // Previous" = orders that have been sitting at this station
-            // since before today (arrived on an earlier day and haven't
-            // moved); "Completed Today" = orders that left this exact
-            // station today. Both lean on ProductionStageUpdatedAt, which
-            // ProductionWorkflow.SetStage stamps every time a stage
-            // advances — see that class for details.
-            DateTime todayStart = DateTime.Today;
-            int pendingFromPreviousCount;
-            int completedTodayCount;
-
-            if (isCutting)
-            {
-                pendingFromPreviousCount = await _context.Orders.CountAsync(o =>
-                    o.Status == "Confirmed" && o.OrderDate < todayStart && o.OrderDetails.Any(d => d.IsCustomOrder));
-                completedTodayCount = await _context.Orders.CountAsync(o =>
-                    o.ProductionStage == stage + 1 && o.ProductionStageUpdatedAt != null &&
-                    o.ProductionStageUpdatedAt >= todayStart && o.OrderDetails.Any(d => d.IsCustomOrder));
-            }
-            else if (isReadyForPickup)
-            {
-                pendingFromPreviousCount = await _context.Orders.CountAsync(o =>
-                    o.Status == "Ready for Pickup" &&
-                    (o.ProductionStageUpdatedAt == null || o.ProductionStageUpdatedAt < todayStart) &&
-                    o.OrderDetails.Any(d => d.IsCustomOrder));
-                completedTodayCount = await _context.Orders.CountAsync(o =>
-                    o.Status == "Completed" && o.ProductionStageUpdatedAt != null &&
-                    o.ProductionStageUpdatedAt >= todayStart && o.OrderDetails.Any(d => d.IsCustomOrder));
-            }
-            else
-            {
-                pendingFromPreviousCount = await _context.Orders.CountAsync(o =>
-                    o.Status == "In Production" && o.ProductionStage == stage &&
-                    (o.ProductionStageUpdatedAt == null || o.ProductionStageUpdatedAt < todayStart) &&
-                    o.OrderDetails.Any(d => d.IsCustomOrder));
-                completedTodayCount = await _context.Orders.CountAsync(o =>
-                    o.ProductionStage == stage + 1 && o.ProductionStageUpdatedAt != null &&
-                    o.ProductionStageUpdatedAt >= todayStart && o.OrderDetails.Any(d => d.IsCustomOrder));
-            }
+            ViewBag.TotalPages = (int)Math.Ceiling(tabCount / (double)pageSize);
+            // Both counts are exposed: TotalCount drives the pagination summary
+            // for whatever's currently showing, StationTotalCount is the
+            // always-full "Total in {station}" stat card number.
+            ViewBag.TotalCount = tabCount;
+            ViewBag.StationTotalCount = totalCount;
 
             ViewBag.PendingFromPreviousCount = pendingFromPreviousCount;
             ViewBag.CompletedTodayCount = completedTodayCount;
-            ViewBag.InProgressCount = Math.Max(0, totalCount - pendingFromPreviousCount);
+            ViewBag.InProgressCount = inProgressCount;
 
             ViewData["Title"] = $"Production — {StationNames[stage]}";
             ViewData["ActivePage"] = "Production";
@@ -247,6 +304,10 @@ namespace ConceptFactory.Controllers
             // Billing approval + every pSetStage/pCompleteStation call
             // already writes one here with this exact OrderID. Ordered
             // oldest-first so it reads top-to-bottom like the stepper does.
+            ViewBag.StationName = (order.ProductionStage >= 0 && order.ProductionStage < StationNames.Length)
+            ? StationNames[order.ProductionStage]
+            : "";
+
             ViewBag.TimelineLogs = await _context.ActivityLogs
                 .Where(l => l.OrderID == id && (l.Category == "Billing" || l.Category == "Production"))
                 .OrderBy(l => l.Timestamp)
@@ -280,14 +341,27 @@ namespace ConceptFactory.Controllers
             return PartialView("_StationUpdateModal", order);
         }
 
-        // POST: /Production/pCompleteStation — the popup's "Mark as Done"
-        // submit. Advances the order past the given station (stage ->
-        // stage+1), stamping ProductionStageUpdatedAt/ProductionRemarks.
-        // Only succeeds if the order is genuinely still sitting at that
-        // station, so a stale/duplicate submit can't double-advance it.
+        // POST: /Production/pSaveStationProgress — autosaves the quantities
+        // typed into the station modal as the staff member goes, WITHOUT
+        // advancing the stage. Called from station-update.js on every edit
+        // (debounced) so progress survives a closed modal or page refresh.
+        // itemQuantitiesJson is {orderDetailId: quantity}, one entry per
+        // row in the popup — a color/size line's progress is tracked on
+        // that OrderDetail directly (OrderDetail.ProductionQuantityDone),
+        // NOT lumped into one order-wide number, so a 5x Red-Small +
+        // 3x Blue-Large order can't have "8 done" without knowing which
+        // is which. Order.ProductionStageQuantityDone is kept in sync as
+        // a cached sum purely so the station list's cheap stat-card
+        // queries (pStation) don't need to join/sum OrderDetails.
+        // For Cutting specifically, any progress here is also what first
+        // flips the order from "Confirmed" to "In Production" — otherwise
+        // it would sit at "Confirmed" even while work is visibly
+        // underway. Reaching full quantity here does NOT move the order
+        // to the next station on its own; that still only happens
+        // through pCompleteStation ("Mark as Done").
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> pCompleteStation(int id, int stage, int quantity, string? remarks)
+        public async Task<IActionResult> pSaveStationProgress(int id, int stage, string? itemQuantitiesJson)
         {
             stage = Math.Clamp(stage, 0, ProductionWorkflow.ReadyForPickupIndex);
             var order = await _context.Orders
@@ -304,19 +378,102 @@ namespace ConceptFactory.Controllers
             if (!atThisStation)
                 return BadRequest("This order is no longer at this station.");
 
-            int target = order.OrderDetails.Where(d => d.IsCustomOrder).Sum(d => d.Quantity);
-            if (quantity < target)
-                return BadRequest($"Quantity must reach {target} pcs before marking this station done.");
+            Dictionary<int, int>? itemQuantities = null;
+            if (!string.IsNullOrWhiteSpace(itemQuantitiesJson))
+            {
+                try { itemQuantities = System.Text.Json.JsonSerializer.Deserialize<Dictionary<int, int>>(itemQuantitiesJson); }
+                catch (System.Text.Json.JsonException) { return BadRequest("Could not read the per-item quantities submitted."); }
+            }
+            if (itemQuantities == null) return BadRequest("Missing per-item quantities.");
+
+            var customItems = order.OrderDetails.Where(d => d.IsCustomOrder).ToList();
+            foreach (var d in customItems)
+            {
+                int entered = itemQuantities.TryGetValue(d.OrderDetailID, out int q) ? q : 0;
+                d.ProductionQuantityDone = Math.Clamp(entered, 0, d.Quantity);
+            }
+            order.ProductionStageQuantityDone = customItems.Sum(d => d.ProductionQuantityDone);
+
+            // First bit of progress at Cutting — the order is genuinely in
+            // production now, so reflect that on Status instead of leaving
+            // it at "Confirmed" until someone clicks "Mark as Done".
+            if (isCutting && order.Status == "Confirmed" && order.ProductionStageQuantityDone > 0)
+            {
+                order.Status = "In Production";
+                order.ProductionStage = 0;
+            }
+
+            await _context.SaveChangesAsync();
+            return Ok(new
+            {
+                success = true,
+                quantity = order.ProductionStageQuantityDone,
+                status = order.Status,
+                items = customItems.ToDictionary(d => d.OrderDetailID, d => d.ProductionQuantityDone)
+            });
+        }
+
+        // POST: /Production/pCompleteStation — the popup's "Mark as Done"
+        // submit. Advances the order past the given station (stage ->
+        // stage+1), stamping ProductionStageUpdatedAt/ProductionRemarks.
+        // Only succeeds if the order is genuinely still sitting at that
+        // station, so a stale/duplicate submit can't double-advance it.
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> pCompleteStation(int id, int stage, string? itemQuantitiesJson, string? remarks)
+        {
+            stage = Math.Clamp(stage, 0, ProductionWorkflow.ReadyForPickupIndex);
+            var order = await _context.Orders
+                .Include(o => o.OrderDetails)
+                .FirstOrDefaultAsync(o => o.OrderID == id);
+
+            if (order == null) return NotFound();
+
+            bool isCutting = stage == 0;
+            bool atThisStation = isCutting
+                ? (order.Status == "Confirmed" || (order.Status == "In Production" && order.ProductionStage == 0))
+                : (order.Status == "In Production" && order.ProductionStage == stage);
+
+            if (!atThisStation)
+                return BadRequest("This order is no longer at this station.");
+
+            var customItems = order.OrderDetails.Where(d => d.IsCustomOrder).ToList();
+
+            // Each color/size line has to individually reach its own
+            // quantity — an order combining, say, 5x Red-Small and 3x
+            // Blue-Large can't be marked done just because 8 pcs total
+            // were entered somewhere; both lines need to actually be
+            // finished.
+            Dictionary<int, int>? itemQuantities = null;
+            if (!string.IsNullOrWhiteSpace(itemQuantitiesJson))
+            {
+                try { itemQuantities = System.Text.Json.JsonSerializer.Deserialize<Dictionary<int, int>>(itemQuantitiesJson); }
+                catch (System.Text.Json.JsonException) { return BadRequest("Could not read the per-item quantities submitted."); }
+            }
+            if (itemQuantities == null) return BadRequest("Missing per-item quantities.");
+
+            foreach (var d in customItems)
+            {
+                if (!itemQuantities.TryGetValue(d.OrderDetailID, out int enteredQty) || enteredQty < d.Quantity)
+                {
+                    string label = string.IsNullOrEmpty(d.ProductNameSnapshot) ? "an item" : d.ProductNameSnapshot;
+                    string variant = string.Join(" / ", new[] { d.SelectedColor, d.SelectedSize }.Where(v => !string.IsNullOrEmpty(v)));
+                    string itemDesc = string.IsNullOrEmpty(variant) ? label : $"{label} ({variant})";
+                    return BadRequest($"{itemDesc} still needs {d.Quantity} pcs before this station can be marked done.");
+                }
+            }
+
+            int target = customItems.Sum(d => d.Quantity);
 
             order.ProductionRemarks = string.IsNullOrWhiteSpace(remarks) ? null : remarks.Trim();
-            ProductionWorkflow.SetStage(order, stage + 1);
+            ProductionWorkflow.SetStage(order, stage + 1); // also resets every item's ProductionQuantityDone back to 0
             await _context.SaveChangesAsync();
 
             string stationName = (stage >= 0 && stage < StationNames.Length) ? StationNames[stage] : $"stage {stage}";
             await ActivityLogger.LogAsync(_context, HttpContext, "Production", "Completed Station",
-                $"{order.CustomerName} — finished {stationName} ({quantity} pcs).", order.OrderID);
+                $"{order.CustomerName} — finished {stationName} ({target} pcs across {customItems.Count} item{(customItems.Count == 1 ? "" : "s")}).", order.OrderID);
 
-            return Ok(new { success = true, message = $"Order #ORD-{order.OrderID:D5} marked done at {stationName}." });
+            return Ok(new { success = true, message = $"Order #ORD-{order.OrderID:D3} marked done at {stationName}." });
         }
 
         // POST: /Production/pSetStage — clicking a stage in the stepper
@@ -325,7 +482,9 @@ namespace ConceptFactory.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> pSetStage(int id, int stage)
         {
-            var order = await _context.Orders.FirstOrDefaultAsync(o => o.OrderID == id);
+            var order = await _context.Orders
+                .Include(o => o.OrderDetails)
+                .FirstOrDefaultAsync(o => o.OrderID == id);
             if (order != null)
             {
                 ProductionWorkflow.SetStage(order, stage);
@@ -333,7 +492,7 @@ namespace ConceptFactory.Controllers
                 string stageName = (stage >= 0 && stage < StationNames.Length) ? StationNames[stage] : $"stage {stage}";
                 await ActivityLogger.LogAsync(_context, HttpContext, "Production", "Advanced Production Stage",
                     $"{order.CustomerName} — reached {stageName}.", order.OrderID);
-                TempData["Success"] = $"Order #ORD-{order.OrderID:D5} production updated.";
+                TempData["Success"] = $"Order #ORD-{order.OrderID:D3} production updated.";
             }
             return RedirectToAction(nameof(pIndex));
         }
@@ -343,14 +502,28 @@ namespace ConceptFactory.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> pMarkCompleted(int id)
         {
-            var order = await _context.Orders.FirstOrDefaultAsync(o => o.OrderID == id);
+            var order = await _context.Orders
+                .Include(o => o.OrderDetails)
+                .FirstOrDefaultAsync(o => o.OrderID == id);
             if (order != null)
             {
+                var customItems = order.OrderDetails.Where(d => d.IsCustomOrder).ToList();
+                int target = customItems.Sum(d => d.Quantity);
+
                 ProductionWorkflow.MarkCompleted(order);
+
+                // Advance the stage pointer so the stepper + timeline both
+                // treat "Completed" (last stage, index 6) as done.
+                order.ProductionStage = 6; // stages.Length - 1
+
                 await _context.SaveChangesAsync();
+
+                await ActivityLogger.LogAsync(_context, HttpContext, "Production", "Completed Station",
+                    $"{order.CustomerName} � finished Ready for Pickup ({target} pcs across {customItems.Count} item{(customItems.Count == 1 ? "" : "s")}).", order.OrderID);
                 await ActivityLogger.LogAsync(_context, HttpContext, "Production", "Marked Order Completed",
-                    $"{order.CustomerName}'s order picked up / completed.", order.OrderID);
-                TempData["Success"] = $"Order #ORD-{order.OrderID:D5} marked Completed.";
+                    $"{order.CustomerName} � items picked up.", order.OrderID);
+
+                TempData["Success"] = $"Order #ORD-{order.OrderID:D3} marked Completed.";
             }
             return RedirectToAction(nameof(pIndex));
         }

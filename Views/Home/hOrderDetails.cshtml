@@ -1,21 +1,42 @@
 @model ConceptFactory.Models.Order
 @{
-    ViewData["Title"] = "Order Status";
+    bool fromTrack = (ViewBag.From as string) == "track";
+    ViewData["Title"] = fromTrack ? "Track Order" : "Order Status";
 }
 @section Styles {
     <link rel="stylesheet" href="~/css/home/home-index.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/navbar.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/home/order-details.css" asp-append-version="true" />
+    @if (fromTrack)
+    {
+        <link rel="stylesheet" href="~/css/home/track-order-details.css" asp-append-version="true" />
+    }
 }
 <div class="cf-page cot-page">
     <form id="cfAntiForgeryForm" class="js-hidden">@Html.AntiForgeryToken()</form>
-    <div class="cf-page-title">Order Placed!</div>
-    <div class="cf-page-sub">Thank you — here's the status of your order. You can come back to this any time from "Track Order".</div>
+
+    @if (fromTrack)
+    {
+        <a asp-action="hTrackOrder" class="cot-back-link"><i class="fa-solid fa-arrow-left"></i></a>
+        <div class="cf-page-title">Track Order</div>
+    }
+    else
+    {
+        <div class="cf-page-title">Order Placed!</div>
+        <div class="cf-page-sub">Thank you — here's the status of your order. You can come back to this any time from "Track Order".</div>
+    }
 
     @await Html.PartialAsync("_CustomerOrderTrackingBody", Model)
 
     <div class="cot-actions-row">
-        <a asp-action="hIndex" class="cot-btn cot-btn-outline">Continue Shopping</a>
-        <a asp-action="hTrackOrder" class="cot-btn cot-btn-primary">Track Another Order</a>
+        @if (fromTrack)
+        {
+            <a asp-action="hTrackOrder" class="cot-btn cot-btn-outline">Back to My Orders</a>
+        }
+        else
+        {
+            <a asp-action="hIndex" class="cot-btn cot-btn-outline">Continue Shopping</a>
+            <a asp-action="hTrackOrder" class="cot-btn cot-btn-primary">Track Another Order</a>
+        }
     </div>
 </div>

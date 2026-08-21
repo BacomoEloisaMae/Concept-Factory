@@ -2,33 +2,48 @@
 @using ConceptFactory.Models
 
 @{
-    // Real production order (matches ProductionStage 0-5 everywhere else
-    // in the app — ProductionController, ProductionWorkflow). "Order
-    // Confirm" is a virtual step 0 shown before any real station, purely
-    // for this customer-facing stepper; it isn't a ProductionStage value.
-    string[] stages = { "Cutting", "Printing", "Sewing", "Trimming", "Quality Check", "Ready for Pickup" };
-    string[] stageIcons = { "fa-scissors", "fa-print", "fa-shirt", "fa-crop-simple", "fa-magnifying-glass", "fa-box" };
+    // Real production stages use ProductionStage 0-5.
+    // "Order Confirm" is a virtual customer-facing step before
+    // the actual production stations begin.
+    string[] stages =
+    {
+        "Cutting",
+        "Printing",
+        "Sewing",
+        "Trimming",
+        "Quality Check",
+        "Ready for Pickup"
+    };
+
+    string[] stageIcons =
+    {
+        "fa-scissors",
+        "fa-print",
+        "fa-shirt",
+        "fa-crop-simple",
+        "fa-magnifying-glass",
+        "fa-box"
+    };
 
     string StatusBadgeClass(string status) => status switch
     {
-        "Pending Down Payment" => "cot-badge-gray",
-        "Pending Cash Payment" => "cot-badge-orange",
-        "Pending Payment Verification" => "cot-badge-orange",
-        "Confirmed" => "cot-badge-purple",
-        "Design Review" => "cot-badge-blue",
-        "In Production" => "cot-badge-orange",
-        "Ready for Pickup" => "cot-badge-teal",
-        "Completed" => "cot-badge-green",
-        "Cancelled" => "cot-badge-red",
-        _ => "cot-badge-gray"
+        "Pending Down Payment" => "cot-pendingdp",
+        "Pending Cash Payment" => "cot-pendingcash",
+        "Pending Payment Verification" => "cot-pendingverif",
+        "Confirmed" => "cot-confirmed",
+        "In Production" => "cot-inproduction",
+        "Ready for Pickup" => "cot-readypickup",
+        "Completed" => "cot-completed",
+        "Cancelled" => "cot-cancelled",
+        _ => "cot-pending"
     };
 
     string PaymentBadgeClass(string status) => status switch
     {
-        "Partially Paid" => "cot-badge-purple",
-        "Fully Paid" => "cot-badge-green",
-        "Rejected" => "cot-badge-red",
-        _ => "cot-badge-orange"
+        "Partially Paid" => "cot-partiallypaid",
+        "Fully Paid" => "cot-fullypaid",
+        "Rejected" => "cot-rejected",
+        _ => "cot-waiting"
     };
 
     bool isCancelled = Model.Status == "Cancelled";
@@ -57,17 +72,10 @@
             ? $"{firstItemName} +{Model.OrderDetails.Count - 1} more"
             : firstItemName;
 
-    // Pulled out of the markup below on purpose: nested quotes inside a
-    // double-quoted HTML attribute (title="@string.Join(", ", ...)") can
-    // throw off the Razor parser, so it's computed here and referenced
-    // as a plain variable instead.
     string productNamesJoined = string.Join(
         ", ",
         Model.OrderDetails.Select(d => d.ProductNameSnapshot));
 
-    // "Order Timeline" list below — same ActivityLogs the admin Overview
-    // popup uses (see HomeController.hOrderDetailsPanel), just worded
-    // for a customer instead of staff.
     List<ActivityLog> timelineLogs =
         ViewBag.TimelineLogs ?? new List<ActivityLog>();
 
@@ -94,9 +102,10 @@
 }
 
 <div class="cot-card-header">
-    <div>
+    <div >
         <div class="cot-card-title">
-            Order #ORD-@Model.OrderID.ToString("D5")
+            Order #ORD-@Model.OrderID.ToString("D3")
+
             <span class="cot-badge @StatusBadgeClass(Model.Status)">
                 @Model.Status
             </span>
@@ -108,7 +117,9 @@
     </div>
 </div>
 
+
 <div class="cot-infobar">
+
     <div class="cot-infobar-item">
         <label>Customer</label>
         <span>@Model.CustomerName</span>
@@ -131,17 +142,22 @@
 
     <div class="cot-infobar-item">
         <label>Payment Status</label>
+
         <span class="cot-badge @PaymentBadgeClass(Model.PaymentStatus)">
             @Model.PaymentStatus
         </span>
     </div>
+
 </div>
 
+
 <div class="cot-card cot-progress-card">
+
     <div class="cot-section-title">
         <i class="fa-solid fa-industry"></i>
         Production Progress
     </div>
+
 
     @if (isCancelled)
     {
@@ -156,6 +172,7 @@
 
             @{
                 bool step0Done = !isPending;
+
                 bool step0Current = isPending;
 
                 string step0Class =
@@ -173,10 +190,14 @@
                 ? (orderConfirmedDate.HasValue
                 ? orderConfirmedDate.Value.ToString("MMM d, yyyy")
                 : "Confirmed")
-                : "Waiting";
+                : "Payment Verification";
             }
 
+
+            <!-- ORDER CONFIRM -->
+
             <div class="cot-icon-step @step0Class">
+
                 <div class="cot-icon-step-dot">
                     <i class="fa-solid @step0Icon"></i>
                 </div>
@@ -188,23 +209,32 @@
                 <div class="cot-icon-step-sub">
                     @step0Sub
                 </div>
+
             </div>
 
+
+            <!-- PRODUCTION STAGES -->
             @for (int i = 0; i < stages.Length; i++)
             {
                 bool done =
                 !isPending &&
                 Model.Status != "Confirmed" &&
                 Model.Status != "Design Review" &&
+                Model.ProductionStage >= 0 &&
+                Model.ProductionStage < stages.Length &&
                 i <= Model.ProductionStage &&
                 !(i == 5 && Model.Status == "Ready for Pickup");
+
 
                 bool current =
                 !done &&
                 !isPending &&
+                Model.ProductionStage >= 0 &&
+                Model.ProductionStage < stages.Length &&
                 (Model.Status == "In Production" ||
                 Model.Status == "Ready for Pickup") &&
                 i == Model.ProductionStage;
+
 
                 bool prevDone =
                 i == 0
@@ -213,6 +243,8 @@
                 !isPending &&
                 Model.Status != "Confirmed" &&
                 Model.Status != "Design Review" &&
+                Model.ProductionStage >= 0 &&
+                Model.ProductionStage < stages.Length &&
                 (i - 1) <= Model.ProductionStage &&
                 !(
                 (i - 1) == 5 &&
@@ -220,27 +252,38 @@
                 )
                 );
 
-                string lineClass = prevDone ? "done" : "";
+
+                string lineClass =
+                prevDone
+                ? "done"
+                : "";
+
 
                 string stepClass =
                 done
                 ? "done"
                 : (current ? "current" : "");
 
+
                 string iconClass =
                 done
                 ? "fa-check"
                 : stageIcons[i];
 
+
                 string subLabel;
+
 
                 if (done)
                 {
                     DateTime? stationDoneDate =
-                    (stages[i] == "Ready for Pickup" &&
-                    Model.Status == "Completed")
+                    (
+                    stages[i] == "Ready for Pickup" &&
+                    Model.Status == "Completed"
+                    )
                     ? pickedUpDate
                     : StationDate(stages[i]);
+
 
                     subLabel =
                     stationDoneDate.HasValue
@@ -259,9 +302,12 @@
                     subLabel = "Waiting";
                 }
 
+
                 <div class="cot-icon-step-line @lineClass"></div>
 
+
                 <div class="cot-icon-step @stepClass">
+
                     <div class="cot-icon-step-dot">
                         <i class="fa-solid @iconClass"></i>
                     </div>
@@ -273,52 +319,79 @@
                     <div class="cot-icon-step-sub">
                         @subLabel
                     </div>
+
                 </div>
             }
+
         </div>
 
-        /*
-        * IMPORTANT:
-        * We are already inside the Razor `else { }` code block here.
-        * Therefore, do NOT use `@{ }`.
-        */
 
-        string currStageName = stages[Model.ProductionStage];
 
-        string prevStageName =
-        Model.ProductionStage > 0
-        ? stages[Model.ProductionStage - 1]
-        : "";
+        // Only access ProductionStage when it is actually valid.
+        string currStageName = "";
+
+        string prevStageName = "";
+
+
+        if (!isPending &&
+        Model.ProductionStage >= 0 &&
+        Model.ProductionStage < stages.Length)
+        {
+            currStageName = stages[Model.ProductionStage];
+
+
+            if (Model.ProductionStage > 0)
+            {
+                prevStageName =
+                stages[Model.ProductionStage - 1];
+            }
+        }
+
 
         string bannerText =
         isPending
-        ? "Waiting for your down payment to be confirmed before production begins."
+        ? "Waiting for your payment to be verified before production begins."
+
         : Model.Status == "Confirmed" ||
         Model.Status == "Design Review"
         ? "Your order has been confirmed! Production will begin shortly."
+
         : Model.Status == "In Production"
         ? (
-        Model.ProductionStage > 0
+        !string.IsNullOrEmpty(prevStageName)
         ? $"{prevStageName} completed successfully! Your order has moved to {currStageName} Station."
         : $"Your order has moved to {currStageName} Station."
         )
+
         : Model.Status == "Ready for Pickup"
         ? "Your order is ready! Please visit the shop to pick it up."
+
         : Model.Status == "Completed"
         ? "This order has been completed. Thank you for choosing The Concept Factory!"
+
         : "";
+
 
         @if (!string.IsNullOrEmpty(bannerText))
         {
             <div class="cot-note-banner cot-note-info">
+
                 <i class="fa-solid fa-circle-info"></i>
+
                 @bannerText
+
             </div>
         }
+
     }
+
 </div>
 
+
 <div class="cot-bottom-grid">
+
+
+    <!-- ORDER TIMELINE -->
 
     <div class="cot-card">
 
@@ -326,6 +399,7 @@
             <i class="fa-solid fa-clock-rotate-left"></i>
             Order Timeline
         </div>
+
 
         @if (timelineLogs.Any())
         {
@@ -338,6 +412,7 @@
                         <div class="cot-timeline-marker">
                             <i class="fa-solid fa-check"></i>
                         </div>
+
 
                         <div class="cot-timeline-content">
 
@@ -353,6 +428,7 @@
 
                             </div>
 
+
                             @if (!string.IsNullOrEmpty(log.Details))
                             {
                                 <div class="cot-timeline-desc">
@@ -361,6 +437,7 @@
                             }
 
                         </div>
+
                     </div>
                 }
 
@@ -375,13 +452,16 @@
 
     </div>
 
+
+
+    <!-- ORDER SUMMARY -->
+
     <div class="cot-card">
 
         <div class="cot-section-title">
             <i class="fa-solid fa-receipt"></i>
             Order Summary
         </div>
-
         @{
             var totalServiceFees =
             Model.OrderDetails.Sum(
@@ -391,29 +471,39 @@
             Model.TotalAmount - totalServiceFees;
         }
 
+
         @foreach (var d in Model.OrderDetails)
         {
             var name =
             !string.IsNullOrEmpty(d.ProductNameSnapshot)
             ? d.ProductNameSnapshot
-            : (d.Product != null
+            : (
+            d.Product != null
             ? d.Product.ProductName
-            : "Item");
+            : "Item"
+            );
+
 
             var imgPath =
             !string.IsNullOrEmpty(d.ImageSnapshotPath)
             ? d.ImageSnapshotPath
-            : (d.Product != null
+            : (
+            d.Product != null
             ? d.Product.ImagePath
-            : null);
+            : null
+            );
+
 
             var lineServiceFee =
             d.ServicePriceSnapshot ?? 0;
 
+
             var lineProductPrice =
             d.UnitPrice - lineServiceFee;
 
+
             <div class="cot-product-row">
+
 
                 <div class="cot-product-thumb">
 
@@ -428,11 +518,13 @@
 
                 </div>
 
+
                 <div class="cot-product-info">
 
                     <div class="cot-product-name">
                         @d.Quantity x @name
                     </div>
+
 
                     @if (!string.IsNullOrEmpty(d.SelectedColor))
                     {
@@ -441,6 +533,7 @@
                             <strong>@d.SelectedColor</strong>
                         </div>
                     }
+
 
                     @if (!string.IsNullOrEmpty(d.SelectedSize))
                     {
@@ -457,112 +550,105 @@
                             <strong>@d.ServiceNameSnapshot</strong>
                         </div>
                     }
-
                 </div>
+            </div>
+        }
 
-                <div class="cot-product-price-col">
+        <div class="cots-bottom-grid">
 
-                    <div class="cot-product-price">
-                        ₱@((lineProductPrice * d.Quantity).ToString("N2"))
+            <div class="cot-card cot-total-item">
+                <div class="cot-total-row">
+                    <span>Subtotal</span>
+                    <span>₱@totalProductPrice.ToString("N2")</span>
+                </div>
+                @if (totalServiceFees > 0)
+                {
+                    <div class="cot-total-row">
+                        <span>Service Fees</span>
+                        <span>₱@totalServiceFees.ToString("N2")</span>
                     </div>
-
-                    @if (lineServiceFee > 0)
-                    {
-                        <div class="cot-product-attr cot-product-attr-spaced">
-                            + ₱@((lineServiceFee * d.Quantity).ToString("N2")) fee
-                        </div>
-                    }
-
+                }
+                <div class="cot-total-row cot-paid">
+                    <span>Down Payment Paid</span>
+                    <span>₱@Model.DownPaymentAmount.ToString("N2") @(Model.TotalAmount > 0 ? $"({Math.Round(Model.DownPaymentAmount / Model.TotalAmount * 100, 1)}%)" : "")</span>
+                </div>
+                <div class="cot-total-row cot-total-final">
+                    <span>Remaining Balance</span>
+                    <span class="@(Model.RemainingBalance <= 0 ? "cot-balance-cleared" : "")">₱@Model.RemainingBalance.ToString("N2")</span>
+                </div>
+            </div>
+            <div class="cot-card">
+                <div class="cot-info-row">
+                    <label>Payment Method</label>
+                    <span>@(Model.PaymentMethod ?? "—")</span>
                 </div>
 
+                @if (Model.PaymentMethod == "Gcash" && !string.IsNullOrEmpty(Model.ReferenceNumber))
+                {
+                    <div class="cot-info-row">
+                        <label>Transaction Ref</label>
+                        <span>#@Model.ReferenceNumber</span>
+                    </div>
+                }
+                <div class="cot-info-row">
+                    <label>Payment Date</label>
+                    <span>@Model.OrderDate.ToString("MMM d, yyyy | h:mm tt")</span>
+                </div>
             </div>
-        }
 
-        <div class="cot-total-row">
-            <span>Subtotal</span>
-            <span>₱@totalProductPrice.ToString("N2")</span>
-        </div>
-
-        @if (totalServiceFees > 0)
-        {
-            <div class="cot-total-row">
-                <span>Service Fees</span>
-                <span>₱@totalServiceFees.ToString("N2")</span>
-            </div>
-        }
-
-        <div class="cot-total-row">
-            <span>Down Payment Paid</span>
-            <span>₱@Model.DownPaymentAmount.ToString("N2")</span>
-        </div>
-
-        <div class="cot-total-row cot-total-final">
-            <span>Remaining Balance</span>
-
-            <span class="@(Model.RemainingBalance <= 0 ? "cot-balance-cleared" : "")">
-                ₱@Model.RemainingBalance.ToString("N2")
-            </span>
-        </div>
-
-        <div class="cot-summary-divider"></div>
-
-        <div class="cot-info-row">
-            <label>Payment Method</label>
-            <span>@(Model.PaymentMethod ?? "—")</span>
-        </div>
-
-        @if (Model.PaymentMethod == "Gcash" &&
-                !string.IsNullOrEmpty(Model.ReferenceNumber))
-        {
-            <div class="cot-info-row">
-                <label>Transaction Ref</label>
-                <span>#@Model.ReferenceNumber</span>
-            </div>
-        }
-
-        <div class="cot-info-row">
-            <label>Payment Date</label>
-            <span>
-                @Model.OrderDate.ToString("MMM d, yyyy | h:mm tt")
-            </span>
         </div>
 
         @{
             var linesWithDesign =
             Model.OrderDetails
-            .Where(d => !string.IsNullOrEmpty(d.ImageSnapshotPath))
+            .Where(d =>
+            !string.IsNullOrEmpty(d.ImageSnapshotPath))
             .ToList();
         }
+
 
         @if (linesWithDesign.Any())
         {
             <div class="cot-summary-divider"></div>
 
+
             <div class="cot-uploaded-design-label">
+
                 <i class="fa-regular fa-image"></i>
+
                 Uploaded Design
+
             </div>
+
 
             @foreach (var d in linesWithDesign)
             {
                 <div class="cot-design-row">
 
                     <div class="cot-design-thumb">
+
                         <img src="@d.ImageSnapshotPath"
                              alt="Uploaded design" />
+
                     </div>
+
 
                     <div class="cot-design-name">
-                        @System.IO.Path.GetFileName(d.ImageSnapshotPath)
-                    </div>
 
-                </div>
-            }
+                        @System.IO.Path.GetFileName(
+                        d.ImageSnapshotPath)
+
+            </div>
+
+        </div>
+                }
         }
 
     </div>
 
 </div>
+
+
 
 @if (canCancel)
 {
@@ -573,6 +659,7 @@
                 onclick="cfCancelMyOrder(@Model.OrderID)">
 
             <i class="fa-solid fa-ban"></i>
+
             Cancel Order
 
         </button>

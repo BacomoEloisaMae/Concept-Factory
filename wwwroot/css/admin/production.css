@@ -13,22 +13,26 @@
     border-radius: 10px;
     padding: 20px 24px;
 }
+
 .prod-monitor-title h2 {
     font-size: 16px;
     font-weight: 800;
     color: var(--text-main);
     margin: 0 0 2px;
 }
+
 .prod-monitor-title p {
     font-size: 12.5px;
     color: var(--text-sub);
     margin: 0 0 18px;
 }
+
 .prod-monitor-stepper {
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
 }
+
 .prod-monitor-step {
     display: flex;
     flex-direction: column;
@@ -37,6 +41,7 @@
     width: 108px;
     flex-shrink: 0;
 }
+
 .prod-monitor-icon {
     width: 46px;
     height: 46px;
@@ -46,25 +51,50 @@
     justify-content: center;
     font-size: 17px;
     border: 2px solid var(--border);
-    background: var(--white);
-    color: var(--text-muted);
-    transition: background .15s, border-color .15s, color .15s;
 }
-.prod-monitor-check-icon { display: none; }
-.prod-monitor-step.done .prod-monitor-orig-icon { display: none; }
-.prod-monitor-step.done .prod-monitor-check-icon { display: block; }
+.prod-monitor-icon img{
+    width: 32px;
+    height: 32px;
+    object-fit: contain;
+
+}
+.prod-ord-name {
+    background: var(--primary-light);
+    color: var(--primary);
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.prod-monitor-step .fa-check {
+    display: none;
+}
+
+.prod-monitor-step.done .prod-monitor-icon img {
+    display: none;
+}
+
+.prod-monitor-step.done .fa-check {
+    display: inline-block;
+}
+
 .prod-monitor-label {
     font-size: 12px;
     font-weight: 700;
     color: var(--text-main);
     margin-top: 8px;
 }
+
 .prod-monitor-sublabel {
     font-size: 10.5px;
     font-weight: 600;
     color: var(--text-muted);
     margin-top: 2px;
 }
+
 .prod-monitor-line {
     flex: 1;
     height: 2px;
@@ -81,7 +111,10 @@
     border-color: var(--border);
     color: var(--text-muted);
 }
-.prod-monitor-step.neutral .prod-monitor-sublabel { color: var(--text-muted); }
+
+.prod-monitor-step.neutral .prod-monitor-sublabel {
+    color: var(--text-muted);
+}
 
 /* Done */
 .prod-monitor-step.done .prod-monitor-icon {
@@ -89,8 +122,14 @@
     border-color: var(--success);
     color: #fff;
 }
-.prod-monitor-step.done .prod-monitor-sublabel { color: var(--success); }
-.prod-monitor-line.done { background: var(--success); }
+
+.prod-monitor-step.done .prod-monitor-sublabel {
+    color: var(--success);
+}
+
+.prod-monitor-line.done {
+    background: var(--success);
+}
 
 /* Current / in progress */
 .prod-monitor-step.current .prod-monitor-icon {
@@ -99,8 +138,14 @@
     color: var(--primary);
     box-shadow: 0 0 0 4px var(--primary-light);
 }
-.prod-monitor-step.current .prod-monitor-label { color: var(--primary); }
-.prod-monitor-step.current .prod-monitor-sublabel { color: var(--primary); }
+
+.prod-monitor-step.current .prod-monitor-label {
+    color: var(--primary);
+}
+
+.prod-monitor-step.current .prod-monitor-sublabel {
+    color: var(--warning);
+}
 
 /* Pending (selected order, stage not reached yet) */
 .prod-monitor-step.pending .prod-monitor-icon {
@@ -108,15 +153,33 @@
     border-color: var(--border);
     color: var(--text-muted);
 }
-.prod-monitor-step.pending .prod-monitor-sublabel { color: var(--text-muted); }
+
+.prod-monitor-step.pending .prod-monitor-sublabel {
+    color: var(--text-muted);
+}
 
 @media (max-width: 900px) {
-    .prod-monitor-stepper { flex-wrap: wrap; row-gap: 20px; }
-    .prod-monitor-line { display: none; }
-    .prod-monitor-step { width: 30%; }
+    .prod-monitor-stepper {
+        flex-wrap: wrap;
+        row-gap: 20px;
+    }
+
+    .prod-monitor-line {
+        display: none;
+    }
+
+    .prod-monitor-step {
+        width: 30%;
+    }
 }
 
 /* ── Mini progress bar in the orders table ── */
+.prod-progress-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
 .prod-progress-bar {
     width: 100%;
     max-width: 140px;
@@ -125,14 +188,13 @@
     border-radius: 999px;
     overflow: hidden;
 }
+
 .prod-progress-clickable {
     cursor: pointer;
     height: 8px;
     transition: transform .1s;
 }
-.prod-progress-clickable:hover {
-    transform: scaleY(1.4);
-}
+
 .prod-progress-fill {
     height: 100%;
     width: var(--pct, 0%);
@@ -140,6 +202,7 @@
     border-radius: 999px;
     transition: width .2s;
 }
+
 .prod-progress-label {
     font-size: 11px;
     color: var(--text-muted);
@@ -148,13 +211,19 @@
 
 /* ── Card wrapping the interactive stepper inside the modal ── */
 .prod-card {
+    background: var(--white);
     border: 1px solid var(--border);
     border-radius: 12px;
-    padding: 18px 16px;
+    padding: 20px 18px;
     margin-bottom: 16px;
 }
+.prod-body-grid {
+    gap: 20px;
+    padding: 20px 12px;
+    background-color: #E9E9E9;
+}
 .prod-card-title {
-    font-size: 13.5px;
+    font-size: 15px;
     font-weight: 700;
     color: var(--text-main);
     display: flex;
@@ -162,7 +231,17 @@
     gap: 8px;
     margin-bottom: 16px;
 }
-.prod-card-title i { color: var(--primary); }
+
+    .prod-card-title i {
+        color: var(--primary);
+        font-size: 14px;
+    }
+    /* od-readonly-tag sits at the end of a prod-card-title row (e.g.
+   "View only" / "Click a stage to mark it done") — push it right
+   without touching the shared .od-readonly-tag rule itself. */
+    .prod-card-title .od-readonly-tag {
+        margin-left: auto;
+    }
 
 /* ── Prompt cards for manual transitions (Start Design Review / Mark Completed) ── */
 .prod-step-card {
@@ -177,7 +256,11 @@
     padding: 14px 16px;
     margin-bottom: 16px;
 }
-.prod-step-card-success { background: var(--success-light); border-color: #bbf7d0; }
+
+.prod-step-card-success {
+    background: var(--success-light);
+    border-color: #bbf7d0;
+}
 
 /* Overview's read-only banner — see pDetailsPanel(readOnly=true) */
 .prod-readonly-banner {
@@ -193,6 +276,7 @@
     font-size: 13px;
     font-weight: 500;
 }
+
 .prod-step-card-text {
     font-size: 13px;
     color: var(--text-sub);
@@ -202,13 +286,29 @@
     flex: 1;
     min-width: 220px;
 }
-.prod-step-card-text i { color: var(--primary); font-size: 16px; }
-.prod-step-card-success .prod-step-card-text i { color: #16a34a; }
+
+    .prod-step-card-text i {
+        color: var(--primary);
+        font-size: 16px;
+    }
+
+.prod-step-card-success .prod-step-card-text i {
+    color: #16a34a;
+}
 
 @media (max-width: 600px) {
-    .prod-step-card { flex-direction: column; align-items: stretch; }
-    .prod-step-card form { display: flex; }
-    .prod-step-card button { width: 100%; }
+    .prod-step-card {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+        .prod-step-card form {
+            display: flex;
+        }
+
+        .prod-step-card button {
+            width: 100%;
+        }
 }
 
 /* ── "Items in Production" list inside the modal ── */
@@ -217,12 +317,14 @@
     flex-direction: column;
     gap: 10px;
 }
+
 .prod-items-empty {
     font-size: 13px;
     color: var(--text-muted);
     text-align: center;
     padding: 10px 0;
 }
+
 .prod-item-row {
     display: flex;
     align-items: center;
@@ -230,11 +332,19 @@
     border: 1px solid var(--border);
     border-radius: 10px;
     padding: 10px 12px;
+    background: var(--white);
+    transition: border-color .15s;
 }
+
+    .prod-item-row:hover {
+        border-color: var(--primary-light);
+    }
+
 .prod-item-row-untracked {
     opacity: 0.7;
     background: var(--bg);
 }
+
 .prod-item-tracked-tag {
     display: inline-block;
     margin-left: 6px;
@@ -248,6 +358,7 @@
     padding: 2px 8px;
     vertical-align: middle;
 }
+
 .prod-item-untracked-tag {
     display: inline-block;
     margin-left: 6px;
@@ -261,6 +372,7 @@
     padding: 2px 8px;
     vertical-align: middle;
 }
+
 .prod-item-thumb {
     width: 48px;
     height: 48px;
@@ -273,20 +385,29 @@
     justify-content: center;
     color: var(--text-muted);
 }
-.prod-item-thumb img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
+
+    .prod-item-thumb i {
+        font-size: 18px;
+    }
+
+    .prod-item-thumb img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
 .prod-item-info {
     flex: 1;
     min-width: 0;
 }
+
 .prod-item-name {
-    font-size: 13.5px;
+    font-size: 14px;
     font-weight: 700;
+    margin-bottom: 6px;
     color: var(--text-main);
 }
+
 .prod-item-meta {
     font-size: 12px;
     color: var(--text-sub);
@@ -306,7 +427,11 @@
     justify-content: center;
     padding: 20px;
 }
-.prod-item-modal-backdrop.open { display: flex; }
+
+    .prod-item-modal-backdrop.open {
+        display: flex;
+    }
+
 .prod-item-modal {
     background: var(--white);
     border-radius: 14px;
@@ -316,6 +441,7 @@
     overflow-y: auto;
     box-shadow: var(--shadow-md);
 }
+
 .prod-item-modal-img {
     width: 100%;
     aspect-ratio: 1 / 1;
@@ -324,6 +450,7 @@
     display: block;
     border-radius: 14px 14px 0 0;
 }
+
 .prod-item-modal-img-placeholder {
     width: 100%;
     aspect-ratio: 1 / 1;
@@ -335,15 +462,18 @@
     font-size: 40px;
     border-radius: 14px 14px 0 0;
 }
+
 .prod-item-modal-body {
     padding: 18px 20px 20px;
 }
+
 .prod-item-modal-title {
     font-size: 16px;
     font-weight: 800;
     color: var(--text-main);
     margin-bottom: 12px;
 }
+
 .prod-item-modal-field {
     display: flex;
     justify-content: space-between;
@@ -352,9 +482,21 @@
     border-bottom: 1px dashed var(--border);
     font-size: 13px;
 }
-.prod-item-modal-field:last-of-type { border-bottom: none; }
-.prod-item-modal-field label { color: var(--text-sub); font-weight: 600; }
-.prod-item-modal-field span { color: var(--text-main); text-align: right; }
+
+    .prod-item-modal-field:last-of-type {
+        border-bottom: none;
+    }
+
+    .prod-item-modal-field label {
+        color: var(--text-sub);
+        font-weight: 600;
+    }
+
+    .prod-item-modal-field span {
+        color: var(--text-main);
+        text-align: right;
+    }
+
 .prod-item-modal-notes {
     margin-top: 12px;
     padding-top: 12px;
@@ -363,6 +505,7 @@
     color: var(--text-sub);
     line-height: 1.6;
 }
+
 .prod-item-modal-close {
     width: 100%;
     margin-top: 16px;
@@ -375,83 +518,148 @@
    header/.prod-card/.prod-step-card from above — this block only
    covers what's new: the info grid, quantity field, and progress bar.
 ============================================================ */
-.station-modal { max-width: 520px; }
+.station-modal {
+    max-width: 520px;
+}
 
 .station-info-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 14px 20px;
 }
+
 .station-info-item label {
     display: block;
-    font-size: 11.5px;
+    font-size: 12px;
     font-weight: 600;
     color: var(--text-muted);
-    text-transform: uppercase;
-    letter-spacing: .02em;
     margin-bottom: 3px;
 }
+
 .station-info-item span {
-    font-size: 13.5px;
+    font-size: 16px;
     color: var(--text-main);
     font-weight: 500;
 }
 
+.station-item-info {
+    padding: 10px;
+}   
+.station-product-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+    .station-product-list span {
+        font-size: 14px;
+        font-weight: 500;
+        color: var(--text-main);
+    }
 .station-qty-row {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    font-size: 13.5px;
+    font-size: 14px;
     color: var(--text-sub);
     margin-bottom: 14px;
 }
-.station-qty-row strong { color: var(--text-main); }
 
-.station-field { margin-bottom: 16px; }
-.station-field label {
-    display: block;
+    .station-qty-row strong {
+        color: var(--text-main);
+    }
+
+.station-item-hint {
     font-size: 12.5px;
-    font-weight: 700;
-    color: var(--text-main);
-    margin-bottom: 6px;
+    color: var(--text-sub);
+    margin: -4px 0 12px;
+    line-height: 1.5;
 }
-.station-required { color: var(--danger); }
+
+.station-item-list { margin-bottom: 16px; }
+.station-item-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px dashed var(--border);
+}
+.station-item-row:last-child { border-bottom: none; }
+.station-item-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-main);
+    flex: 1;
+    min-width: 0;
+}
+
+.station-field {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 16px;
+}
+
+    .station-field label {
+        display: block;
+        align-content: center;
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--text-main);
+        margin-bottom: 6px;
+    }
+
+.station-required {
+    color: var(--danger);
+}
 
 .station-qty-input-wrap {
     display: flex;
     align-items: center;
     gap: 8px;
 }
-.station-qty-input-wrap input[type="number"] {
-    width: 90px;
-    padding: 8px 10px;
-    border: 1.5px solid var(--border);
-    border-radius: var(--radius);
-    font-size: 14px;
-    font-weight: 600;
-    text-align: center;
-}
-.station-qty-input-wrap span {
-    font-size: 12.5px;
-    color: var(--text-muted);
+
+    .station-qty-input-wrap input[type="number"] {
+        width: 90px;
+        padding: 8px 10px;
+        border: 1.5px solid var(--border);
+        border-radius: var(--radius);
+        font-size: 14px;
+        font-weight: 600;
+        text-align: center;
+    }
+
+    .station-qty-input-wrap span {
+        font-size: 14px;
+        color: var(--text-muted);
+    }
+
+.station-progress {
+    margin-bottom: 16px;
 }
 
-.station-progress { margin-bottom: 16px; }
 .station-progress-label {
     display: flex;
     justify-content: space-between;
-    font-size: 11.5px;
+    font-size: 12px;
+    padding: 0 4px;
     color: var(--text-muted);
-    margin-bottom: 6px;
+    margin-top: 6px;
 }
-.station-progress-label span:last-child { color: var(--success); font-weight: 700; }
+
+    .station-progress-label span:last-child {
+        color: var(--success);
+        font-weight: 700;
+    }
+
 .station-progress-bar {
     width: 100%;
-    height: 8px;
+    height: 10px;
     background: #f1f2f6;
     border-radius: 999px;
     overflow: hidden;
 }
+
 .station-progress-fill {
     height: 100%;
     background: var(--success);
@@ -459,8 +667,42 @@
     transition: width .15s;
 }
 
-.station-field textarea {
+
+.station-select {
     width: 100%;
+    height: 35px;
+    padding: 0 42px 0 15px;
+    border: 1px solid #d8e1ee;
+    border-radius: 10px;
+    background: var(--white);
+    color: var(--text-main);
+    font-size: 15px;
+    font-family: inherit;
+    appearance: auto;
+    cursor: pointer;
+    margin-bottom: 10px;
+}
+
+    .station-select:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px var(--primary-light);
+    }
+
+.station-field-notes label {
+    display: block;
+    align-content: center;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-main);
+    margin-bottom: 6px;
+}
+    .station-field-notes {
+    margin-bottom: 16px;
+}
+.station-field-notes textarea {
+    width: 100%;
+    height: 100px;   
     padding: 10px 12px;
     border: 1.5px solid var(--border);
     border-radius: var(--radius);
@@ -468,6 +710,7 @@
     font-family: inherit;
     resize: vertical;
 }
+
 .station-char-count {
     text-align: right;
     font-size: 11px;
@@ -478,13 +721,17 @@
 .station-submit-btn {
     width: 100%;
     justify-content: center;
+    background: var(--success-dark);
+    border-color: var(--success-dark);
+}
+.station-submit-btn:hover {
     background: var(--success);
-    border-color: var(--success);
+    border-color: var(--success)
 }
-.station-submit-btn:disabled {
-    opacity: .55;
-    cursor: not-allowed;
-}
+    .station-submit-btn:disabled {
+        opacity: .55;
+        cursor: not-allowed;
+    }
 
 .station-lock-note {
     display: flex;
@@ -499,35 +746,53 @@
     color: #92400e;
     line-height: 1.5;
 }
-.station-lock-note i { margin-top: 1px; color: #d97706; }
+
+    .station-lock-note i {
+        margin-top: 1px;
+        color: #d97706;
+    }
+
 
 /* ============================================================
    ORDER TIMELINE — the dated per-station history card added to
    _ProductionPanel.cshtml (Overview's "View Progress" popup).
    Reconstructed from ActivityLogs, see ProductionController.
    pDetailsPanel. Lives inside .prod-card like everything else here.
+
+   Connector is a dashed "stitch" line rather than a solid rule — a
+   small nod to the apparel/printing context — running continuously
+   behind the done/active/pending markers.
 ============================================================ */
 .prod-timeline {
     display: flex;
     flex-direction: column;
 }
+
 .prod-timeline-item {
     display: flex;
     gap: 14px;
     position: relative;
     padding-bottom: 20px;
 }
-.prod-timeline-item:last-child { padding-bottom: 0; }
-/* Connecting vertical line between markers */
-.prod-timeline-item:not(:last-child)::before {
-    content: "";
-    position: absolute;
-    left: 11px;
-    top: 24px;
-    bottom: 0;
-    width: 2px;
-    background: var(--border);
+
+    .prod-timeline-item:last-child {
+        padding-bottom: 0;
+    }
+    /* Connecting vertical line between markers — dashed "stitch" style */
+    .prod-timeline-item:not(:last-child)::before {
+        content: "";
+        position: absolute;
+        left: 11px;
+        top: 24px;
+        bottom: 0;
+        width: 0;
+        border-left: 2px dashed var(--border);
+    }
+
+.prod-timeline-item-done:not(:last-child)::before {
+    border-left-color: var(--success);
 }
+
 .prod-timeline-marker {
     flex-shrink: 0;
     width: 24px;
@@ -539,42 +804,62 @@
     font-size: 11px;
     z-index: 1;
 }
+
 .prod-timeline-item-done .prod-timeline-marker {
     background: var(--success);
     color: #fff;
 }
+
 .prod-timeline-item-active .prod-timeline-marker {
     background: #fff;
     border: 3px solid #f59e0b;
 }
+
 .prod-timeline-item-pending .prod-timeline-marker {
     background: #fff;
     border: 2px solid var(--border);
 }
-.prod-timeline-content { flex: 1; padding-top: 2px; }
+
+.prod-timeline-content {
+    flex: 1;
+    padding-top: 2px;
+}
+
 .prod-timeline-row {
     display: flex;
     align-items: baseline;
     justify-content: space-between;
     gap: 10px;
 }
+
 .prod-timeline-title {
     font-size: 13.5px;
     font-weight: 700;
     color: var(--text-main);
 }
-.prod-timeline-item-pending .prod-timeline-title { color: var(--text-muted); font-weight: 600; }
+
+.prod-timeline-item-pending .prod-timeline-title {
+    color: var(--text-muted);
+    font-weight: 600;
+}
+
+.prod-timeline-item-active .prod-timeline-title {
+    color: #b45309;
+}
+
 .prod-timeline-date {
     font-size: 11px;
     color: var(--text-muted);
     white-space: nowrap;
 }
+
 .prod-timeline-desc {
     font-size: 12px;
     color: var(--text-sub);
     margin-top: 3px;
     line-height: 1.5;
 }
+
 .prod-timeline-tag {
     font-size: 10.5px;
     font-weight: 700;
@@ -586,4 +871,108 @@
     border-radius: 999px;
     white-space: nowrap;
 }
-.prod-timeline-tag-active { color: #b45309; background: #fef3c7; }
+/* bigger thumb to match the reference layout */
+.prod-item-thumb {
+    width: 124px;
+    height: 124px;
+    border-radius: 10px;
+}
+
+    .prod-item-thumb i {
+        font-size: 28px;
+    }
+
+.prod-item-row {
+    align-items: flex-start;
+}
+
+
+.prod-item-fields {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.prod-item-field {
+    font-size: 13px;
+    color: var(--text-sub);
+}
+
+    .prod-item-field span {
+        color: var(--text-sub);
+    }
+
+    .prod-item-field strong {
+        font-weight: bolder;
+    }
+
+
+.prod-items-status {
+    margin-left: auto; 
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    padding: 3px 10px;
+    border-radius: 999px;
+    white-space: nowrap;
+}
+.prod-ord-num {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 20px;
+}
+
+.design-file-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 10px;
+    border: 1.5px solid #5B5EF4;
+    border-radius: 8px;
+    color: #5B5EF4;
+    font-weight: 600;
+    font-size: 12px;
+    text-decoration: none;
+    background: #fff;
+    transition: background 0.15s ease;
+}
+
+    .design-file-link:hover {
+        background: #f2f2ff;
+    }
+
+    .design-file-link i {
+        font-size: 0.9rem;
+    }
+
+.station-info-item .design-file-link + .design-file-link {
+    margin-top: 6px;
+}
+
+.prod-items-status-waiting {
+    color: var(--primary);
+    background: var(--primary-light);
+}
+
+.prod-items-status-started {
+    color: var(--warning);
+    background: #fff7ed;
+}
+
+.prod-items-status-completed {
+    color: var(--success-dark);
+    background: var(--success-light);
+}
+.prod-items-status-ready {
+    background: #ecfeff;
+    color: #0891b2; 
+}
+.prod-timeline-tag-active {
+    color: #b45309;
+    background: #fef3c7;
+}
+.billing-modal::-webkit-scrollbar {
+    display: none;
+}

@@ -20,12 +20,13 @@
         "Confirmed" or "Design Review" => 0,
         _ => (int)Math.Round((o.ProductionStage + 1) / 6.0 * 100)
     };
+    string[] StageNames = { "Cutting", "Printing", "Sewing", "Trimming", "Quality Check", "Ready for Pickup" };
     string ProgressLabel(ConceptFactory.Models.Order o) => o.Status switch
     {
         "Completed" => "Done",
         "Confirmed" => "Not started",
-        "Design Review" => "In review",
-        _ => $"Stage {o.ProductionStage + 1} of 6"
+        // _ => $"{StageNames[o.ProductionStage]} Stage of 6"
+        _ => StageNames[o.ProductionStage]
     };
 }
 @section Styles {
@@ -38,12 +39,9 @@
     <!-- Page Header -->
     <div class="page-header">
         <div>
-            <h1 class="page-title">Production Monitoring</h1>
-            <p class="page-subtitle">Track and advance every confirmed order through production</p>
+            <h1 class="page-title">Production Workflow Monitoring</h1>
+            <p class="page-subtitle">Track and monitor all production stages in real-time</p>
         </div>
-        <a href="@Url.Action("hTrackOrder", "Home")" target="_blank" class="btn btn-outline">
-            <i class="fa-solid fa-arrow-up-right-from-square"></i> Preview Customer Tracking Page
-        </a>
     </div>
 
     @if (TempData["Success"] != null)
@@ -61,43 +59,43 @@
         </div>
         <div class="prod-monitor-stepper" id="prodMonitorStepper">
             <div class="prod-monitor-step" data-node="confirm">
-                <div class="prod-monitor-icon"><i class="fa-solid fa-check prod-monitor-orig-icon"></i><i class="fa-solid fa-check prod-monitor-check-icon"></i></div>
+                <div class="prod-monitor-icon stat-icon-purple"><img src="~/images/logo/image 24.png"><i class="fa-solid fa-check"></i></div>
                 <div class="prod-monitor-label">Order Confirm</div>
                 <div class="prod-monitor-sublabel">—</div>
             </div>
             <div class="prod-monitor-line"></div>
             <div class="prod-monitor-step" data-node="0">
-                <div class="prod-monitor-icon"><i class="fa-solid fa-scissors prod-monitor-orig-icon"></i><i class="fa-solid fa-check prod-monitor-check-icon"></i></div>
+                <div class="prod-monitor-icon stat-icon-purple"><img src="~/images/logo/cutt.png"><i class="fa-solid fa-check"></i></div>
                 <div class="prod-monitor-label">Cutting</div>
                 <div class="prod-monitor-sublabel">—</div>
             </div>
             <div class="prod-monitor-line"></div>
+            <div class="prod-monitor-step" data-node="1">
+                <div class="prod-monitor-icon stat-icon stat-icon-purple"><img src="~/images/logo/print blue 2.png"><i class="fa-solid fa-check"></i></div>
+                <div class="prod-monitor-label">Printing</div>
+                <div class="prod-monitor-sublabel">—</div>
+            </div>
+            <div class="prod-monitor-line"></div>
             <div class="prod-monitor-step" data-node="2">
-                <div class="prod-monitor-icon"><i class="fa-solid fa-shirt prod-monitor-orig-icon"></i><i class="fa-solid fa-check prod-monitor-check-icon"></i></div>
+                <div class="prod-monitor-icon stat-icon-purple"><img src="~/images/logo/sewing 1.png"><i class="fa-solid fa-check"></i></div>
                 <div class="prod-monitor-label">Sewing</div>
                 <div class="prod-monitor-sublabel">—</div>
             </div>
             <div class="prod-monitor-line"></div>
             <div class="prod-monitor-step" data-node="3">
-                <div class="prod-monitor-icon"><i class="fa-solid fa-ruler-combined prod-monitor-orig-icon"></i><i class="fa-solid fa-check prod-monitor-check-icon"></i></div>
+                <div class="prod-monitor-icon stat-icon-purple"><img src="~/images/logo/blue trim 3.png"><i class="fa-solid fa-check"></i></div>
                 <div class="prod-monitor-label">Trimming</div>
                 <div class="prod-monitor-sublabel">—</div>
             </div>
             <div class="prod-monitor-line"></div>
-            <div class="prod-monitor-step" data-node="1">
-                <div class="prod-monitor-icon"><i class="fa-solid fa-print prod-monitor-orig-icon"></i><i class="fa-solid fa-check prod-monitor-check-icon"></i></div>
-                <div class="prod-monitor-label">Printing</div>
-                <div class="prod-monitor-sublabel">—</div>
-            </div>
-            <div class="prod-monitor-line"></div>
             <div class="prod-monitor-step" data-node="4">
-                <div class="prod-monitor-icon"><i class="fa-solid fa-shield-halved prod-monitor-orig-icon"></i><i class="fa-solid fa-check prod-monitor-check-icon"></i></div>
+                <div class="prod-monitor-icon stat-icon-purple"><img src="~/images/logo/quality check 1.png"><i class="fa-solid fa-check"></i></div>
                 <div class="prod-monitor-label">Quality Check</div>
                 <div class="prod-monitor-sublabel">—</div>
             </div>
             <div class="prod-monitor-line"></div>
             <div class="prod-monitor-step" data-node="5">
-                <div class="prod-monitor-icon"><i class="fa-solid fa-box-open prod-monitor-orig-icon"></i><i class="fa-solid fa-check prod-monitor-check-icon"></i></div>
+                <div class="prod-monitor-icon stat-icon-purple"><img src="~/images/logo/ready 1.png"><i class="fa-solid fa-check"></i></div>
                 <div class="prod-monitor-label">Ready for Pickup</div>
                 <div class="prod-monitor-sublabel">—</div>
             </div>
@@ -106,32 +104,25 @@
 
     <!-- Stat Cards -->
     <div class="stat-cards-row">
-        <div class="stat-card">
-            <span class="stat-card-label">Confirmed</span>
+        <div class="stat-card stat-card-purple">
+            <span class="stat-card-label">Total Orders</span>
             <div class="stat-card-body">
-                <div class="stat-icon stat-icon-purple"><i class="fa-solid fa-thumbs-up"></i></div>
-                <span class="stat-value">@ViewBag.ConfirmedCount</span>
+                <div class="stat-icon stat-icon-purple"><img src="~/images/logo/icons 1.png"></div>
+                <span class="stat-value">@ViewBag.TotalOrders</span>
             </div>
         </div>
-        <div class="stat-card">
-            <span class="stat-card-label">In Production</span>
-            <div class="stat-card-body">
-                <div class="stat-icon stat-icon-orange"><i class="fa-solid fa-gear"></i></div>
-                <span class="stat-value">@ViewBag.InProductionCount</span>
-            </div>
-        </div>
-        <div class="stat-card">
-            <span class="stat-card-label">Ready for Pickup</span>
-            <div class="stat-card-body">
-                <div class="stat-icon stat-icon-teal"><i class="fa-solid fa-box-open"></i></div>
-                <span class="stat-value">@ViewBag.ReadyForPickupCount</span>
-            </div>
-        </div>
-        <div class="stat-card">
+        <div class="stat-card stat-card-green">
             <span class="stat-card-label">Completed</span>
             <div class="stat-card-body">
-                <div class="stat-icon stat-icon-green"><i class="fa-solid fa-circle-check"></i></div>
+                <div class="stat-icon stat-icon-green"><img src="~/images/logo/image 24.png"></div>
                 <span class="stat-value">@ViewBag.CompletedCount</span>
+            </div>
+        </div>
+        <div class="stat-card stat-card-orange">
+            <span class="stat-card-label">In Production</span>
+            <div class="stat-card-body">
+                <div class="stat-icon stat-icon-orange"><img src="~/images/logo/production 2.png"></div>
+                <span class="stat-value">@ViewBag.InProductionCount</span>
             </div>
         </div>
     </div>
@@ -147,18 +138,25 @@
         </div>
 
         <!-- Filters -->
-        <div class="filter-bar">
-            <form method="get" asp-action="pIndex"  class="filter-form">
-				<input type="hidden" name="tab" value="@ViewBag.Tab" />
-				<div class="search-box">
-					<i class="fa-solid fa-magnifying-glass"></i>
-					<input type="text" name="search" value="@ViewBag.Search" placeholder="Search Order ID, customer, product..." class="search-input" />
-				</div>
-				<button type="submit" class="btn btn-outline">
-					<i class="fa-solid fa-filter"></i> Search
-				</button>
-			</form>
-		</div>
+    <div class="filter-bar">
+        <form method="get" asp-action="pIndex" class="filter-form">
+            <input type="hidden" name="tab" value="@ViewBag.Tab" />
+            <div class="search-box">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" name="search" value="@ViewBag.Search" placeholder="Search Order ID, customer, product..." class="search-input" />
+            </div>
+            <button type="submit" class="btn btn-outline">
+                <i class="fa-solid fa-filter"></i> Search
+            </button>
+            <select name="stage" class="filter-select" onchange="this.form.submit()">
+                <option value="">All Stages</option>
+                @for (int i = 0; i < StageNames.Length; i++)
+                {
+                    <option value="@i" selected="@(ViewBag.Stage == i)">@StageNames[i]</option>
+                }
+            </select>
+        </form>
+    </div>
 
     <!-- Table Card -->
     <div class="card">
@@ -170,7 +168,7 @@
                     <th>Customer</th>
                     <th>Products</th>
                     <th>Status</th>
-                    <th>Progress</th>
+                    <th>Current Stage</th>
                     <th>Order Date</th>
                     <th>Actions</th>
                 </tr>
@@ -195,14 +193,16 @@
                         <td><span class="order-id-link id-link-static">#ORD-@o.OrderID.ToString("D3")</span></td>
                         <td>@o.CustomerName</td>
                         <td class="order-products-cell">
-                            @Html.Raw(string.Join("<br />", o.OrderDetails.Select(d => $"{d.Quantity}x {(string.IsNullOrEmpty(d.ProductNameSnapshot) ? "Item" : d.ProductNameSnapshot)}{(d.IsCustomOrder ? "" : " (pre-designed)")}")))
+                            @Html.Raw(string.Join("<br />", o.OrderDetails.Select(d => $"{d.Quantity}x {(string.IsNullOrEmpty(d.ProductNameSnapshot) ? "Item" : d.ProductNameSnapshot)}")))
                         </td>
                         <td>
-                            <span class="status-badge @OrderStatusDisplay.BadgeClass(o.Status)">@o.Status</span>
+							<span class="status-badge @OrderStatusDisplay.BadgeClass(o.Status)">@o.Status</span>
                         </td>
                         <td>
-                            <div class="prod-progress-bar prod-progress-clickable" title="View production progress"><div class="prod-progress-fill" style="--pct:@(ProgressPercent(o))%"></div></div>
-                            <div class="prod-progress-label">@ProgressLabel(o)</div>
+                            <div class="prod-progress-container">
+								<div class="prod-progress-bar prod-progress-clickable" title="View production progress"><div class="prod-progress-fill" style="--pct:@(ProgressPercent(o))%"></div></div>
+								<div class="prod-progress-label">@ProgressLabel(o)</div>
+							</div>
                         </td>
                         <td class="order-date-cell">
                             @o.OrderDate.ToString("MMMM d, yyyy")
@@ -250,8 +250,8 @@
 </div>
 
 <!-- Production Progress modal -->
-<div class="billing-modal-backdrop" id="prodModalBackdrop" onclick="if(event.target===this) closeProductionModal()">
-    <div class="billing-modal om-modal" id="prodModal">
+<div class="billing-modal-backdrop prod-item-modal-scroll" id="prodModalBackdrop" onclick="if(event.target===this) closeProductionModal()">
+    <div class="billing-modal" id="prodModal">
         <div class="billing-modal-loading"><i class="fa-solid fa-spinner fa-spin"></i> Loading production details…</div>
     </div>
 </div>

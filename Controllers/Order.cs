@@ -114,6 +114,17 @@ namespace ConceptFactory.Models
         [StringLength(500)]
         public string? ProductionRemarks { get; set; }
 
+        // Quantity entered so far at the CURRENT station, autosaved as the
+        // staff member types (ProductionController.pSaveStationProgress) —
+        // separate from actually advancing the stage. This lets progress
+        // survive a closed modal/page refresh without requiring "Mark as
+        // Done" to be clicked; the order only moves to the next station
+        // once that quantity reaches the order total AND "Mark as Done" is
+        // submitted. Reset to 0 whenever the stage advances (see
+        // ProductionWorkflow.SetStage) since it always reflects whatever
+        // station the order is currently sitting at.
+        public int ProductionStageQuantityDone { get; set; } = 0;
+
         // When ProductionStage was last advanced. Powers the "Completed
         // Today" / "Pending from Previous" stat cards on each station's
         // page (ProductionController.pStation) — see ProductionWorkflow.SetStage.
@@ -190,6 +201,15 @@ namespace ConceptFactory.Models
 
         [StringLength(50)]
         public string? SelectedColor { get; set; }
+
+        // Per-item autosave progress at whichever station the order
+        // currently sits at (Cutting/Printing/Sewing/Trimming/Quality
+        // Check) — different color/size lines get cut, printed, etc.
+        // separately, so this can't be a single number on the Order.
+        // Reset to 0 by ProductionWorkflow.SetStage whenever the order
+        // hands off to the next station. See ProductionController.
+        // pSaveStationProgress / pCompleteStation.
+        public int ProductionQuantityDone { get; set; } = 0;
 
         [ForeignKey("OrderID")]
         public virtual Order? Order { get; set; }

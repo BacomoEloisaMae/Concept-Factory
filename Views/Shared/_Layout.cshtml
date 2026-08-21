@@ -31,8 +31,7 @@
                class="nav-link @(IsActive("Home", "hProducts") ? "active" : "")">Products</a>
             <a asp-controller="Customize" asp-action="Index"
                class="nav-link @(IsActive("Customize", "Index", "Custom") ? "active" : "")">Customize</a>
-			@* asp-controller="Home" asp-action="hTrackOrder" *@
-			<a href="#"
+            <a asp-controller="Home" asp-action="hTrackOrder"
             class="nav-link @(IsActive("Home", "hTrackOrder") ? "active" : "")">Track Order</a>
             <a href="#" class="nav-link">About Us</a>
         </div>
