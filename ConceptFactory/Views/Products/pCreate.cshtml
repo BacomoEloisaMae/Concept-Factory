@@ -72,7 +72,7 @@
                                 <span class="btn-add-color-label">Add Color</span>
                             </button>
                             <input type="color" id="nativeColorPicker"
-                                   style="position:absolute; bottom:0; right:0; width:0; height:0; opacity:0; padding:0; border:none;"
+                                   class="native-color-picker"
                                    onchange="addColor(this.value)" oninput="addColor(this.value)"/>
                         </div>
                         <input type="hidden" id="colorHidden" name="Color" value="@Model.Color" />
@@ -114,20 +114,19 @@
                                 <p class="upload-main-text">Drag and drop your item image here<br>or click to browse</p>
                                 <p class="upload-sub-text">PNG, JPEG, WEBP up to 5MB</p>
                             </div>
-                            <div id="imagePreviewContainer" style="display:none; width:100%; padding:10px;">
-                                <img id="primaryImagePreview" src="#" alt="Preview"
-                                     style="max-width:100%; max-height:220px; border-radius:8px; object-fit:contain; display:block; margin:0 auto;" />
-                                <p id="uploadedFileName" style="margin-top:8px; font-weight:600; color:var(--primary); text-align:center;"></p>
+                            <div id="imagePreviewContainer" class="image-preview-container js-hidden">
+                                <img id="primaryImagePreview" src="#" alt="Preview" class="image-preview-img" />
+                                <p id="uploadedFileName" class="uploaded-filename-label"></p>
                             </div>
                         </div>
-                        <input type="file" id="imageFile" name="imageFile" accept="image/*" style="display:none;" onchange="handleImageUpload(this)" />
+                        <input type="file" id="imageFile" name="imageFile" accept="image/*" class="js-hidden" onchange="handleImageUpload(this)" />
                     </div>
 
                     <!-- ── Additional Images ── -->
-                    <div class="form-group" style="margin-top:8px;">
+                    <div class="form-group form-group-spaced">
                         <label class="form-label">Additional Images</label>
                         <p class="form-sublabel">Optional — up to 6 extra showcase photos</p>
-                        <input type="file" id="showcaseFiles" name="showcaseFiles" accept="image/*" multiple style="display:none;" />
+                        <input type="file" id="showcaseFiles" name="showcaseFiles" accept="image/*" multiple class="js-hidden" />
 
                         <!-- Shown when no additional images have been added yet -->
                         <div class="sc-bigbox" id="scBigBox"
@@ -141,7 +140,7 @@
                         </div>
 
                         <!-- Shown once at least one image has been added -->
-                        <div class="sc-grid" id="showcaseGrid" style="display:none;"></div>
+                        <div class="sc-grid js-hidden" id="showcaseGrid"></div>
                     </div>
 
                     <div class="form-actions">
@@ -157,5 +156,6 @@
 @section Scripts {
 <partial name="_ValidationScriptsPartial" />
 <link rel="stylesheet" href="~/css/admin/product-form.css" asp-append-version="true" />
+<!-- product-form.css used on this page: .native-color-picker, .js-hidden, .image-preview-container, .image-preview-img, .uploaded-filename-label, .form-group-spaced, .sc-bigbox, .sc-grid -->
 <script src="~/js/admin/product-create.js" asp-append-version="true"></script>
 }

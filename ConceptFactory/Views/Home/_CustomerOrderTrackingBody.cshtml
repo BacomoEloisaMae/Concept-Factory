@@ -1,0 +1,686 @@
+@model ConceptFactory.Models.Order
+@using ConceptFactory.Models
+
+@{
+    // Real production stages use ProductionStage 0-5.
+    // "Order Confirm" is a virtual customer-facing step before
+    // the actual production stations begin.
+    string[] stages =
+    {
+        "Cutting",
+        "Printing",
+        "Sewing",
+        "Trimming",
+        "Quality Check",
+        "Ready for Pickup"
+    };
+
+    string[] stageIcons =
+    {
+        "fa-scissors",
+        "fa-print",
+        "fa-shirt",
+        "fa-crop-simple",
+        "fa-magnifying-glass",
+        "fa-box"
+    };
+
+    string StatusBadgeClass(string status) => status switch
+    {
+        "Pending Down Payment" => "cot-pendingdp",
+        "Pending Cash Payment" => "cot-pendingcash",
+        "Pending Payment Verification" => "cot-pendingverif",
+        "Confirmed" => "cot-confirmed",
+        "In Production" => "cot-inproduction",
+        "Ready for Pickup" => "cot-readypickup",
+        "Completed" => "cot-completed",
+        "Cancelled" => "cot-cancelled",
+        _ => "cot-pending"
+    };
+
+    string PaymentBadgeClass(string status) => status switch
+    {
+        "Partially Paid" => "cot-partiallypaid",
+        "Fully Paid" => "cot-fullypaid",
+        "Rejected" => "cot-rejected",
+        _ => "cot-waiting"
+    };
+
+    bool isCancelled = Model.Status == "Cancelled";
+
+    bool isPending =
+        Model.Status == "Pending Down Payment" ||
+        Model.Status == "Pending Cash Payment" ||
+        Model.Status == "Pending Payment Verification";
+
+    bool canCancel =
+        isPending ||
+        Model.Status == "Confirmed" ||
+        Model.Status == "Design Review";
+
+    int totalQty = Model.OrderDetails.Sum(d => d.Quantity);
+
+    var firstItemName = Model.OrderDetails
+        .Select(d =>
+            !string.IsNullOrEmpty(d.ProductNameSnapshot)
+                ? d.ProductNameSnapshot
+                : (d.Product != null ? d.Product.ProductName : "Item"))
+        .FirstOrDefault() ?? "—";
+
+    string productSummary =
+        Model.OrderDetails.Count > 1
+            ? $"{firstItemName} +{Model.OrderDetails.Count - 1} more"
+            : firstItemName;
+
+    string productNamesJoined = string.Join(
+        ", ",
+        Model.OrderDetails.Select(d => d.ProductNameSnapshot));
+
+    List<ActivityLog> timelineLogs =
+        ViewBag.TimelineLogs ?? new List<ActivityLog>();
+
+    DateTime? orderConfirmedDate =
+        timelineLogs
+            .Where(l => l.Category == "Billing" &&
+                        (l.Action == "Approved Gcash Payment" || l.Action == "Confirmed Cash Payment"))
+            .Select(l => (DateTime?)l.Timestamp)
+            .LastOrDefault();
+
+    DateTime? StationDate(string stationName) =>
+        timelineLogs
+            .Where(l =>
+                l.Category == "Production" &&
+                l.Action == "Completed Station" &&
+                (l.Details ?? "").Contains(stationName))
+            .Select(l => (DateTime?)l.Timestamp)
+            .FirstOrDefault();
+
+    DateTime? pickedUpDate =
+        timelineLogs
+            .Where(l => l.Action == "Marked Order Completed")
+            .Select(l => (DateTime?)l.Timestamp)
+            .FirstOrDefault();
+}
+
+<div class="cot-card-header">
+    <div >
+        <div class="cot-card-title">
+            Order #ORD-@Model.OrderID.ToString("D3")
+
+            <span class="cot-badge @StatusBadgeClass(Model.Status)">
+                @Model.Status
+            </span>
+        </div>
+
+        <div class="cot-card-subtitle">
+            Placed on @Model.OrderDate.ToString("MMMM d, yyyy | h:mm tt")
+        </div>
+    </div>
+</div>
+
+
+<div class="cot-infobar">
+
+    <div class="cot-infobar-item">
+        <label>Customer</label>
+        <span>@Model.CustomerName</span>
+    </div>
+
+    <div class="cot-infobar-item">
+        <label>Product</label>
+        <span title="@productNamesJoined">@productSummary</span>
+    </div>
+
+    <div class="cot-infobar-item">
+        <label>Quantity</label>
+        <span>@totalQty pcs</span>
+    </div>
+
+    <div class="cot-infobar-item">
+        <label>Total Amount</label>
+        <span>₱@Model.TotalAmount.ToString("N2")</span>
+    </div>
+
+    <div class="cot-infobar-item">
+        <label>Payment Status</label>
+
+        <span class="cot-badge @PaymentBadgeClass(Model.PaymentStatus)">
+            @Model.PaymentStatus
+        </span>
+    </div>
+
+</div>
+
+
+<div class="cot-card cot-progress-card">
+
+    <div class="cot-section-title">
+        <i class="fa-solid fa-industry"></i>
+        Production Progress
+    </div>
+
+
+    @if (isCancelled)
+    {
+        bool canReuploadProof = Model.PaymentMethod == "Gcash" && Model.PaymentStatus == "Rejected";
+
+        <div class="cot-note-banner cot-note-danger">
+            <i class="fa-solid fa-circle-xmark"></i>
+            <div>
+                This order was cancelled.
+                @if (!string.IsNullOrEmpty(Model.PaymentNote))
+                {
+                    <div class="cot-cancel-reason">Reason: @Model.PaymentNote</div>
+                }
+            </div>
+        </div>
+
+        @if (canReuploadProof)
+        {
+            <div class="cot-reupload-row">
+                <button type="button" class="cot-reupload-btn" onclick="cfOpenReuploadModal(@Model.OrderID)">
+                    <i class="fa-solid fa-rotate"></i> Re-upload Payment Proof
+                </button>
+            </div>
+        }
+    }
+    else
+    {
+        <div class="cot-icon-stepper">
+
+            @{
+                bool step0Done = !isPending;
+
+                bool step0Current = isPending;
+
+                string step0Class =
+                step0Done
+                ? "done"
+                : (step0Current ? "current" : "");
+
+                string step0Icon =
+                step0Done
+                ? "fa-check"
+                : "fa-file-circle-check";
+
+                string step0Sub =
+                step0Done
+                ? (orderConfirmedDate.HasValue
+                ? orderConfirmedDate.Value.ToString("MMM d, yyyy")
+                : "Confirmed")
+                : "Payment Verification";
+            }
+
+
+            <!-- ORDER CONFIRM -->
+
+            <div class="cot-icon-step @step0Class">
+
+                <div class="cot-icon-step-dot">
+                    <i class="fa-solid @step0Icon"></i>
+                </div>
+
+                <div class="cot-icon-step-label">
+                    Order Confirm
+                </div>
+
+                <div class="cot-icon-step-sub">
+                    @step0Sub
+                </div>
+
+            </div>
+
+
+            <!-- PRODUCTION STAGES -->
+            @for (int i = 0; i < stages.Length; i++)
+            {
+                bool done =
+                !isPending &&
+                Model.Status != "Confirmed" &&
+                Model.Status != "Design Review" &&
+                Model.ProductionStage >= 0 &&
+                Model.ProductionStage < stages.Length &&
+                i <= Model.ProductionStage &&
+                !(i == 5 && Model.Status == "Ready for Pickup");
+
+
+                bool current =
+                !done &&
+                !isPending &&
+                Model.ProductionStage >= 0 &&
+                Model.ProductionStage < stages.Length &&
+                (Model.Status == "In Production" ||
+                Model.Status == "Ready for Pickup") &&
+                i == Model.ProductionStage;
+
+
+                bool prevDone =
+                i == 0
+                ? step0Done
+                : (
+                !isPending &&
+                Model.Status != "Confirmed" &&
+                Model.Status != "Design Review" &&
+                Model.ProductionStage >= 0 &&
+                Model.ProductionStage < stages.Length &&
+                (i - 1) <= Model.ProductionStage &&
+                !(
+                (i - 1) == 5 &&
+                Model.Status == "Ready for Pickup"
+                )
+                );
+
+
+                string lineClass =
+                prevDone
+                ? "done"
+                : "";
+
+
+                string stepClass =
+                done
+                ? "done"
+                : (current ? "current" : "");
+
+
+                string iconClass =
+                done
+                ? "fa-check"
+                : stageIcons[i];
+
+
+                string subLabel;
+
+
+                if (done)
+                {
+                    DateTime? stationDoneDate =
+                    (
+                    stages[i] == "Ready for Pickup" &&
+                    Model.Status == "Completed"
+                    )
+                    ? pickedUpDate
+                    : StationDate(stages[i]);
+
+
+                    subLabel =
+                    stationDoneDate.HasValue
+                    ? stationDoneDate.Value.ToString("MMM d, yyyy")
+                    : "Completed";
+                }
+                else if (current)
+                {
+                    subLabel =
+                    stages[i] == "Ready for Pickup"
+                    ? "Ready Now"
+                    : "In Progress";
+                }
+                else
+                {
+                    subLabel = "Waiting";
+                }
+
+
+                <div class="cot-icon-step-line @lineClass"></div>
+
+
+                <div class="cot-icon-step @stepClass">
+
+                    <div class="cot-icon-step-dot">
+                        <i class="fa-solid @iconClass"></i>
+                    </div>
+
+                    <div class="cot-icon-step-label">
+                        @stages[i]
+                    </div>
+
+                    <div class="cot-icon-step-sub">
+                        @subLabel
+                    </div>
+
+                </div>
+            }
+
+        </div>
+
+
+
+        // Only access ProductionStage when it is actually valid.
+        string currStageName = "";
+
+        string prevStageName = "";
+
+
+        if (!isPending &&
+        Model.ProductionStage >= 0 &&
+        Model.ProductionStage < stages.Length)
+        {
+            currStageName = stages[Model.ProductionStage];
+
+
+            if (Model.ProductionStage > 0)
+            {
+                prevStageName =
+                stages[Model.ProductionStage - 1];
+            }
+        }
+
+
+        string bannerText =
+        isPending
+        ? "Waiting for your payment to be verified before production begins."
+
+        : Model.Status == "Confirmed" ||
+        Model.Status == "Design Review"
+        ? "Your order has been confirmed! Production will begin shortly."
+
+        : Model.Status == "In Production"
+        ? (
+        !string.IsNullOrEmpty(prevStageName)
+        ? $"{prevStageName} completed successfully! Your order has moved to {currStageName} Station."
+        : $"Your order has moved to {currStageName} Station."
+        )
+
+        : Model.Status == "Ready for Pickup"
+        ? "Your order is ready! Please visit the shop to pick it up."
+
+        : Model.Status == "Completed"
+        ? "This order has been completed. Thank you for choosing The Concept Factory!"
+
+        : "";
+
+
+        @if (!string.IsNullOrEmpty(bannerText))
+        {
+            <div class="cot-note-banner cot-note-info">
+
+                <i class="fa-solid fa-circle-info"></i>
+
+                @bannerText
+
+            </div>
+        }
+
+    }
+
+</div>
+
+
+<div class="cot-bottom-grid">
+
+
+    <!-- ORDER TIMELINE -->
+
+    <div class="cot-card">
+
+        <div class="cot-section-title">
+            <i class="fa-solid fa-clock-rotate-left"></i>
+            Order Timeline
+        </div>
+
+
+        @if (timelineLogs.Any())
+        {
+            <div class="cot-timeline">
+
+                @foreach (var log in timelineLogs)
+                {
+                    <div class="cot-timeline-item">
+
+                        <div class="cot-timeline-marker">
+                            <i class="fa-solid fa-check"></i>
+                        </div>
+
+
+                        <div class="cot-timeline-content">
+
+                            <div class="cot-timeline-row">
+
+                                <span class="cot-timeline-title">
+                                    @log.Action
+                                </span>
+
+                                <span class="cot-timeline-date">
+                                    @log.Timestamp.ToString("MMM d, yyyy | h:mm tt")
+                                </span>
+
+                            </div>
+
+
+                            @if (!string.IsNullOrEmpty(log.Details))
+                            {
+                                <div class="cot-timeline-desc">
+                                    @log.Details
+                                </div>
+                            }
+
+                        </div>
+
+                    </div>
+                }
+
+            </div>
+        }
+        else
+        {
+            <div class="cot-empty-note">
+                No updates yet.
+            </div>
+        }
+
+    </div>
+
+
+
+    <!-- ORDER SUMMARY -->
+
+    <div class="cot-card">
+
+        <div class="cot-section-title">
+            <i class="fa-solid fa-receipt"></i>
+            Order Summary
+        </div>
+        @{
+            var totalServiceFees =
+            Model.OrderDetails.Sum(
+            d => (d.ServicePriceSnapshot ?? 0) * d.Quantity);
+
+            var totalProductPrice =
+            Model.TotalAmount - totalServiceFees;
+        }
+
+
+        @foreach (var d in Model.OrderDetails)
+        {
+            var name =
+            !string.IsNullOrEmpty(d.ProductNameSnapshot)
+            ? d.ProductNameSnapshot
+            : (
+            d.Product != null
+            ? d.Product.ProductName
+            : "Item"
+            );
+
+
+            var imgPath =
+            !string.IsNullOrEmpty(d.ImageSnapshotPath)
+            ? d.ImageSnapshotPath
+            : (
+            d.Product != null
+            ? d.Product.ImagePath
+            : null
+            );
+
+
+            var lineServiceFee =
+            d.ServicePriceSnapshot ?? 0;
+
+
+            var lineProductPrice =
+            d.UnitPrice - lineServiceFee;
+
+
+            <div class="cot-product-row">
+
+
+                <div class="cot-product-thumb">
+
+                    @if (!string.IsNullOrEmpty(imgPath))
+                    {
+                        <img src="@imgPath" alt="@name" />
+                    }
+                    else
+                    {
+                        <i class="fa-solid fa-shirt"></i>
+                    }
+
+                </div>
+
+
+                <div class="cot-product-info">
+
+                    <div class="cot-product-name">
+                        @d.Quantity x @name
+                    </div>
+
+
+                    @if (!string.IsNullOrEmpty(d.SelectedColor))
+                    {
+                        <div class="cot-product-attr">
+                            Color:
+                            <strong>@ConceptFactory.Utils.ColorNameHelper.GetName(d.SelectedColor)</strong>
+                        </div>
+                    }
+
+
+                    @if (!string.IsNullOrEmpty(d.SelectedSize))
+                    {
+                        <div class="cot-product-attr">
+                            Size:
+                            <strong>@d.SelectedSize</strong>
+                        </div>
+                    }
+
+                    @if (!string.IsNullOrEmpty(d.ServiceNameSnapshot))
+                    {
+                        <div class="cot-product-attr">
+                            Printing:
+                            <strong>@d.ServiceNameSnapshot</strong>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+
+        <div class="cots-bottom-grid">
+
+            <div class="cot-card cot-total-item">
+                <div class="cot-total-row">
+                    <span>Subtotal</span>
+                    <span>₱@totalProductPrice.ToString("N2")</span>
+                </div>
+                @if (totalServiceFees > 0)
+                {
+                    <div class="cot-total-row">
+                        <span>Service Fees</span>
+                        <span>₱@totalServiceFees.ToString("N2")</span>
+                    </div>
+                }
+                <div class="cot-total-row cot-paid">
+                    <span>Down Payment Paid</span>
+                    <span>₱@Model.DownPaymentAmount.ToString("N2") @(Model.TotalAmount > 0 ? $"({Math.Round(Model.DownPaymentAmount / Model.TotalAmount * 100, 1)}%)" : "")</span>
+                </div>
+                <div class="cot-total-row cot-total-final">
+                    <span>Remaining Balance</span>
+                    <span class="@(Model.RemainingBalance <= 0 ? "cot-balance-cleared" : "")">₱@Model.RemainingBalance.ToString("N2")</span>
+                </div>
+            </div>
+            <div class="cot-card">
+                <div class="cot-info-row">
+                    <label>Payment Method</label>
+                    <span>@(Model.PaymentMethod ?? "—")</span>
+                </div>
+
+                @if (Model.PaymentMethod == "Gcash" && !string.IsNullOrEmpty(Model.ReferenceNumber))
+                {
+                    <div class="cot-info-row">
+                        <label>Transaction Ref</label>
+                        <span>#@Model.ReferenceNumber</span>
+                    </div>
+                }
+                <div class="cot-info-row">
+                    <label>Payment Date</label>
+                    <span>@Model.OrderDate.ToString("MMM d, yyyy | h:mm tt")</span>
+                </div>
+            </div>
+
+        </div>
+
+        @{
+            var linesWithDesign =
+            Model.OrderDetails
+            .Where(d =>
+            !string.IsNullOrEmpty(d.ImageSnapshotPath))
+            .ToList();
+        }
+
+
+        @if (linesWithDesign.Any())
+        {
+            <div class="cot-summary-divider"></div>
+
+
+            <div class="cot-uploaded-design-label">
+
+                <i class="fa-regular fa-image"></i>
+
+                Uploaded Design
+
+            </div>
+
+
+            @foreach (var d in linesWithDesign)
+            {
+                <div class="cot-design-row">
+
+                    <div class="cot-design-thumb">
+
+                        <img src="@d.ImageSnapshotPath"
+                             alt="Uploaded design" />
+
+                    </div>
+
+
+                    <div class="cot-design-name">
+
+                        @System.IO.Path.GetFileName(
+                        d.ImageSnapshotPath)
+
+            </div>
+
+        </div>
+                }
+        }
+
+    </div>
+
+</div>
+
+
+
+@if (canCancel)
+{
+    <div class="cot-actions-row">
+
+        <button type="button"
+                class="cot-cancel-btn"
+                onclick="cfCancelMyOrder(@Model.OrderID)">
+
+            <i class="fa-solid fa-ban"></i>
+
+            Cancel Order
+
+        </button>
+
+    </div>
+}

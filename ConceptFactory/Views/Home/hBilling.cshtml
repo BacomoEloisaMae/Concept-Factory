@@ -1,0 +1,427 @@
+@{
+    ViewData["Title"] = "Check Out";
+
+    // Connected files:
+    //   Controller : Controllers/HomeController.cs        -> hBilling() / SubmitOrder()
+    //   Styles     : wwwroot/css/home/billing-payment.css
+    //   Script     : wwwroot/js/billing-payment.js
+    //   Layout     : Views/Shared/_Layout.cshtml (navbar; footer is Home/Browse only, not here)
+    //
+    // Billing Information below is normally read-only for a logged-in
+    // Customer (see hBilling() in HomeController) — pulled straight from
+    // their account. When a Sales rep opens this from the admin
+    // "Storefront" link (StaffRole == "Sales" in the shared session), the
+    // same fields render editable so they can type a walk-in customer's
+    // details in directly; either way billing-payment.js reads the live
+    // input values at submit time.
+    //
+    // The Order Summary is built entirely client-side from whichever cart
+    // lines the shopper checked on the Cart page (see billing-payment.js),
+    // since the cart itself lives in localStorage.
+    //
+    // The page is a small 2-step wizard (see billing-payment.js's
+    // bpGoToPaymentStep()/bpGoToSummaryStep()): Step 1 reviews the order +
+    // billing info, Step 2 is payment method selection. Both are plain
+    // show/hide — no server round-trip between them.
+}
+@section Styles {
+    <link rel="stylesheet" href="~/css/home/home-index.css" asp-append-version="true" />
+    <!-- home-index.css used on this page: .cf-page, .js-hidden, .active -->
+    <link rel="stylesheet" href="~/css/navbar.css" asp-append-version="true" />
+    <!-- navbar.css used on this page: .active -->
+    <link rel="stylesheet" href="~/css/home/billing-payment.css" asp-append-version="true" />
+}
+
+<div class="cf-page bp-page">
+    <div id="bpFormWrap">
+
+        <!-- ════ STEP 1: Order Summary + Billing Info ════ -->
+        <div id="bpStepSummary" class="bp-step bp-wizard-col">
+            <div class="bp-card">
+                <div class="bp-card-title">Order Summary</div>
+                <p class="bp-static-hint">Review your order details</p>
+
+                <div id="bpSummaryItems"><!-- populated by billing-payment.js from selected cart lines --></div>
+
+                <div class="bp-price-rows">
+                    <div class="bp-price-divider"></div>
+                    <div class="bp-price-row bp-price-total">
+                        <span>Subtotal</span>
+                        <span id="bpSubtotal">₱0.00</span>
+                    </div>
+
+                    <div class="bp-downpayment-box">
+                        <div class="bp-price-row bp-price-highlight">
+                            <span>Minimum down payment (50%)</span>
+                            <span id="bpDownPayment">₱0.00</span>
+                        </div>
+                        <p>Pay at least 50% down payment after confirming your order — you can also choose to pay more.</p>
+                    </div>
+
+                    <div class="bp-price-divider" bp-price-total"></div>
+                    <div class="bp-price-row bp-price-remaining ">
+						<span>Remaining Balance</span>
+						<span id="bpRemaining">₱0.00</span>
+					</div>
+                    <div class="bp-price-row bp-price-total">
+                        <span>Total Order Amount</span>
+                        <span id="bpTotal">₱0.00</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Billing Information — editable input fields throughout;
+                 read-only (via the "readonly" attribute) for a logged-in
+                 Customer, since it's pulled straight from their account.
+                 In Sales mode (walk-in orders rung up from the admin
+                 Storefront link) these are left blank and editable so the
+                 sales rep can type the customer's details in directly. -->
+            <div class="bp-card">
+                <div class="bp-card-title">Billing Information</div>
+                @if (ViewBag.IsSalesMode)
+                {
+                    <p class="bp-static-hint">Walk-in order — enter the customer's details below.</p>
+                }
+                else
+                {
+                    <p class="bp-static-hint">This comes from your account.</p>
+                }
+                <div class="bp-form-grid">
+                    <div class="bp-field">
+                        <label for="bpBillingName">Full name</label>
+                        <input type="text" id="bpBillingName" class="bp-input" value="@ViewBag.BillingName" @(ViewBag.IsSalesMode ? "" : "readonly") placeholder="Customer's full name" />
+                    </div>
+                    <div class="bp-field">
+                        <label for="bpBillingEmail">Email Address</label>
+                        <input type="email" id="bpBillingEmail" class="bp-input" value="@ViewBag.BillingEmail" @(ViewBag.IsSalesMode ? "" : "readonly") placeholder="Email address (optional)" />
+                    </div>
+                    <div class="bp-field">
+                        <label for="bpBillingPhone">Phone number</label>
+                        <input type="text" id="bpBillingPhone" class="bp-input" value="@ViewBag.BillingPhone" @(ViewBag.IsSalesMode ? "" : "readonly") placeholder="Phone number" />
+                    </div>
+                    <div class="bp-field">
+                        <label for="bpBillingAddress">Address</label>
+                        <input type="text" id="bpBillingAddress" class="bp-input" value="@ViewBag.BillingAddress" @(ViewBag.IsSalesMode ? "" : "readonly") placeholder="Address (optional)" />
+                    </div>
+                </div>
+            </div>
+
+            <div class="bp-review-note">
+                <i class="fa-regular fa-circle-check"></i>
+                Please review and confirm — make sure all details are correct before proceeding to payment.
+            </div>
+
+            <div class="bp-step-actions">
+                <a href="@Url.Action("hCart", "Home")" id="bpBackBtn" class="bp-back-btn">Back to Cart</a>
+                <button type="button" class="bp-submit-btn" id="bpToPaymentBtn" onclick="bpGoToPaymentStep()">Confirm Order</button>
+            </div>
+        </div>
+
+        <!-- ════ STEP 2: Payment Method ════ -->
+        <div id="bpStepPayment" class="bp-step bp-wizard-col js-hidden">
+            <div class="bp-card">
+                <div class="bp-card-title">Select Payment Method</div>
+                <p class="bp-static-hint">Choose how you want to pay</p>
+
+                <div class="bp-method-row">
+                    <label class="bp-method active" data-method="gcash">
+                        <input type="radio" name="paymentMethod" value="gcash" checked onchange="bpSelectMethod('gcash')" />
+                        <span class="bp-method-icon bp-method-icon-gcash">
+                            <img src="~/images/payment/gcash-logo.png" alt="GCash" />
+                        </span>
+                        <span class="bp-method-text">
+                            <span class="bp-method-name">Gcash</span>
+                            <span class="bp-method-desc">Pay using Gcash</span>
+                        </span>
+                    </label>
+                    <label class="bp-method" data-method="cash">
+                        <input type="radio" name="paymentMethod" value="cash" onchange="bpSelectMethod('cash')" />
+                        <span class="bp-method-icon bp-method-icon-cash"><i class="fa-solid fa-money-bill-wave"></i></span>
+                        <span class="bp-method-text">
+                            <span class="bp-method-name">Cash</span>
+                            <span class="bp-method-desc">Pay in person upon pickup</span>
+                        </span>
+                    </label>
+                </div>
+
+                <!-- Gcash panel -->
+                <div class="bp-details-panel" id="bpPanelGcash">
+                    <div class="bp-amount-callout">
+                        <span>Minimum Down Payment (50%)</span>
+                        <strong id="bpAmountToPayGcash">₱0.00</strong>
+                    </div>
+
+                    <div class="bp-field">
+                        <label>Amount you paid via Gcash</label>
+                        <input type="text" inputmode="decimal" id="bpAmountPaidGcash" placeholder="Enter the exact amount you sent (e.g. 210)" oninput="bpOnAmountInput('gcash')" />
+                        <div class="bp-field-hint">You may pay more than the 50% minimum — just enter the exact amount you sent.</div>
+                        <div class="bp-live-breakdown js-hidden" id="bpLiveBreakdownGcash">
+                            <div class="bp-price-row" id="bpPercentRowGcash"><span>Percentage of total</span><span id="bpPercentGcash">—</span></div>
+                            <div class="bp-price-row"><span>Remaining balance</span><span id="bpRemainingLiveGcash">—</span></div>
+                        </div>
+                    </div>
+
+                    <div class="bp-instructions-box">
+                        <div class="bp-instructions-label">Gcash Payment Instruction</div>
+                        <ul class="bp-instructions-list bp-instructions-checklist">
+                            <li><i class="fa-solid fa-circle-check"></i>Open your Gcash App</li>
+                            <li><i class="fa-solid fa-circle-check"></i>Scan the QR code or send payment our Gcash number</li>
+                            <li><i class="fa-solid fa-circle-check"></i>Pay the exact amount shown above</li>
+                            <li><i class="fa-solid fa-circle-check"></i>Save your payment receipt</li>
+                            <li><i class="fa-solid fa-circle-check"></i>Enter the reference number below</li>
+                            <li><i class="fa-solid fa-circle-check"></i>Upload your payment screenshot for verfication</li>
+                        </ul>
+                    </div>
+
+                    <div class="bp-qr-box">
+                        <div class="bp-qr-label">Payment with Gcash — Scan to pay</div>
+                        <div class="bp-qr-img">
+                            <img src="~/images/payment/gcash-qr.png" alt="GCash QR code" />
+                        </div>
+                        <div class="bp-gcash-number-row">
+                            <span class="bp-gcash-number-label">Gcash number</span>
+                            <div class="bp-gcash-number">
+                                <span>0951 238 8661</span>
+                                <button type="button" class="bp-copy-btn" onclick="bpCopyGcashNumber(this)">Copy</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bp-field bp-field-spaced-sm">
+                        <label>Gcash reference number</label>
+                        <input type="text" id="bpRefInputGcash" placeholder="Reference Number can be find in your Gcash transaction details" />
+                        @* <div class="bp-field-hint">You can find this in your Gcash transaction details</div> *@
+                    </div>
+                    <div class="bp-field">
+                        <label>Upload payment screenshot</label>
+                        <div class="bp-upload-box" id="bpUploadBoxGcash">
+                            <label for="bpUploadInputGcash" class="bp-upload-inner">
+                                <i class="fa-solid fa-cloud-arrow-up"></i>
+                                <strong>Drag &amp; drop your file here</strong>
+                                <span>PNG, JPG, SVG, PDF (Max 10MB)</span>
+                            </label>
+                            <input type="file" id="bpUploadInputGcash" accept="image/*,.pdf" class="bp-hidden-input" onchange="bpShowFileName(this, 'bpUploadFileNameGcash')" />
+                            <div class="bp-upload-filename" id="bpUploadFileNameGcash"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cash panel (hidden by default) -->
+                <div class="bp-details-panel js-hidden" id="bpPanelCash">
+                    <div class="bp-amount-callout bp-amount-callout-cash">
+                        <span>Minimum Down Payment (50%)</span>
+                        <strong id="bpAmountToPayCash">₱0.00</strong>
+                    </div>
+
+                    <div class="bp-field">
+                        <label>Amount you will pay in cash</label>
+                        <input type="text" inputmode="decimal" id="bpAmountPaidCash" placeholder="Enter the amount you plan to pay (e.g. 210)" oninput="bpOnAmountInput('cash')" />
+                        <div class="bp-field-hint">You may pay more than the 50% minimum if you'd like.</div>
+                        <div class="bp-live-breakdown js-hidden" id="bpLiveBreakdownCash">
+                            <div class="bp-price-row" id="bpPercentRowCash"><span>Percentage of total</span><span id="bpPercentCash">—</span></div>
+                            <div class="bp-price-row"><span>Remaining balance</span><span id="bpRemainingLiveCash">—</span></div>
+                        </div>
+                    </div>
+
+                    <div class="bp-instructions-box">
+                        <div class="bp-instructions-label">Cash Payment Instruction</div>
+                        <div class="bp-cash-steps">
+                            <div class="bp-cash-step">
+                                <div class="bp-cash-step-icon"><i class="fa-solid fa-shop"></i><span class="bp-cash-step-num">1</span></div>
+                                <div class="bp-cash-step-text"><strong>Visit our shop</strong><br />Go to our shop during business hours</div>
+                            </div>
+                            <div class="bp-cash-step">
+                                <div class="bp-cash-step-icon"><i class="fa-solid fa-hand-holding-dollar"></i><span class="bp-cash-step-num">2</span></div>
+                                <div class="bp-cash-step-text"><strong>Pay at least 50% down payment</strong><br />Pay the amount you entered above to confirm your order</div>
+                            </div>
+                            <div class="bp-cash-step">
+                                <div class="bp-cash-step-icon"><i class="fa-solid fa-clipboard-check"></i><span class="bp-cash-step-num">3</span></div>
+                                <div class="bp-cash-step-text"><strong>We'll confirm at the shop</strong><br />Our staff will verify your payment and start production</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bp-shop-info-box">
+                        <div class="bp-instructions-label">Shop Information</div>
+                        <div class="bp-shop-info-row"><i class="fa-solid fa-location-dot"></i> The Concept Factory — Brgy. Santo Nino, Cebu City, Philippines</div>
+                        <div class="bp-shop-info-row"><i class="fa-solid fa-clock"></i> Monday – Saturday, 8:00 AM – 6:00 PM</div>
+                        <div class="bp-shop-info-row"><i class="fa-solid fa-circle-exclamation"></i> Important: Your order will remain "waiting for the at least 50% down payment" until staff confirm your payment.</div>
+                    </div>
+
+                    <div class="bp-field bp-field-spaced-lg">
+                        <label>Note (optional)</label>
+                        <input type="text" id="bpRefInputCash" />
+                        <div class="bp-field-hint">Add anything the staff should know when you visit to pay</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bp-reminders">
+                <div class="bp-reminders-title"><i class="fa-regular fa-bell"></i> Important Reminders</div>
+                <ul id="bpRemindersList">
+                    <li>Enter the exact amount you paid — it must be at least 50% of the total</li>
+                    <li>Ensure the reference number is correct</li>
+                    <li>Upload a clear screenshot of your payment receipt</li>
+                    <li>Our staff will check that the amount, reference number, and screenshot all match before approving</li>
+                </ul>
+            </div>
+
+            <div class="bp-step-actions">
+                <button type="button" class="bp-back-btn" onclick="bpGoToSummaryStep()">Back</button>
+                <button type="button" class="bp-submit-btn" id="bpSubmitBtn" onclick="bpConfirmOrderClick()">Submit Payment</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirmation state (shown after a successful submit, replaces the form) -->
+    <div id="bpConfirmWrap" class="bp-confirm-wrap js-hidden">
+        <div class="bp-confirm-card">
+            <div class="bp-confirm-icon"><i class="fa-solid fa-circle-check"></i></div>
+            <div class="bp-confirm-title">Payment Submitted Successfully!</div>
+            <p class="bp-confirm-sub">Thank you! Your payment has been submitted.</p>
+
+            <div class="bp-confirm-rows">
+                <div class="bp-confirm-row">
+                    <div class="bp-confirm-row-icon"><i class="fa-regular fa-clipboard"></i></div>
+                    <div class="bp-confirm-row-label">Order Number</div>
+                    <div class="bp-confirm-row-value" id="bpConfirmOrderId">—</div>
+                </div>
+                <div class="bp-confirm-row">
+                    <div class="bp-confirm-row-icon"><i class="fa-regular fa-credit-card"></i></div>
+                    <div class="bp-confirm-row-label">Payment Method</div>
+                    <div class="bp-confirm-row-value bp-confirm-method-value">
+                        <span class="bp-confirm-method-badge" id="bpConfirmMethodBadge">G</span>
+                        <span id="bpConfirmMethod">—</span>
+                    </div>
+                </div>
+                <div class="bp-confirm-row">
+                    <div class="bp-confirm-row-icon"><i class="fa-solid fa-wallet"></i></div>
+                    <div class="bp-confirm-row-label">Amount Paid</div>
+                    <div class="bp-confirm-row-value" id="bpConfirmAmountPaid">—</div>
+                </div>
+                <div class="bp-confirm-row">
+                    <div class="bp-confirm-row-icon"><i class="fa-regular fa-clock"></i></div>
+                    <div class="bp-confirm-row-label">Payment Status</div>
+                    <div class="bp-confirm-row-value"><span class="bp-status-pill" id="bpConfirmStatusPill"><i class="fa-solid fa-hourglass-half"></i> Waiting for Verification</span></div>
+                </div>
+            </div>
+
+            <div class="bp-confirm-notes">
+                <div class="bp-confirm-note-title">What happens next?</div>
+                <div id="bpConfirmNextGcash">
+                    <div class="bp-confirm-note">
+                        <i class="fa-regular fa-circle-check bp-confirm-note-icon"></i>
+                        <div>Your payment has been submitted — our staff will verify it within a few minutes.</div>
+                    </div>
+                    <div class="bp-confirm-note">
+                        <i class="fa-regular fa-circle-check bp-confirm-note-icon"></i>
+                        <div>Production will begin after verification. You'll be notified once your payment is verified.</div>
+                    </div>
+                    <div class="bp-confirm-note">
+                        <i class="fa-regular fa-circle-check bp-confirm-note-icon"></i>
+                        <div>You can track your order status anytime — we'll update you as your order progresses.</div>
+                    </div>
+                </div>
+                <div id="bpConfirmNextCash" class="js-hidden">
+                    <div class="bp-confirm-note">
+                        <i class="fa-regular fa-circle-check bp-confirm-note-icon"></i>
+                        <div>Please visit our shop and pay the required 50% down payment.</div>
+                    </div>
+                    <div class="bp-confirm-note">
+                        <i class="fa-regular fa-circle-check bp-confirm-note-icon"></i>
+                        <div>Our staff will confirm your payment once received.</div>
+                    </div>
+                    <div class="bp-confirm-note">
+                        <i class="fa-regular fa-circle-check bp-confirm-note-icon"></i>
+                        <div>Production will begin after payment confirmation.</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bp-confirm-actions">
+                <button type="button" class="bp-submit-btn" onclick="CF.toast('Order status tracking is coming soon!', { icon: 'fa-circle-info', type: 'info' })">
+                    <i class="fa-regular fa-file-lines"></i> View Order Status
+                </button>
+                <a asp-controller="Home" asp-action="hIndex" class="bp-confirm-secondary-btn">
+                    <i class="fa-solid fa-house"></i> Go to Home
+                </a>
+            </div>
+
+            <div class="bp-confirm-footer-note">
+                <i class="fa-solid fa-lock"></i> <span id="bpConfirmSecureNote">Your payment is secure with GCash.</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cash on Pickup confirmation modal — shown before actually submitting
+         when Cash is the chosen payment method, since there's no reference
+         number to validate the way Gcash has. -->
+    <div id="bpCashModalOverlay" class="bp-modal-overlay js-hidden">
+        <div class="bp-modal">
+            <button type="button" class="bp-modal-close" onclick="bpCloseCashModal()"><i class="fa-solid fa-xmark"></i></button>
+            <div class="bp-modal-icon"><i class="fa-solid fa-shop"></i></div>
+            <div class="bp-modal-title">Confirm Cash Down Payment</div>
+
+            <div class="bp-modal-info">
+                <i class="fa-solid fa-circle-info"></i>
+                <span>You have selected <strong>Cash Payment</strong> as your payment method. To start production, please visit our shop and pay the down payment amount you entered (at least 50%).</span>
+            </div>
+
+            <div class="bp-modal-grid">
+                <div class="bp-modal-cell">
+                    <i class="fa-solid fa-location-dot"></i>
+                    <div>
+                        <div class="bp-modal-cell-label">Shop Address</div>
+                        <div class="bp-modal-cell-value">Concept Factory Printing Services<br />Brgy. Santo Nino, Cebu City, Philippines</div>
+                    </div>
+                </div>
+                <div class="bp-modal-cell">
+                    <i class="fa-regular fa-clock"></i>
+                    <div>
+                        <div class="bp-modal-cell-label">Business Hours</div>
+                        <div class="bp-modal-cell-value">Mon – Sat: 8:00 AM – 6:00 PM<br />Sunday: Closed</div>
+                    </div>
+                </div>
+                <div class="bp-modal-cell">
+                    <i class="fa-solid fa-wallet"></i>
+                    <div>
+                        <div class="bp-modal-cell-label">Amount to Pay</div>
+                        <div class="bp-modal-cell-value bp-modal-amount" id="bpCashModalAmount">₱0.00</div>
+                        <div class="bp-modal-cell-sub" id="bpCashModalPercent">(50% of Total Order)</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bp-modal-warning">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                After payment, our staff will verify your payment and production will begin.
+            </div>
+
+            <label class="bp-modal-checkbox">
+                <input type="checkbox" id="bpCashUnderstandCheck" onchange="document.getElementById('bpCashConfirmBtn').disabled = !this.checked" />
+                <span>I understand that my order will only be processed after paying the down payment amount I entered above.</span>
+            </label>
+
+            <div class="bp-modal-actions">
+                <button type="button" class="bp-modal-cancel-btn" onclick="bpCloseCashModal()">Cancel</button>
+                <button type="button" class="bp-submit-btn" id="bpCashConfirmBtn" disabled onclick="bpConfirmCashOrder()">
+                    <i class="fa-solid fa-box"></i> Confirm Order
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<form id="bpAntiForgeryForm" class="js-hidden">@Html.AntiForgeryToken()</form>
+
+<script>
+    window.CF_BILLING_PAGE = {
+        isSalesMode: @Html.Raw(ViewBag.IsSalesMode ? "true" : "false"),
+        submitUrl: '@Url.Action("SubmitOrder", "Home")',
+        cartUrl: '@Url.Action("hCart", "Home")',
+        homeUrl: '@Url.Action("hIndex", "Home")'
+    };
+</script>
+@section Scripts {
+    <script src="~/js/billing-payment.js" asp-append-version="true"></script>
+}

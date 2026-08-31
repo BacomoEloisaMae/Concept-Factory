@@ -4,9 +4,12 @@ using Microsoft.EntityFrameworkCore;
 using ConceptFactory.Data;
 using ConceptFactory.Models;
 using ConceptFactory.Models.ViewModels;
+using ConceptFactory.Utils;
+using ConceptFactory.Filters;
 
 namespace ConceptFactory.Controllers
 {
+    [AdminAuthFilter(Roles = "Admin")]
     public class ProductsController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -85,6 +88,7 @@ namespace ConceptFactory.Controllers
 
                 await SaveColorImagesAsync(product.ProductID, ColorImages);
 
+                await ActivityLogger.LogAsync(_context, HttpContext, "Products", "Added Product", $"\"{product.ProductName}\"");
                 TempData["Success"] = "Item added successfully.";
                 return RedirectToLocal(returnUrl);
             }
@@ -169,6 +173,7 @@ namespace ConceptFactory.Controllers
                     if (!ProductExists(product.ProductID)) return NotFound();
                     else throw;
                 }
+                await ActivityLogger.LogAsync(_context, HttpContext, "Products", "Edited Product", $"\"{product.ProductName}\"");
                 TempData["Success"] = "Item updated successfully.";
                 return RedirectToLocal(returnUrl);
             }
@@ -181,7 +186,7 @@ namespace ConceptFactory.Controllers
         public async Task<IActionResult> pSoftDelete(int id)
         {
             var product = await _context.Products.FindAsync(id);
-            if (product != null) { product.IsDeleted = true; product.DeletedAt = DateTime.Now; await _context.SaveChangesAsync(); TempData["Success"] = $"\"{product.ProductName}\" moved to deleted items."; }
+            if (product != null) { product.IsDeleted = true; product.DeletedAt = DateTime.Now; await _context.SaveChangesAsync(); await ActivityLogger.LogAsync(_context, HttpContext, "Products", "Deleted Product", $"\"{product.ProductName}\" moved to deleted items."); TempData["Success"] = $"\"{product.ProductName}\" moved to deleted items."; }
             return RedirectToAction(nameof(pIndex));
         }
 
@@ -191,13 +196,15 @@ namespace ConceptFactory.Controllers
             var product = await _context.Products.FindAsync(id);
             if (product != null)
             {
+                string productName = product.ProductName;
                 if (!string.IsNullOrEmpty(product.ImagePath)) DeleteImage(product.ImagePath);
                 if (!string.IsNullOrEmpty(product.AdditionalImages))
                     foreach (var p in product.AdditionalImages.Split(',', StringSplitOptions.RemoveEmptyEntries))
                         DeleteImage(p.Trim());
                 _context.Products.Remove(product);
                 await _context.SaveChangesAsync();
-                TempData["Success"] = $"\"{product.ProductName}\" permanently deleted.";
+                await ActivityLogger.LogAsync(_context, HttpContext, "Products", "Permanently Deleted Product", $"\"{productName}\"");
+                TempData["Success"] = $"\"{productName}\" permanently deleted.";
             }
             return RedirectToAction(nameof(pDeleted));
         }
@@ -206,7 +213,7 @@ namespace ConceptFactory.Controllers
         public async Task<IActionResult> pRestore(int id)
         {
             var product = await _context.Products.FindAsync(id);
-            if (product != null) { product.IsDeleted = false; product.DeletedAt = null; await _context.SaveChangesAsync(); TempData["Success"] = $"\"{product.ProductName}\" restored successfully."; }
+            if (product != null) { product.IsDeleted = false; product.DeletedAt = null; await _context.SaveChangesAsync(); await ActivityLogger.LogAsync(_context, HttpContext, "Products", "Restored Product", $"\"{product.ProductName}\""); TempData["Success"] = $"\"{product.ProductName}\" restored successfully."; }
             return RedirectToAction(nameof(pDeleted));
         }
 
@@ -217,6 +224,7 @@ namespace ConceptFactory.Controllers
             if (product == null) return NotFound();
             product.Status = product.Status == "Active" ? "Inactive" : "Active";
             await _context.SaveChangesAsync();
+            await ActivityLogger.LogAsync(_context, HttpContext, "Products", "Toggled Product Status", $"\"{product.ProductName}\" → {product.Status}");
             return Json(new { success = true, status = product.Status });
         }
 

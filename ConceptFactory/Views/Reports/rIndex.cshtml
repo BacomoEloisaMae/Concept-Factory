@@ -1,0 +1,514 @@
+@model List<ConceptFactory.Models.Order>
+@using ConceptFactory.Models
+@{
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    ViewData["Title"] = "Reports & Analytics";
+    ViewData["ActivePage"] = "Reports";
+
+    string type = ViewBag.Type;
+    DateTime? fromRaw = ViewBag.FromRaw;
+    DateTime? toRaw = ViewBag.ToRaw;
+    string? fromParam = fromRaw?.ToString("yyyy-MM-dd");
+    string? toParam = toRaw?.ToString("yyyy-MM-dd");
+    string? search = ViewBag.Search;
+    int page = ViewBag.Page;
+    int totalPages = ViewBag.TotalPages;
+    int totalCount = ViewBag.TotalCount;
+    int pageSize = 10;
+    int startItem = totalCount == 0 ? 0 : ((page - 1) * pageSize) + 1;
+    int endItem = Math.Min(page * pageSize, totalCount);
+
+    string typeLabel = type switch
+    {
+        "Billing" => "Billing Report",
+        "Orders" => "Order Report",
+        "Production" => "Production Report",
+        _ => "Sales Report"
+    };
+    string typeDesc = type switch
+    {
+        "Billing" => "Monitor customer payments, down payments, and outstanding balances.",
+        "Orders" => "Monitor orders, order status, sales volume, and order activity.",
+        "Production" => "Monitor production progress, workflow efficiency, and stage performance.",
+        _ => "Generate and analyze business reports."
+    };
+
+    string[] stageNames = type == "Production" ? (string[])ViewBag.StageNames : Array.Empty<string>();
+    int[] stageCounts = type == "Production" ? (int[])ViewBag.StageCounts : Array.Empty<int>();
+    int[] stageAvgProgress = type == "Production" ? (int[])ViewBag.StageAvgProgress : Array.Empty<int>();
+    Dictionary<int, DateTime> startedDates = type == "Production" ? (Dictionary<int, DateTime>)ViewBag.StartedDates : new();
+
+    string PaidLabel(Order o) => o.PaymentStatus switch
+    {
+        "Fully Paid" => "Fully Paid",
+        "Partially Paid" => $"Paid {(o.TotalAmount > 0 ? Math.Round(o.DownPaymentAmount / o.TotalAmount * 100) : 0)}%",
+        "Rejected" => "Rejected",
+        _ => "Waiting"
+    };
+    decimal PaidAmount(Order o) => o.PaymentStatus switch
+    {
+        "Fully Paid" => o.TotalAmount,
+        "Partially Paid" => o.DownPaymentAmount,
+        _ => 0m
+    };
+    int ProgressPercent(Order o) => o.Status switch
+    {
+        "Completed" => 100,
+        "Confirmed" or "Design Review" => 0,
+        _ when o.ProductionStage >= 0 => (int)Math.Round((o.ProductionStage + 1) / 6.0 * 100),
+        _ => 0
+    };
+    string[] StageNamesLocal = { "Cutting", "Printing", "Sewing", "Trimming", "Quality Check", "Ready for Pickup" };
+}
+@section Styles {
+    <link rel="stylesheet" href="~/css/admin/orders.css" asp-append-version="true" />
+    <!-- orders.css used on this page: .page-container, .page-header, .stat-cards-row, .stat-card, .stat-card-purple, .stat-card-label, .stat-card-body, .stat-icon-purple, .stat-icon, .stat-value, .stat-card-green, .stat-icon-green, .stat-card-orange, .stat-icon-yellow, .stat-card-red, .stat-icon-blue, .stat-icon-orange, .stat-icon-red, .stat-card-blue, .data-table, .orders-empty-state, .id-link-static, .order-id-link, .status-badge, .order-date-cell, .order-row-clickable, .pagination, .billing-modal-backdrop, .om-modal, .billing-modal -->
+    <link rel="stylesheet" href="~/css/admin/production.css" asp-append-version="true" />
+    <!-- production.css used on this page: .prod-progress-container, .prod-progress-bar, .prod-progress-fill, .prod-progress-label, .billing-modal-backdrop, .billing-modal -->
+    <link rel="stylesheet" href="~/css/admin/reports.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/admin/billing.css" asp-append-version="true" />
+    <!-- billing.css used on this page: .btn, .billing-modal-backdrop, .billing-modal, .billing-modal-loading -->
+
+}
+<div class="page-container reports-print-area">
+
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Reports & Analytics</h1>
+            <p class="page-subtitle"><span class="reports-breadcrumb-active">@typeLabel</span> • @typeDesc</p>
+        </div>
+        <button type="button" class="btn btn-outline no-print" onclick="window.print()">
+            <i class="fa-solid fa-file-pdf"></i> Export PDF
+        </button>
+    </div>
+
+    <!-- Stat Cards -->
+    <div class="stat-cards-row">
+        @if (type == "Billing")
+        {
+            <div class="stat-card stat-card-purple">
+                <span class="stat-card-label">Total Billing</span>
+                <div class="stat-card-body"><div class="prod-monitor-icon stat-card-purple"><img src="~/images/logo/total 1.png"/></div><span class="stat-value">₱@(((decimal)ViewBag.TotalBilling).ToString("N2"))</span></div>
+            </div>
+            <div class="stat-card stat-card-green">
+                <span class="stat-card-label">Amount Paid</span>
+                <div class="stat-card-body"><div class="prod-monitor-icon stat-card-green"><img src="~/images/logo/amoutpaid.png" /></div><span class="stat-value">₱@(((decimal)ViewBag.AmountPaid).ToString("N2"))</span></div>
+            </div>
+            <div class="stat-card stat-card-orange">
+                <span class="stat-card-label">Down Payments</span>
+                <div class="stat-card-body"><div class="prod-monitor-icon stat-card-yellow"><img src="~/images/logo/downpayment.png" /></div><span class="stat-value">₱@(((decimal)ViewBag.DownPayments).ToString("N2"))</span></div>
+            </div>
+            <div class="stat-card stat-card-red">
+                <span class="stat-card-label">Balance Due</span>
+                <div class="stat-card-body"><div class="prod-monitor-icon stat-card-red"><img src="~/images/logo/due.png" /></div><span class="stat-value">₱@(((decimal)ViewBag.BalanceDue).ToString("N2"))</span></div>
+            </div>
+        }
+        else if (type == "Orders")
+        {
+            <div class="stat-card stat-card-purple">
+                <span class="stat-card-label">Total Orders</span>
+                <div class="stat-card-body"><div class="prod-monitor-icon stat-card-purple"><img src="~/images/logo/icons 1.png" /></div><span class="stat-value">@ViewBag.OrdersTotalOrders</span></div>
+            </div>
+            <div class="stat-card stat-card-green">
+                <span class="stat-card-label">Completed</span>
+                <div class="stat-card-body"><div class="prod-monitor-icon stat-card-green"><img src="~/images/logo/image 24.png"/></div><span class="stat-value">@ViewBag.OrdersCompleted</span></div>
+            </div>
+            <div class="stat-card stat-card-orange">
+                <span class="stat-card-label">In Production</span>
+                <div class="stat-card-body"><div class="prod-monitor-icon stat-card-orange"><img src="~/images/logo/production.png"/></div><span class="stat-value">@ViewBag.OrdersInProduction</span></div>
+            </div>
+            <div class="stat-card stat-card-red">
+                <span class="stat-card-label">Cancelled</span>
+                <div class="stat-card-body"><div class="prod-monitor-icon stat-card-red"><img src="~/images/logo/image 59.png" /></div><span class="stat-value">@ViewBag.OrdersCancelled</span></div>
+            </div>
+        }
+        else if (type == "Production")
+        {
+            <div class="stat-card stat-card-purple">
+                <span class="stat-card-label">Total Orders in Production</span>
+                <div class="stat-card-body"><div class="prod-monitor-icon stat-card-purple"><img src="~/images/logo/icons 1.png"/></div><span class="stat-value">@ViewBag.TotalInProduction</span></div>
+            </div>
+            <div class="stat-card stat-card-green">
+                <span class="stat-card-label">Completed This Period</span>
+                <div class="stat-card-body"><div class="prod-monitor-icon stat-card-green"><img src="~/images/logo/image 24.png"/></div><span class="stat-value">@ViewBag.CompletedThisPeriod</span></div>
+            </div>
+            <div class="stat-card stat-card-blue">
+                <span class="stat-card-label">Avg. Production Progress</span>
+                <div class="stat-card-body"><div class="prod-monitor-icon stat-card-blue"><img src="~/images/logo/productionprogress.png"/></div><span class="stat-value">@(ViewBag.AvgProgress)%</span></div>
+            </div>
+            <div class="stat-card stat-card-purple">
+                <span class="stat-card-label">Avg. Production Time</span>
+                <div class="stat-card-body"><div class="prod-monitor-icon stat-card-purple"><img src="~/images/logo/productiontime.png"/></div><span class="stat-value">@(ViewBag.AvgProductionDays != null ? $"{ViewBag.AvgProductionDays} days" : "—")</span></div>
+            </div>
+        }
+        else
+        {
+            <div class="stat-card stat-card-purple">
+                <span class="stat-card-label">Total Sales</span>
+                <div class="stat-card-body"><div class="prod-monitor-icon stat-card-purple"><img src="~/images/logo/total.png"/></div><span class="stat-value">₱@(((decimal)ViewBag.SalesTotalSales).ToString("N2"))</span></div>
+            </div>
+            <div class="stat-card stat-card-blue">
+                <span class="stat-card-label">Total Orders</span>
+                <div class="stat-card-body"><div class="prod-monitor-icon stat-card-blue"><img src="~/images/logo/icons 1.png"/></div><span class="stat-value">@ViewBag.SalesTotalOrders</span></div>
+            </div>
+            <div class="stat-card stat-card-green">
+                <span class="stat-card-label">Completed Orders</span>
+                <div class="stat-card-body"><div class="prod-monitor-icon stat-card-green"><img src="~/images/logo/image 24.png" /></div><span class="stat-value">@ViewBag.SalesCompleted</span></div>
+            </div>
+            <div class="stat-card stat-card-orange">
+                <span class="stat-card-label">Revenue</span>
+                <div class="stat-card-body"><div class="prod-monitor-icon stat-card-orange"><img src="~/images/logo/sales.png" /></div><span class="stat-value">₱@(((decimal)ViewBag.SalesRevenue).ToString("N2"))</span></div>
+            </div>
+        }
+    </div>
+
+    <!-- Filter Bar -->
+    <div class="card reports-filter-card no-print">
+        <div class="reports-filter-row">
+            <div>
+                <div class="reports-filter-label">Report Type</div>
+                <div class="reports-type-btns">
+                    <a asp-action="rIndex" asp-route-type="Sales" asp-route-from="@fromParam" asp-route-to="@toParam" asp-route-search="@search" class="reports-type-btn @(type == "Sales" ? "active" : "")"><i class="fa-solid fa-chart-line"></i> Sales</a>
+                    <a asp-action="rIndex" asp-route-type="Billing" asp-route-from="@fromParam" asp-route-to="@toParam" asp-route-search="@search" class="reports-type-btn @(type == "Billing" ? "active" : "")"><i class="fa-solid fa-file-invoice-dollar"></i> Billing</a>
+                    <a asp-action="rIndex" asp-route-type="Orders" asp-route-from="@fromParam" asp-route-to="@toParam" asp-route-search="@search" class="reports-type-btn @(type == "Orders" ? "active" : "")"><i class="fa-solid fa-cart-shopping"></i> Orders</a>
+                    <a asp-action="rIndex" asp-route-type="Production" asp-route-from="@fromParam" asp-route-to="@toParam" asp-route-search="@search" class="reports-type-btn @(type == "Production" ? "active" : "")"><i class="fa-solid fa-industry"></i> Production</a>
+                </div>
+            </div>
+            <form method="get" asp-action="rIndex" class="reports-date-form">
+                <input type="hidden" name="type" value="@type" />
+                <input type="hidden" name="search" value="@search" />
+                <div>
+                    <div class="reports-filter-label">Date Range</div>
+                    <div class="reports-date-inputs">
+                        <input type="date" name="from" value="@fromParam" class="reports-date-input" />
+                        <span>to</span>
+                        <input type="date" name="to" value="@toParam" class="reports-date-input" />
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary"><i class="fa-solid fa-filter"></i> Apply Filter</button>
+                <a asp-action="rIndex"
+                   asp-route-type="@type"
+                   class="btn btn-outline">
+                    <i class="fa-solid fa-xmark"></i> Clear Filter
+                </a>
+            </form>
+        </div>
+    </div>
+
+    <!-- Breakdown widget -->
+    <div class="card reports-breakdown-card">
+        @if (type == "Billing")
+        {
+            int maxCount = Math.Max(1, Math.Max((int)ViewBag.GcashCount, (int)ViewBag.CashCount));
+            <h2 class="reports-card-title">Payment Method</h2>
+            <div class="reports-bar-list">
+                <div class="reports-bar-row">
+                    <div class="reports-bar-label">GCash</div>
+                    <div class="reports-bar-track"><div class="reports-bar-fill reports-bar-purple" style="width:@((int)ViewBag.GcashCount * 100 / maxCount)%"></div></div>
+                    <div class="reports-bar-value">@ViewBag.GcashCount</div>
+                </div>
+                <div class="reports-bar-row">
+                    <div class="reports-bar-label">Cash</div>
+                    <div class="reports-bar-track"><div class="reports-bar-fill reports-bar-green" style="width:@((int)ViewBag.CashCount * 100 / maxCount)%"></div></div>
+                    <div class="reports-bar-value">@ViewBag.CashCount</div>
+                </div>
+            </div>
+        }
+        else if (type == "Orders")
+        {
+            int ot = Math.Max(1, (int)ViewBag.OrdersTotalOrders);
+            <h2 class="reports-card-title">Order Status</h2>
+            <div class="reports-bar-list">
+                <div class="reports-bar-row">
+                    <div class="reports-bar-label">Completed</div>
+                    <div class="reports-bar-track"><div class="reports-bar-fill reports-bar-green" style="width:@((int)ViewBag.OrdersCompleted * 100 / ot)%"></div></div>
+                    <div class="reports-bar-value">@ViewBag.OrdersCompleted (@(Math.Round((int)ViewBag.OrdersCompleted * 100.0 / ot, 1))%)</div>
+                </div>
+                <div class="reports-bar-row">
+                    <div class="reports-bar-label">In Production</div>
+                    <div class="reports-bar-track"><div class="reports-bar-fill reports-bar-orange" style="width:@((int)ViewBag.OrdersInProduction * 100 / ot)%"></div></div>
+                    <div class="reports-bar-value">@ViewBag.OrdersInProduction (@(Math.Round((int)ViewBag.OrdersInProduction * 100.0 / ot, 1))%)</div>
+                </div>
+                <div class="reports-bar-row">
+                    <div class="reports-bar-label">Processing</div>
+                    <div class="reports-bar-track"><div class="reports-bar-fill reports-bar-blue" style="width:@((int)ViewBag.OrdersProcessing * 100 / ot)%"></div></div>
+                    <div class="reports-bar-value">@ViewBag.OrdersProcessing (@(Math.Round((int)ViewBag.OrdersProcessing * 100.0 / ot, 1))%)</div>
+                </div>
+                <div class="reports-bar-row">
+                    <div class="reports-bar-label">Cancelled</div>
+                    <div class="reports-bar-track"><div class="reports-bar-fill reports-bar-red" style="width:@((int)ViewBag.OrdersCancelled * 100 / ot)%"></div></div>
+                    <div class="reports-bar-value">@ViewBag.OrdersCancelled (@(Math.Round((int)ViewBag.OrdersCancelled * 100.0 / ot, 1))%)</div>
+                </div>
+            </div>
+
+        }
+        else if (type == "Production")
+        {
+            
+            <h2 class="reports-card-title">Production by Stage</h2>
+            <div class="reports-stage-list">
+                @for (int i = 0; i < stageNames.Length; i++)
+                {
+                    <div class="reports-stage-row">
+                        <div class="reports-stage-label">@stageNames[i]</div>
+                        <div class="reports-bar-track reports-stage-track"><div class="reports-bar-fill reports-bar-purple" style="width:@(stageAvgProgress[i])%"></div></div>
+                        <div class="reports-stage-orders">@stageCounts[i]</div>
+                        <div class="reports-stage-progress">@(stageAvgProgress[i])%</div>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <h2 class="reports-card-title">Sales Summary</h2>
+            <div class="reports-summary-list">
+                <div class="reports-summary-row"><span>Total Orders</span><span>@ViewBag.SalesTotalOrders</span></div>
+                <div class="reports-summary-row"><span>Completed Orders</span><span>@ViewBag.SalesCompleted</span></div>
+                <div class="reports-summary-row"><span>Pending Orders</span><span>@ViewBag.SalesPending</span></div>
+                <div class="reports-summary-row"><span>Cancelled Orders</span><span>@ViewBag.SalesCancelled</span></div>
+                <div class="reports-summary-row reports-summary-highlight"><span>Total Revenue</span><span>₱@(((decimal)ViewBag.SalesRevenue).ToString("N2"))</span></div>
+            </div>
+        }
+    </div>
+
+    <!-- Data table -->
+    <div class="card reports-breakdown-card">
+        @if (type == "Billing")
+        {
+            <div class="reports-table-header">
+                <h2 class="reports-card-title reports-table-title">Billing Records</h2>
+                <form method="get" asp-action="rIndex" class="reports-table-search">
+                    <input type="hidden" name="type" value="@type" />
+                    <input type="hidden" name="from" value="@fromParam" />
+                    <input type="hidden" name="to" value="@toParam" />
+                    <div class="search-box">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <input type="text" name="search" value="@search" placeholder="Search Order ID, customer, reference..." class="search-input" />
+                    </div>
+                </form>
+            </div>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Order ID</th>
+                        <th>Customer</th>
+                        <th>Payment Method</th>
+                        <th>Total Amount</th>
+                        <th>Amount Paid</th>
+                        <th>Balance Due</th>
+                        <th>Status</th>
+                        <th>Payment Date</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Any())
+                    {
+                        <tr><td colspan="9"><div class="orders-empty-state"><i class="fa-solid fa-file-invoice-dollar"></i><p>No billing records in this range.</p></div></td></tr>
+                    }
+                    @foreach (var o in Model)
+                    {
+                        <tr>
+                            <td><span class="order-id-link id-link-static">ORD-@o.OrderID.ToString("D3")</span></td>
+                            <td>@o.CustomerName</td>
+                            <td>@(o.PaymentMethod ?? "—")</td>
+                            <td>₱@o.TotalAmount.ToString("N2")</td>
+                            <td>₱@PaidAmount(o).ToString("N2")</td>
+                            <td>₱@(o.TotalAmount - PaidAmount(o)).ToString("N2")</td>
+                            <td><span class="status-badge @OrderStatusDisplay.BillingBadgeClass(o.PaymentStatus)">@PaidLabel(o)</span></td>
+                            <td class="order-date-cell">@o.OrderDate.ToString("MMM d, yyyy")</td>
+                            <td><a asp-controller="Orders" asp-action="oDetails" asp-route-id="@o.OrderID" class="btn btn-outline btn-sm">View</a></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+        else if (type == "Orders")
+        {
+            <div class="reports-table-header">
+                <h2 class="reports-card-title reports-table-title">Order Records</h2>
+                <form method="get" asp-action="rIndex" class="reports-table-search">
+                    <input type="hidden" name="type" value="@type" />
+                    <input type="hidden" name="from" value="@fromParam" />
+                    <input type="hidden" name="to" value="@toParam" />
+                    <div class="search-box">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <input type="text" name="search" value="@search" placeholder="Search Order ID, customer, product..." class="search-input" />
+                    </div>
+                </form>
+            </div>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Order ID</th>
+                        <th>Customer</th>
+                        <th>Products</th>
+                        <th>Amount</th>
+                        <th>Status</th>
+                        <th>Order Date</th>
+                </thead>
+                <tbody>
+                    @if (!Model.Any())
+                    {
+                        <tr><td colspan="7"><div class="orders-empty-state"><i class="fa-solid fa-cart-shopping"></i><p>No orders in this range.</p></div></td></tr>
+                    }
+                    @foreach (var o in Model)
+                    {
+                        var first = o.OrderDetails.FirstOrDefault();
+                        int extra = o.OrderDetails.Count - 1;
+                        <tr id="order-row-@o.OrderID" class="order-row-clickable" onclick="loadOrderDetails(@o.OrderID)">
+                            <td><span class="order-id-link id-link-static">ORD-@o.OrderID.ToString("D3")</span></td>
+                            <td>@o.CustomerName</td>
+                            <td>
+                                @(first != null ? $"{first.Quantity}x {first.ProductNameSnapshot}" : "—")
+                                @if (extra > 0) { <span class="reports-extra-items">+@extra more</span> }
+                            </td>
+                            <td>₱@o.TotalAmount.ToString("N2")</td>
+                            <td><span class="status-badge @OrderStatusDisplay.BadgeClass(o.Status)">@o.Status</span></td>
+                            <td class="order-date-cell">@o.OrderDate.ToString("MMM d, yyyy")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+        else if (type == "Production")
+        {
+            <div class="reports-table-header">
+                <h2 class="reports-card-title reports-table-title">Active Production Orders</h2>
+                <form method="get" asp-action="rIndex" class="reports-table-search">
+                    <input type="hidden" name="type" value="@type" />
+                    <input type="hidden" name="from" value="@fromParam" />
+                    <input type="hidden" name="to" value="@toParam" />
+                    <div class="search-box">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <input type="text" name="search" value="@search" placeholder="Search Order ID, customer, product..." class="search-input" />
+                    </div>
+                </form>
+            </div>
+            <table class="data-table">
+                <thead>
+                    <tr><th>Order ID</th>
+                        <th>Customer</th>
+                        <th>Products</th>
+                        <th>Quantity</th>
+                        <th>Current Stage</th>
+                        <th>Progress</th>
+                        <th>Started Date</th>
+                        <th>Target Date</th>
+                </thead>
+                <tbody>
+                    @if (!Model.Any())
+                    {
+                        <tr><td colspan="9"><div class="orders-empty-state"><i class="fa-solid fa-industry"></i><p>No orders currently in production.</p></div></td></tr>
+                    }
+                    @foreach (var o in Model)
+                    {
+                        var first = o.OrderDetails.FirstOrDefault();
+                        int totalQty = o.OrderDetails.Sum(d => d.Quantity);
+                        <tr id="order-row-@o.OrderID" class="order-row-clickable" onclick="loadOrderDetails(@o.OrderID)">
+                            <td><span class="order-id-link id-link-static">ORD-@o.OrderID.ToString("D3")</span></td>
+                            <td>@o.CustomerName</td>
+                            <td>@(first != null ? first.ProductNameSnapshot : "—")</td>
+                            <td>@totalQty pcs</td>
+                            <td><span class="status-badge @OrderStatusDisplay.BadgeClass(o.Status)">@(o.ProductionStage >= 0 && o.ProductionStage < 6 ? StageNamesLocal[o.ProductionStage] : "—")</span></td>
+                            <td>
+                                <div class="prod-progress-container">
+                                    <div class="prod-progress-bar"><div class="prod-progress-fill" style="--pct:@(ProgressPercent(o))%"></div></div>
+                                    <div class="prod-progress-label">@(ProgressPercent(o))%</div>
+                                </div>
+                            </td>
+                            <td class="order-date-cell">@(startedDates.TryGetValue(o.OrderID, out var sd) ? sd.ToString("MMM d, yyyy") : "—")</td>
+                            <td class="order-date-cell">@(o.ProductionTargetDate.HasValue ? o.ProductionTargetDate.Value.ToString("MMM d, yyyy") : "—")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+        else
+        {
+            <div class="reports-table-header">
+                <h2 class="reports-card-title reports-table-title">Sales Report</h2>
+                <form method="get" asp-action="rIndex" class="reports-table-search">
+                    <input type="hidden" name="type" value="@type" />
+                    <input type="hidden" name="from" value="@fromParam" />
+                    <input type="hidden" name="to" value="@toParam" />
+                    <div class="search-box">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <input type="text" name="search" value="@search" placeholder="Search Order ID, customer, product..." class="search-input" />
+                    </div>
+                </form>
+            </div>
+            <table class="data-table">
+                <thead>
+                    <tr><th>Date</th><th>Order ID</th><th>Customer</th><th>Products</th><th>Qty</th><th>Payment Method</th><th>Total Amount</th><th>Status</th></tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Any())
+                    {
+                        <tr><td colspan="8"><div class="orders-empty-state"><i class="fa-solid fa-chart-line"></i><p>No sales in this range.</p></div></td></tr>
+                    }
+                    @foreach (var o in Model)
+                    {
+                        int qty = o.OrderDetails.Sum(d => d.Quantity);
+                        string itemsLabel = o.OrderDetails.Count == 1 ? "1 Item" : $"{o.OrderDetails.Count} Items";
+                        <tr id="order-row-@o.OrderID" class="order-row-clickable" onclick="loadOrderDetails(@o.OrderID)">
+                            <td class="order-date-cell">@o.OrderDate.ToString("MMM d, yyyy")</td>
+                            <td><span class="order-id-link id-link-static">ORD-@o.OrderID.ToString("D3")</span></td>
+                            <td>@o.CustomerName</td>
+                            <td>@itemsLabel</td>
+                            <td>@qty</td>
+                            <td>@(o.PaymentMethod ?? "—")</td>
+                            <td>₱@o.TotalAmount.ToString("N2")</td>
+                            <td><span class="status-badge @OrderStatusDisplay.BadgeClass(o.Status)">@o.Status</span></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+
+        @if (totalPages > 1)
+        {
+            <div class="pagination no-print">
+                <span class="page-info">Showing @startItem–@endItem of @totalCount results</span>
+                <div class="page-btns">
+                    @if (page > 1)
+                    {
+                        <a asp-action="rIndex" asp-route-page="@(page-1)" asp-route-type="@type" asp-route-from="@fromParam" asp-route-to="@toParam" asp-route-search="@search" class="page-btn">‹</a>
+                    }
+                    @for (int i = 1; i <= totalPages; i++)
+                    {
+                        <a asp-action="rIndex" asp-route-page="@i" asp-route-type="@type" asp-route-from="@fromParam" asp-route-to="@toParam" asp-route-search="@search" class="page-btn @(i == page ? "active" : "")">@i</a>
+                    }
+                    @if (page < totalPages)
+                    {
+                        <a asp-action="rIndex" asp-route-page="@(page+1)" asp-route-type="@type" asp-route-from="@fromParam" asp-route-to="@toParam" asp-route-search="@search" class="page-btn">›</a>
+                    }
+                </div>
+            </div>
+        }
+        else if (totalCount > 0)
+        {
+            <div class="pagination no-print">
+                <span class="page-info">Showing @startItem–@endItem of @totalCount results</span>
+            </div>
+        }
+    </div>
+</div>
+
+
+<!-- Order Details Modal -->
+<div class="billing-modal-backdrop"
+     id="orderModalBackdrop"
+     onclick="if(event.target===this) closeOrderModal()">
+
+    <div class="billing-modal om-modal" id="orderModal">
+        <div class="billing-modal-loading">
+            <i class="fa-solid fa-spinner fa-spin"></i>
+            Loading order details…
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/admin/orders-index.js" asp-append-version="true"></script>
+}

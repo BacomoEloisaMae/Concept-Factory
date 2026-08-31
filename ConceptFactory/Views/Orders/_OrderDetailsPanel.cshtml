@@ -1,0 +1,29 @@
+@model ConceptFactory.Models.Order
+@{
+    // This is the content injected into oIndex's center popup modal (see
+    // loadOrderDetails() in oIndex.cshtml). The full standalone page at
+    // /Orders/oDetails/{id} shares the exact same body content via
+    // _OrderDetailsBody.cshtml so the two views can never show different
+    // information — only the header/chrome around it differs.
+}
+<div class="bvp-header">
+    <div class="bvp-header-icon"><i class="fa-solid fa-clipboard-list"></i></div>
+    <div class="bvp-header-text">
+        <div class="bvp-title">Order Details</div>
+        <div class="bvp-subtitle">#ORD-@Model.OrderID.ToString("D3")</div>
+    </div>
+    <button type="button" class="bvp-close-btn" onclick="closeOrderModal()"><i class="fa-solid fa-xmark"></i> Close</button>
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success om-modal-alert">@TempData["Success"]</div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger om-modal-alert">@TempData["Error"]</div>
+}
+
+<div class="om-modal-body">
+    @await Html.PartialAsync("_OrderDetailsBody", Model)
+</div>

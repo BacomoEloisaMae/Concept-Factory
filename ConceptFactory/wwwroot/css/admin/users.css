@@ -1,0 +1,55 @@
+.status-badge-purple {
+    background: var(--primary-light);
+    color: var(--primary);
+}
+
+.status-badge-blue {
+    background: #eff6ff;
+    color: #3b82f6;
+}
+
+.status-badge-orange {
+    background: #fff7ed;
+    color: var(--warning);
+}
+
+.status-badge-teal {
+    background: #ecfeff;
+    color: #0891b2;
+}
+
+.users-stat-cards-row {
+    grid-template-columns: repeat(4, 1fr);
+}
+
+@media (max-width: 1200px) {
+    .users-stat-cards-row {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 700px) {
+    .users-stat-cards-row {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+.users-name-cell {
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.users-inactive-tag {
+    margin-left: 6px;
+}
+
+.users-station-tag {
+    margin-left: 6px;
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.users-managed-elsewhere {
+    color: var(--text-muted);
+    cursor: help;
+}

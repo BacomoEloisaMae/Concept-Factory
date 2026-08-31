@@ -1,0 +1,116 @@
+@model IEnumerable<ConceptFactory.Models.Notification>
+@using ConceptFactory.Models
+@{
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    ViewData["Title"] = "Notifications";
+    ViewData["ActivePage"] = "Notifications";
+
+    int page = ViewBag.Page ?? 1;
+    int totalPages = ViewBag.TotalPages ?? 1;
+    int totalCount = ViewBag.TotalCount ?? 0;
+    int pageSize = 20;
+    int startItem = totalCount == 0 ? 0 : ((page - 1) * pageSize) + 1;
+    int endItem = Math.Min(page * pageSize, totalCount);
+    string currentTab = ViewBag.Tab ?? "All";
+}
+@section Styles {
+    <link rel="stylesheet" href="~/css/admin/orders.css" asp-append-version="true" />
+    <!-- orders.css used on this page: .page-container, .page-header, .stat-cards-row, .stat-card, .stat-card-label, .stat-card-body, .stat-icon, .stat-icon-orange, .stat-value, .stat-icon-purple, .order-tabs, .order-tab, .orders-empty-state, .pagination -->
+}
+<div class="page-container">
+
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Notifications</h1>
+            <p class="page-subtitle">Order placed, payments verified/rejected, and production updates across every order.</p>
+        </div>
+        @if ((int)(ViewBag.UnreadCount ?? 0) > 0)
+        {
+            <form asp-action="nMarkAllRead" method="post">
+                <button type="submit" class="btn btn-outline"><i class="fa-solid fa-check-double"></i> Mark all as read</button>
+            </form>
+        }
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
+
+    <div class="stat-cards-row">
+        <div class="stat-card">
+            <span class="stat-card-label">Unread</span>
+            <div class="stat-card-body">
+                <div class="stat-icon stat-icon-orange"><i class="fa-solid fa-bell"></i></div>
+                <span class="stat-value">@ViewBag.UnreadCount</span>
+            </div>
+        </div>
+        <div class="stat-card">
+            <span class="stat-card-label">Total</span>
+            <div class="stat-card-body">
+                <div class="stat-icon stat-icon-purple"><i class="fa-solid fa-list-check"></i></div>
+                <span class="stat-value">@ViewBag.TotalCount2</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="order-tabs">
+        <a asp-action="nIndex" class="order-tab @(currentTab == "All" ? "active" : "")">All</a>
+        <a asp-action="nIndex" asp-route-tab="Unread" class="order-tab @(currentTab == "Unread" ? "active" : "")">Unread (@ViewBag.UnreadCount)</a>
+    </div>
+
+    <div class="card">
+        <div class="notif-list">
+            @if (!Model.Any())
+            {
+                <div class="orders-empty-state">
+                    <i class="fa-solid fa-bell-slash"></i>
+                    <p>No notifications @(currentTab == "Unread" ? "to read" : "yet").</p>
+                </div>
+            }
+            @foreach (var n in Model)
+            {
+                <form asp-action="nMarkRead" asp-route-id="@n.NotificationID" method="post"
+                      class="notif-row @(n.IsRead ? "" : "notif-row-unread")" data-notif-form="1"
+                      data-redirect="@Url.Action("oDetails", "Orders", new { id = n.OrderID })">
+                    <div class="notif-row-icon notif-color-@NotificationDisplay.ColorClass(n.Type)">
+                        <i class="fa-solid @NotificationDisplay.IconClass(n.Type)"></i>
+                    </div>
+                    <div class="notif-row-body">
+                        <div class="notif-row-title">
+                            @n.Title
+                            @if (!n.IsRead)
+                            {
+                                <span class="notif-dot" title="Unread"></span>
+                            }
+                        </div>
+                        <div class="notif-row-message">@n.Message</div>
+                    </div>
+                    <div class="notif-row-time">@n.CreatedAt.ToString("MMM d, yyyy h:mm tt")</div>
+                    <button type="submit" class="btn btn-outline btn-sm">Open</button>
+                </form>
+            }
+        </div>
+
+        @if (totalPages > 1)
+        {
+            <div class="pagination">
+                <span class="page-info">Showing @startItem–@endItem of @totalCount notifications</span>
+                <div class="page-btns">
+                    @if (page > 1)
+                    {
+                        <a asp-action="nIndex" asp-route-page="@(page-1)" asp-route-tab="@currentTab" class="page-btn">‹</a>
+                    }
+                    @for (int i = 1; i <= totalPages; i++)
+                    {
+                        <a asp-action="nIndex" asp-route-page="@i" asp-route-tab="@currentTab" class="page-btn @(i == page ? "active" : "")">@i</a>
+                    }
+                    @if (page < totalPages)
+                    {
+                        <a asp-action="nIndex" asp-route-page="@(page+1)" asp-route-tab="@currentTab" class="page-btn">›</a>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+</div>

@@ -1,0 +1,220 @@
+@model IEnumerable<ConceptFactory.Models.Order>
+@using ConceptFactory.Models
+@{
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    ViewData["Title"] = "Billing";
+    ViewData["ActivePage"] = "Billing";
+
+    int page = ViewBag.Page ?? 1;
+    int totalPages = ViewBag.TotalPages ?? 1;
+    int totalCount = ViewBag.TotalCount ?? 0;
+    int pageSize = 10;
+    int startItem = totalCount == 0 ? 0 : ((page - 1) * pageSize) + 1;
+    int endItem = Math.Min(page * pageSize, totalCount);
+    string currentTab = ViewBag.Tab ?? "All";
+}
+@section Styles {
+    <link rel="stylesheet" href="~/css/admin/orders.css" asp-append-version="true" />
+    <!-- orders.css used on this page: .page-container, .page-header, .stat-card, .stat-card-clickable, .stat-card-label, .stat-card-body, .stat-icon, .stat-icon-orange, .stat-value, .stat-icon-green, .stat-icon-purple, .stat-icon-red, .filter-bar-flat, .filter-bar, .data-table, .orders-empty-state, .order-row-clickable, .id-link-static, .order-id-link, .status-badge, .order-date-cell, .order-time, .pagination, .billing-modal-backdrop, .billing-modal -->
+    <link rel="stylesheet" href="~/css/admin/billing.css" asp-append-version="true" />
+    <!-- billing.css used on this page: .billing-stat-cards-row, .billing-stat-card, .billing-stat-card-approved, .billing-stat-card-full, .billing-stat-card-rejected, .btn, .billing-payment-id, .billing-amount-sub, .billing-modal-backdrop, .billing-modal-wrap, .billing-modal-close, .billing-modal, .billing-modal-loading, .fp-confirm-backdrop, .fp-confirm-modal, .fp-confirm-icon, .fp-confirm-title, .fp-confirm-text, .fp-confirm-actions, .reason-confirm-backdrop, .reason-confirm-modal, .reason-confirm-icon, .reason-confirm-title, .reason-confirm-text, .reason-confirm-label, .reason-confirm-textarea, .reason-confirm-error, .reason-confirm-actions -->
+	<link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+	<!-- site.css used on this page: .page-container, .page-header, .page-title, .page-subtitle, .alert, .alert-success, .filter-bar, .filter-form, .search-box, .search-input, .filter-select, .btn-outline, .btn, .card, .data-table, .status-badge, .pagination, .page-info, .page-btns, .page-btn, .btn-primary, .btn-danger -->
+}
+<div class="page-container">
+
+    <!-- Page Header -->
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Payment Verification</h1>
+            <p class="page-subtitle">Review and verify customer payments</p>
+        </div>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
+
+    <!-- Stats Cards -->
+    <div class="billing-stat-cards-row">
+        <a asp-action="bIndex" asp-route-tab="Waiting" asp-route-search="@ViewBag.Search"
+           class="stat-card billing-stat-card stat-card-clickable @(currentTab == "Waiting" ? "active" : "")">
+            <span class="stat-card-label">Waiting for Verification</span>
+            <div class="stat-card-body">
+                <div class="stat-icon stat-icon-orange"><img src="~/images/logo/Clock.png" /></div>
+                <span class="stat-value">@ViewBag.WaitingCount</span>
+            </div>
+       </a>
+        <a asp-action="bIndex" asp-route-tab="Approved" asp-route-search="@ViewBag.Search"
+           class="stat-card billing-stat-card billing-stat-card-approved stat-card-clickable @(currentTab == "Approved" ? "active" : "")">
+            <span class="stat-card-label">Approved</span>
+            <div class="stat-card-body">
+                <div class="stat-icon stat-icon-green"><img src="~/images/logo/image 24.png" /></div>
+                <span class="stat-value">@ViewBag.ApprovedCount</span>
+            </div>
+       </a>
+        <a asp-action="bIndex" asp-route-tab="Rejected" asp-route-search="@ViewBag.Search"
+           class="stat-card billing-stat-card billing-stat-card-rejected stat-card-clickable @(currentTab == "Rejected" ? "active" : "")">
+			<span class="stat-card-label">Rejected</span>
+			<div class="stat-card-body">
+				<div class="stat-icon stat-icon-red"><img src="~/images/logo/image 59.png" /></div>
+				<span class="stat-value">@ViewBag.RejectedCount</span>
+			</div>
+        </a>
+    </div>
+
+	<!-- Filters -->
+    <div class="filter-bar filter-bar-flat">
+		<form method="get" asp-action="bIndex" class="filter-form">
+			<input type="hidden" name="tab" value="@ViewBag.Tab" />
+			<div class="search-box">
+				<i class="fa-solid fa-magnifying-glass"></i>
+				<input type="text" name="search" value="@ViewBag.Search" placeholder="Search by Order ID or Customer..." class="search-input" />
+			</div>
+			<select name="paymentMethod" class="filter-select">
+				<option value="" selected="@(ViewBag.PaymentMethod == null)">All Payment Methods</option>
+				<option value="Gcash" selected="@(ViewBag.PaymentMethod == "Gcash")">Gcash</option>
+				<option value="Cash" selected="@(ViewBag.PaymentMethod == "Cash")">Cash</option>
+			</select>
+			<button type="submit" class="btn btn-outline">
+				<i class="fa-solid fa-filter"></i> Filter
+			</button>
+		</form>
+	</div>
+
+	<!-- Table Card -->
+	<div class="card">
+        <!-- Payments Table -->
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Payment ID</th>
+                    <th>Order ID</th>
+                    <th>Customer</th>
+                    <th>Payment Method</th>
+                    <th>Amount</th>
+                    <th>Status</th>
+                    <th>Payment Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Any())
+                {
+                    <tr>
+                        <td colspan="7">
+                            <div class="orders-empty-state">
+                                <i class="fa-solid fa-file-invoice-dollar"></i>
+                                <p>No payments found.</p>
+                            </div>
+                        </td>
+                    </tr>
+                }
+                @foreach (var o in Model)
+                {
+                    <tr id="payment-row-@o.OrderID" class="order-row-clickable" onclick="openPaymentModal(@o.OrderID)">
+
+                        <td><span class="billing-payment-id id-link-static" title=" Same number as the Order ID, prefixed PAY- instead of ORD-">#@o.PaymentID</span></td>
+						<td onclick="event.stopPropagation()">
+							<a asp-controller="Orders" asp-action="oDetails" asp-route-id="@o.OrderID" class="order-id-link">#ORD-@o.OrderID.ToString("D3")</a>
+						</td>
+						<td>@o.CustomerName</td>
+                        <td>@(o.PaymentMethod ?? "—")</td>
+                        <td>
+                            ₱@((o.PaymentStatus == "Fully Paid" ? o.TotalAmount : o.DownPaymentAmount).ToString("N2"))
+                            <div class="billing-amount-sub">@(o.PaymentStatus == "Fully Paid" ? "Full amount paid" : $"{(o.TotalAmount > 0 ? Math.Round(o.DownPaymentAmount / o.TotalAmount * 100, 1) : 0)}% down payment")</div>
+                        </td>
+                        <td>
+                            <span class="status-badge @OrderStatusDisplay.BillingBadgeClass(o.PaymentStatus)">
+                                @(o.PaymentStatus == "Partially Paid" ? "Approved" : o.PaymentStatus)
+                            </span>
+                        </td>
+                        <td class="order-date-cell">
+                            @o.OrderDate.ToString("MMMM d, yyyy")
+                            <span class="order-time">@o.OrderDate.ToString("h:mm tt")</span>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        <!-- Pagination -->
+        @if (totalPages > 1)
+        {
+            <div class="pagination">
+                <span class="page-info">Showing @startItem–@endItem of @totalCount payments</span>
+                <div class="page-btns">
+                    @if (page > 1)
+                    {
+                        <a asp-action="bIndex" asp-route-page="@(page-1)" asp-route-tab="@ViewBag.Tab"
+                           asp-route-search="@ViewBag.Search" asp-route-paymentMethod="@ViewBag.PaymentMethod" class="page-btn">‹</a>
+                    }
+                    @for (int i = 1; i <= totalPages; i++)
+                    {
+                        <a asp-action="bIndex" asp-route-page="@i" asp-route-tab="@ViewBag.Tab"
+                           asp-route-search="@ViewBag.Search" asp-route-paymentMethod="@ViewBag.PaymentMethod"
+                           class="page-btn @(i == page ? "active" : "")">@i</a>
+                    }
+                    @if (page < totalPages)
+                    {
+                        <a asp-action="bIndex" asp-route-page="@(page+1)" asp-route-tab="@ViewBag.Tab"
+                           asp-route-search="@ViewBag.Search" asp-route-paymentMethod="@ViewBag.PaymentMethod" class="page-btn">›</a>
+                    }
+                </div>
+            </div>
+        }
+        else if (totalCount > 0)
+        {
+            <div class="pagination">
+                <span class="page-info">Showing @startItem–@endItem of @totalCount payments</span>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Payment Verification modal -->
+<div class="billing-modal-backdrop" id="paymentModalBackdrop" onclick="if(event.target===this) closePaymentModal()">
+    <div class="billing-modal-wrap">
+        <button type="button" class="billing-modal-close" onclick="closePaymentModal()" aria-label="Close">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+        <div class="billing-modal" id="paymentModal">
+            <div class="billing-modal-loading"><i class="fa-solid fa-spinner fa-spin"></i> Loading payment details…</div>
+        </div>
+    </div>
+</div>
+
+<!-- "Mark Fully Paid" confirmation modal — sits above the Payment
+     Verification modal since it's triggered from a button inside it. -->
+<div class="fp-confirm-backdrop" id="fpConfirmBackdrop" onclick="if(event.target===this) closeFpConfirm()">
+    <div class="fp-confirm-modal">
+        <div class="fp-confirm-icon"><i class="fa-solid fa-circle-check"></i></div>
+        <div class="fp-confirm-title">Mark this order as Fully Paid?</div>
+        <div class="fp-confirm-text">This confirms the customer has settled the remaining balance in full. This moves the order out of the Approved tab and into Fully Paid.</div>
+        <div class="fp-confirm-actions">
+            <button type="button" class="btn btn-outline" onclick="closeFpConfirm()">Cancel</button>
+            <button type="button" class="btn btn-primary" onclick="confirmFullyPaid()">Yes, Mark Fully Paid</button>
+        </div>
+    </div>
+</div>
+
+<!-- "Reject Payment" confirmation modal — requires a reason before it
+     actually submits; the reason is sent to the customer. -->
+<div class="reason-confirm-backdrop" id="rejectConfirmBackdrop" onclick="if(event.target===this) closeRejectConfirm()">
+    <div class="reason-confirm-modal">
+        <div class="reason-confirm-icon"><i class="fa-solid fa-xmark"></i></div>
+        <div class="reason-confirm-title">Reject this payment?</div>
+        <div class="reason-confirm-text">The customer will need to resubmit proof of payment. Let them know why below — this is included in the notification sent to them.</div>
+        <label class="reason-confirm-label" for="rejectReasonInput">Reason for rejection</label>
+        <textarea id="rejectReasonInput" class="reason-confirm-textarea" maxlength="300" placeholder="e.g. Payment screenshot doesn't match the amount required"></textarea>
+        <div class="reason-confirm-error" id="rejectReasonError">Please enter a reason before rejecting.</div>
+        <div class="reason-confirm-actions">
+            <button type="button" class="btn btn-outline" onclick="closeRejectConfirm()">Cancel</button>
+            <button type="button" class="btn btn-danger" onclick="confirmReject()">Yes, Reject Payment</button>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/admin/billing-index.js" asp-append-version="true"></script>
+}

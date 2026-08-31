@@ -1,0 +1,83 @@
+@model IEnumerable<ConceptFactory.Models.Notification>
+@using ConceptFactory.Models
+@{
+    ViewData["Title"] = "Notifications";
+    int page = ViewBag.Page ?? 1;
+    int totalPages = ViewBag.TotalPages ?? 1;
+    int totalCount = ViewBag.TotalCount ?? 0;
+    string currentTab = ViewBag.Tab ?? "All";
+}
+@section Styles {
+    <link rel="stylesheet" href="~/css/home/home-index.css" asp-append-version="true" />
+    <!-- home-index.css used on this page: .cf-page, .cf-page-title, .cf-page-sub, .cf-empty -->
+    <link rel="stylesheet" href="~/css/navbar.css" asp-append-version="true" />
+    <!-- navbar.css used on this page: .nav-notif-tabs, .nav-notif-tab, .nav-notif-fulllist, .nav-notif-item, .nav-notif-item-form, .nav-notif-icon, .nav-notif-item-body, .nav-notif-item-title, .nav-notif-item-message, .nav-notif-item-time -->
+}
+<div class="cf-page cot-page">
+    <div class="cf-page-title">Notifications</div>
+    <div class="cf-page-sub">Updates on your orders — payments, production progress, and pickup.</div>
+
+    <div class="cot-actions-row" style="justify-content:flex-end; margin-bottom:14px;">
+        @if ((int)(ViewBag.UnreadCount ?? 0) > 0)
+        {
+            <form asp-action="hMarkAllNotificationsRead" method="post">
+                <button type="submit" class="cot-btn cot-btn-outline"><i class="fa-solid fa-check-double"></i> Mark all as read</button>
+            </form>
+        }
+    </div>
+
+    <div class="nav-notif-tabs">
+        <a asp-action="hNotifications" class="nav-notif-tab @(currentTab == "All" ? "active" : "")">All</a>
+        <a asp-action="hNotifications" asp-route-tab="Unread" class="nav-notif-tab @(currentTab == "Unread" ? "active" : "")">Unread (@ViewBag.UnreadCount)</a>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="cf-empty">
+            <i class="fa-regular fa-bell-slash"></i>
+            <p>No notifications @(currentTab == "Unread" ? "to read" : "yet").</p>
+        </div>
+    }
+    else
+    {
+        <div class="nav-notif-fulllist">
+            @foreach (var n in Model)
+            {
+                <form asp-action="hMarkNotificationRead" asp-route-id="@n.NotificationID" method="post"
+                      class="nav-notif-item nav-notif-item-form @(n.IsRead ? "" : "nav-notif-item-unread")" data-cf-notif-form="1"
+                      data-redirect="@Url.Action("hTrackOrder", new { id = n.OrderID })">
+                    <div class="nav-notif-icon nav-notif-color-@NotificationDisplay.ColorClass(n.Type)">
+                        <i class="fa-solid @NotificationDisplay.IconClass(n.Type)"></i>
+                    </div>
+                    <div class="nav-notif-item-body">
+                        <div class="nav-notif-item-title">@n.Title</div>
+                        <div class="nav-notif-item-message">@n.Message</div>
+                        <div class="nav-notif-item-time">@n.CreatedAt.ToString("MMM d, yyyy h:mm tt")</div>
+                    </div>
+                    <button type="submit" class="cot-btn cot-btn-outline">Open</button>
+                </form>
+            }
+        </div>
+
+        @if (totalPages > 1)
+        {
+            <div class="pagination">
+                <span class="page-info">Page @(page) of @totalPages</span>
+                <div class="page-btns">
+                    @if (page > 1)
+                    {
+                        <a asp-action="hNotifications" asp-route-page="@(page-1)" asp-route-tab="@currentTab" class="page-btn">‹</a>
+                    }
+                    @for (int i = 1; i <= totalPages; i++)
+                    {
+                        <a asp-action="hNotifications" asp-route-page="@i" asp-route-tab="@currentTab" class="page-btn @(i == page ? "active" : "")">@i</a>
+                    }
+                    @if (page < totalPages)
+                    {
+                        <a asp-action="hNotifications" asp-route-page="@(page+1)" asp-route-tab="@currentTab" class="page-btn">›</a>
+                    }
+                </div>
+            </div>
+        }
+    }
+</div>

@@ -1,0 +1,232 @@
+@model IEnumerable<ConceptFactory.Models.Order>
+@using ConceptFactory.Models
+@using ConceptFactory.Utils
+@{
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    ViewData["Title"] = "Production";
+    ViewData["ActivePage"] = "Production";
+    ViewData["ActiveStation"] = (ViewBag.Tab as string) == "Completed" ? "Completed" : "Overview";
+
+    bool hasSelection = ViewBag.HasSelection ?? false;
+    int page = ViewBag.Page ?? 1;
+    int totalPages = ViewBag.TotalPages ?? 1;
+    int totalCount = ViewBag.TotalCount ?? 0;
+    int pageSize = 10;
+    int startItem = totalCount == 0 ? 0 : ((page - 1) * pageSize) + 1;
+    int endItem = Math.Min(page * pageSize, totalCount);
+    string currentTab = ViewBag.Tab ?? "";
+    Dictionary<int, DateTime> startedDates = ViewBag.StartedDates ?? new Dictionary<int, DateTime>();
+
+    int ProgressPercent(ConceptFactory.Models.Order o) => o.Status switch
+    {
+        "Completed" => 100,
+        "Confirmed" or "Design Review" => 0,
+        _ => (int)Math.Round((o.ProductionStage + 1) / 6.0 * 100)
+    };
+    string[] StageNames = { "Cutting", "Printing", "Sewing", "Trimming", "Quality Check", "Ready for Pickup" };
+    string ProgressLabel(ConceptFactory.Models.Order o) => o.Status switch
+    {
+        "Completed" => "Done",
+        "Confirmed" => "Not started",
+        _ => StageNames[o.ProductionStage]
+    };
+    int RowQuantity(ConceptFactory.Models.Order o) => o.OrderDetails.Where(d => d.IsCustomOrder).Sum(d => d.Quantity);
+}
+@section Styles {
+    <link rel="stylesheet" href="~/css/admin/orders.css" asp-append-version="true" />
+    <!-- orders.css used on this page: .page-container, .page-header, .stat-cards-row, .stat-card, .stat-card-clickable, .stat-card-purple, .stat-card-label, .stat-card-body, .stat-icon-purple, .stat-icon, .stat-value, .stat-card-blue, .stat-icon-blue, .stat-card-orange, .stat-icon-orange, .stat-card-green, .stat-icon-green, .filter-bar, .orders-empty-state, .data-table, .order-row-clickable, .id-link-static, .order-id-link, .status-badge, .order-date-cell, .pagination, .billing-modal-backdrop, .billing-modal -->
+    <link rel="stylesheet" href="~/css/admin/billing.css" asp-append-version="true" />
+    <!-- billing.css used on this page: .btn, .billing-modal-backdrop, .billing-modal, .billing-modal-loading -->
+    <link rel="stylesheet" href="~/css/admin/production.css" asp-append-version="true" />
+    <!-- production.css used on this page: .prod-target-date-input, .prod-progress-container, .prod-progress-clickable, .prod-progress-bar, .prod-progress-fill, .prod-progress-label, .billing-modal-backdrop, .billing-modal, .prod-item-modal-backdrop, .prod-item-modal -->
+}
+<div class="page-container">
+
+    <!-- Page Header -->
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Production Workflow Monitoring</h1>
+            <p class="page-subtitle">Track and monitor all production stages in real-time</p>
+        </div>
+    </div>
+
+
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
+
+    <!-- Stat Cards — click one to see those orders below. Total Orders =
+         everything tracked (tab=All), In Production / Completed / Confirmed
+         = exactly that status. Pending is informational (not yet in
+         production — still waiting on payment) so it isn't a link. -->
+    <div class="stat-cards-row">
+        <a asp-action="pIndex" asp-route-tab="All" asp-route-search="@ViewBag.Search"
+           class="stat-card stat-card-purple stat-card-clickable @(currentTab == "All" ? "active" : "")">
+            <span class="stat-card-label">Total Orders</span>
+            <div class="stat-card-body">
+                <div class="stat-icon stat-icon-purple"><img src="~/images/logo/icons 1.png"></div>
+                <span class="stat-value">@ViewBag.TotalOrders</span>
+            </div>
+        </a>
+        <a asp-action="pIndex" asp-route-tab="Confirmed" asp-route-search="@ViewBag.Search"
+           class="stat-card stat-card-blue stat-card-clickable @(currentTab == "Confirmed" ? "active" : "")">
+            <span class="stat-card-label">Confirmed</span>
+            <div class="stat-card-body">
+                <div class="stat-icon stat-icon-blue"><i class="fa-solid fa-clipboard-check"></i></div>
+                <span class="stat-value">@ViewBag.ConfirmedCount</span>
+            </div>
+        </a>
+        <a asp-action="pIndex" asp-route-tab="InProduction" asp-route-search="@ViewBag.Search"
+           class="stat-card stat-card-orange stat-card-clickable @(currentTab == "InProduction" ? "active" : "")">
+            <span class="stat-card-label">In Production</span>
+            <div class="stat-card-body">
+                <div class="stat-icon stat-icon-orange"><img src="~/images/logo/production 2.png"></div>
+                <span class="stat-value">@ViewBag.InProductionCount</span>
+            </div>
+        </a>
+        <a asp-action="pIndex" asp-route-tab="Completed" asp-route-search="@ViewBag.Search"
+           class="stat-card stat-card-green stat-card-clickable @(currentTab == "Completed" ? "active" : "")">
+            <span class="stat-card-label">Completed</span>
+            <div class="stat-card-body">
+                <div class="stat-icon stat-icon-green"><img src="~/images/logo/image 24.png"></div>
+                <span class="stat-value">@ViewBag.CompletedCount</span>
+            </div>
+        </a>
+    </div>
+
+
+    <!-- Filters -->
+    <div class="filter-bar">
+        <form method="get" asp-action="pIndex" class="filter-form">
+            <input type="hidden" name="tab" value="@ViewBag.Tab" />
+            <div class="search-box">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" name="search" value="@ViewBag.Search" placeholder="Search Order ID, customer, product..." class="search-input" />
+            </div>
+            <button type="submit" class="btn btn-outline">
+                <i class="fa-solid fa-filter"></i> Search
+            </button>
+            <select name="stage" class="filter-select" onchange="this.form.submit()">
+                <option value="">All Stages</option>
+                @for (int i = 0; i < StageNames.Length; i++)
+                {
+                    <option value="@i" selected="@(ViewBag.Stage == i)">@StageNames[i]</option>
+                }
+            </select>
+        </form>
+    </div>
+
+    <!-- Table Card -->
+    <div class="card">
+        @if (!hasSelection)
+        {
+            <div class="orders-empty-state">
+                <i class="fa-solid fa-hand-pointer"></i>
+                <p>Click a stat card or tab above to view those orders.</p>
+            </div>
+        }
+        else
+        {
+            <!-- Production Table -->
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Production ID</th>
+                        <th>Order ID</th>
+                        <th>Status</th>
+                        <th>Started Date</th>
+                        <th>Target Date</th>
+                        <th>Current Stage</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Any())
+                    {
+                        <tr>
+                            <td colspan="6">
+                                <div class="orders-empty-state">
+                                    <i class="fa-solid fa-industry"></i>
+                                    <p>No orders match this view.</p>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                    @foreach (var o in Model)
+                    {
+                        <tr id="prod-row-@o.OrderID" class="order-row-clickable"
+                            data-stage="@o.ProductionStage" data-status="@o.Status"
+                            onclick="loadProductionDetails(@o.OrderID, true)">
+                            <td><span class="order-id-link id-link-static">PROD-@o.OrderID.ToString("D3")</span></td>
+                            <td><span class="order-id-link id-link-static">#ORD-@o.OrderID.ToString("D3")</span></td>
+                            <td>
+                                <span class="status-badge @OrderStatusDisplay.BadgeClass(o.Status)">@o.Status</span>
+                            </td>
+                            <td class="order-date-cell">
+                                @(startedDates.TryGetValue(o.OrderID, out var started) ? started.ToString("MMM d, yyyy") : "—")
+                            </td>
+                            <td onclick="event.stopPropagation()">
+                                <input type="date" class="prod-target-date-input"
+                                       value="@(o.ProductionTargetDate?.ToString("yyyy-MM-dd"))"
+                                       title="Estimate: @ProductionEstimator.EstimateWorkingDays(RowQuantity(o)) working day(s) for @RowQuantity(o) pcs -� auto-filled on confirmation, editable anytime"
+                                       onchange="cfSetProductionTargetDate(@o.OrderID, this)" />
+                            </td>
+                            <td>
+                                <div class="prod-progress-container">
+                                    <div class="prod-progress-bar prod-progress-clickable" title="View production progress"><div class="prod-progress-fill" style="--pct:@(ProgressPercent(o))%"></div></div>
+                                    <div class="prod-progress-label">@ProgressLabel(o)</div>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+
+            <!-- Pagination -->
+            @if (totalPages > 1)
+            {
+                <div class="pagination">
+                    <span class="page-info">Showing @startItem - �@endItem of @totalCount orders</span>
+                    <div class="page-btns">
+                        @if (page > 1)
+                        {
+                            <a asp-action="pIndex" asp-route-page="@(page - 1)" asp-route-tab="@ViewBag.Tab" asp-route-search="@ViewBag.Search" class="page-btn">‹</a>
+                        }
+                        @for (int i = 1; i <= totalPages; i++)
+                        {
+                            <a asp-action="pIndex" asp-route-page="@i" asp-route-tab="@ViewBag.Tab" asp-route-search="@ViewBag.Search"
+                               class="page-btn @(i == page ? "active" : "")">@i</a>
+                        }
+                        @if (page < totalPages)
+                        {
+                            <a asp-action="pIndex" asp-route-page="@(page + 1)" asp-route-tab="@ViewBag.Tab" asp-route-search="@ViewBag.Search" class="page-btn">›</a>
+                        }
+                    </div>
+                </div>
+            }
+            else if (totalCount > 0)
+            {
+                <div class="pagination">
+                    <span class="page-info">Showing @startItem - �@endItem of @totalCount orders</span>
+                </div>
+            }
+        }
+    </div>
+</div>
+
+<!-- Production Progress modal -->
+<div class="billing-modal-backdrop prod-item-modal-scroll" id="prodModalBackdrop" onclick="if(event.target===this) closeProductionModal()">
+    <div class="billing-modal" id="prodModal">
+        <div class="billing-modal-loading"><i class="fa-solid fa-spinner fa-spin"></i> Loading production details…</div>
+    </div>
+</div>
+
+<!-- Per-item detail popup (opened from a "View" button inside the panel above) -->
+<div class="prod-item-modal-backdrop" id="prodItemModalBackdrop" onclick="if(event.target===this) closeProdItemModal()">
+    <div class="prod-item-modal" id="prodItemModal"></div>
+</div>
+
+@section Scripts {
+    <script src="~/js/admin/production-progress.js" asp-append-version="true"></script>
+}

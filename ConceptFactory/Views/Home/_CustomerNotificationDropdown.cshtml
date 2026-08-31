@@ -1,0 +1,25 @@
+@model IEnumerable<ConceptFactory.Models.Notification>
+@using ConceptFactory.Models
+
+@if (!Model.Any())
+{
+    <div class="nav-notif-dropdown-empty"><i class="fa-regular fa-bell-slash"></i> No notifications yet.</div>
+}
+else
+{
+    foreach (var n in Model)
+    {
+        <div class="nav-notif-item @(n.IsRead ? "" : "nav-notif-item-unread")"
+             onclick="cfOpenCustomerNotification(@n.NotificationID, @n.OrderID)">
+            <div class="nav-notif-icon nav-notif-color-@NotificationDisplay.ColorClass(n.Type)">
+                <i class="fa-solid @NotificationDisplay.IconClass(n.Type)"></i>
+            </div>
+            <div class="nav-notif-item-body">
+                <div class="nav-notif-item-title">@n.Title</div>
+                <div class="nav-notif-item-message">@n.Message</div>
+                <div class="nav-notif-item-time">@n.CreatedAt.ToString("MMM d, h:mm tt")</div>
+            </div>
+        </div>
+    }
+}
+<a asp-controller="Home" asp-action="hNotifications" class="nav-notif-viewall">View all notifications</a>

@@ -1,0 +1,788 @@
+/* ============================================================
+   BILLING-PAYMENT.CSS
+   Styles for the Billing & Payment page.
+
+   Connected to:
+     View       : Views/Home/hBilling.cshtml
+     Controller : Controllers/HomeController.cs -> hBilling()
+     Script     : wwwroot/js/billing-payment.js
+
+   Reuses the site's shared tokens (--primary etc. from navbar.css) and
+   the .cf-page/.cf-page-title/.cf-page-sub shell already used by the
+   Cart/Wishlist pages, so this reads as part of the same storefront.
+============================================================ */
+.bp-shop-info-warning {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    background: #fff7ed;
+    color: var(--warning);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    margin-top: 8px;
+    line-height: 1.5;
+}
+
+
+
+/* ── Order summary: multiple selected cart lines ── */
+.bp-summary-empty {
+    font-size: 13px;
+    color: var(--text-sub);
+    padding: 10px 0;
+}
+.bp-confirm-method-badge-gcash { background: #0072ce; }
+.bp-confirm-method-badge-cash { background: var(--primary); font-size: 10px; }
+
+/* ── Payment details: Gcash panel ── */
+.bp-gcash-grid {
+    display: grid;
+    grid-template-columns: 1fr 1.3fr;
+    gap: 20px;
+}
+@media (max-width: 640px) {
+    .bp-gcash-grid { grid-template-columns: 1fr; }
+}
+.bp-qr-fake { width: 100%; height: 100%; }
+
+/* ── Reference number + upload row (shared by both methods) ── */
+.bp-proof-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+}
+@media (max-width: 640px) {
+    .bp-proof-grid { grid-template-columns: 1fr; }
+}
+
+/* ── Order summary (sidebar) ── */
+.bp-summary-item {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 18px;
+    margin-bottom: 18px;
+    border: 1px solid var(--primary-light);
+    border-radius: 10px;
+    background: var(--primary-light);
+}
+.bp-summary-item-top { display: flex; gap: 14px; }
+.bp-summary-thumb {
+    width: 200px;
+    height: 200px;
+    flex-shrink: 0;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    background: var(--bg);
+}
+.bp-summary-item-info { display: flex; flex-direction: column; gap: 3px; flex: 1; }
+.bp-summary-item-header { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.bp-summary-item-name { font-size: 18px; font-weight: 700; color: var(--text-main); margin-bottom: 2px; }
+.bp-summary-item-row { font-size: 14px; color: var(--text-main); }
+.bp-summary-item-price { flex-shrink: 0; font-size: 13.5px; font-weight: 800; color: var(--text-main); white-space: nowrap; }
+.bp-item-price-rows { padding-left: 78px; gap: 6px; }
+.bp-summary-price { margin-top: 18px;}
+.bp-price-row-label { display: flex; align-items: baseline; gap: 6px; }
+.bp-price-row-sub { font-size: 11.5px; font-weight: 400; color: var(--text-sub); opacity: 0.75; }
+
+.bp-page { padding-bottom: 100px; }
+
+/* ── Wizard: single centered column, one step visible at a time ── */
+.bp-wizard-col {
+    max-width: 920px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+.bp-wizard-col.js-hidden { display: none; }
+
+/* ── Shared card shell ── */
+.bp-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 22px 24px;
+}
+.bp-card-title {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--text-main);
+    margin-bottom: 6px;
+}
+/* Read-only billing info (no accounts/login yet — shown as info, not a textbox) */
+.bp-static-hint {
+    font-size: 14px;
+    color: var(--text-muted);
+    margin: -7px 0 14px;
+}
+
+.bp-price-rows { display: flex; flex-direction: column; gap: 10px; }
+.bp-price-divider { border-top: 1px solid var(--border); margin: 4px 0;}
+.bp-price-row { display: flex; justify-content: space-between; align-items: baseline; font-size: 14px; color: var(--text-main); }
+.bp-price-row.bp-price-remaining { margin: 3px 8px 3px 8px; }
+.bp-price-row > span:last-child { color: var(--text-main); font-weight: 600; }
+.bp-price-total { font-size: 15px; margin: 3px 8px 3px 8px }
+.bp-price-total span { font-weight: 800 !important; color: var(--text-main) !important; }
+.bp-downpayment-box .bp-price-row { margin: 0; }
+.bp-live-breakdown .bp-price-row { margin: 4px 0; font-size: 13.5px; }
+.bp-live-breakdown .bp-price-row > span:last-child { color: var(--primary); font-weight: 800; }
+.bp-live-breakdown .bp-price-row.bp-live-warning > span:last-child { color: #dc2626; }
+.bp-summary-item-row span { color: var(--primary); font-weight: 700; }
+
+.bp-downpayment-box {
+    background: #eff3ff;
+    border: 1px solid #c7d2fe;
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin: 2px 0 30px 0;
+}
+.bp-downpayment-box .bp-price-highlight span { color: var(--primary) !important; font-weight: 800 !important; font-size: 14px; }
+.bp-downpayment-box p {
+    margin: 6px 0 0;
+    font-size: 12px;
+    color: var(--text-sub);
+    font-weight: 500;
+}
+
+/* ── Form fields ── */
+.bp-form-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+}
+@media (max-width: 640px) {
+    .bp-form-grid { grid-template-columns: 1fr; }
+}
+.bp-field { display: flex; flex-direction: column; gap: 6px; }
+.bp-field label {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-sub);
+}
+.bp-field input[type="text"],
+.bp-field input[type="email"],
+.bp-field input[type="tel"] {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 13.5px;
+    color: var(--text-main);
+    background: var(--white);
+    outline: none;
+    transition: border-color .15s;
+}
+.bp-field input:focus { border-color: var(--primary); }
+
+.bp-static-value {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 13.5px;
+    color: var(--text-main);
+    background: #f8f9fb;
+}
+
+.bp-input {
+    width: 100%;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 13.5px;
+    color: var(--text-main);
+    background: #fff;
+    font-family: inherit;
+    box-sizing: border-box;
+}
+
+.bp-input[readonly] {
+    background: #f8f9fb;
+    color: var(--text-main);
+    cursor: default;
+}
+
+.bp-input:focus {
+    outline: none;
+    border-color: var(--primary, #6c5ce7);
+}
+
+.bp-review-note {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    color: #15803d;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 12px 16px;
+    border-radius: var(--radius);
+}
+.bp-review-note i { font-size: 14px; flex-shrink: 0; }
+.bp-shop-info-warning i { margin-top: 2px; flex-shrink: 0; }
+
+.bp-step-actions {
+    display: flex;
+    gap: 12px;
+}
+.bp-step-actions .bp-back-btn { flex: 1; }
+.bp-step-actions .bp-submit-btn { flex: 1; margin-top: 0; }
+
+.bp-back-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--white);
+    font-weight: 700;
+    font-size: 14px;
+    padding: 12px;
+    cursor: pointer;
+    color: var(--text-main);
+    text-decoration: none;
+}
+.bp-back-btn:hover { border-color: var(--text-sub); }
+.bp-confirm-actions .bp-submit-btn { display: flex; align-items: center; justify-content: center; gap: 8px; }
+.bp-modal-actions .bp-submit-btn {
+    flex: 1;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+.bp-modal-actions .bp-submit-btn:disabled { opacity: .5; cursor: not-allowed; }
+
+.bp-submit-btn {
+    width: 100%;
+    margin-top: 20px;
+    background: var(--primary);
+    color: var(--white);
+    border: none;
+    border-radius: 8px;
+    padding: 13px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background .15s;
+}
+.bp-submit-btn:hover { background: var(--primary-dark); }
+.bp-confirm-wrap.js-hidden { display: none; }
+.bp-modal-overlay.js-hidden { display: none; }
+
+/* ── Payment method selector ── */
+.bp-method-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+}
+@media (max-width: 640px) {
+    .bp-method-row { grid-template-columns: 1fr; }
+}
+.bp-method {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    cursor: pointer;
+    transition: border-color .15s, background .15s;
+}
+.bp-method:hover { border-color: #c7c9f7; }
+.bp-method.active {
+    border-color: var(--primary);
+    background: var(--primary-light);
+}
+.bp-method input[type="radio"] {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--primary);
+    margin: 0;
+    flex-shrink: 0;
+}
+.bp-method-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 15px;
+    color: var(--white);
+    flex-shrink: 0;
+}
+.bp-method-icon img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 15px;
+    color: var(--white);
+    flex-shrink: 0;
+}
+.bp-method-icon-gcash { background: #0072ce; }
+.bp-summary-thumb img { width: 100%; height: 100%; object-fit: contain; }
+.bp-method-text { display: flex; flex-direction: column; gap: 2px; }
+.bp-method-name { font-size: 13.5px; font-weight: 700; color: var(--text-main); }
+.bp-method-desc { font-size: 11.5px; color: var(--text-muted); }
+.bp-method-icon-cash { background: var(--primary); font-size: 14px; }
+
+/* ── "Amount to Pay" callout at the top of each payment method panel ── */
+.bp-amount-callout {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: space-between;
+    border-radius: 10px;
+    padding: 12px 16px;
+    margin: 16px 0;
+    color: var(--primary);
+    border: 1px solid rgb(91, 94, 244, 0.30);
+    background: rgb(91, 94, 244, 0.10);
+}
+.bp-amount-callout span:first-child { font-size: 12.5px; font-weight: 700; color: var(--text-sub); }
+.bp-amount-callout strong { font-size: 18px; font-weight: 800; color: var(--primary); }
+
+.bp-field-hint {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 2px;
+}
+
+/* Live "% of total / remaining balance" readout shown as the shopper
+   types into the Amount Paid box (Gcash & Cash panels). */
+.bp-live-breakdown {
+    background: #f3f6ff;
+    border: 1px solid #c7d2fe;
+    border-radius: 10px;
+    padding: 10px 14px;
+    margin: 8px 0;
+}
+
+.bp-instructions-box { padding: 4px 0; border: 1px solid var(--border); border-radius: 10px; padding: 10px;}
+.bp-instructions-label { font-size: 13px; font-weight: 700; color: var(--text-sub); margin-bottom: 10px; }
+.bp-instructions-list {
+    margin: 0;
+    padding-left: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.bp-instructions-list li { font-size: 13px; color: var(--text-main); }
+.bp-instructions-checklist {
+    list-style: none;
+    padding-left: 0;
+}
+.bp-instructions-checklist li {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    font-size: 14px;
+}
+.bp-instructions-checklist li i { color: var(--primary); font-size: 13px; margin-top: 2px; flex-shrink: 0; }
+.bp-qr-box {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    text-align: center;
+    margin: 16px 200px;
+}
+.bp-qr-label { font-size: 12.5px; font-weight: 700; color: var(--text-sub); margin-bottom: 10px; }
+.bp-qr-img {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    max-width: 170px;
+    margin: 0 auto 14px;
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+}
+.bp-gcash-number-row { text-align: left; }
+.bp-gcash-number-label { display: block; font-size: 11.5px; color: var(--text-muted); margin-bottom: 4px; }
+.bp-gcash-number {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    font-size: 13.5px;
+    font-weight: 700;
+    color: var(--text-main);
+}
+.bp-copy-btn {
+    border: 1px solid var(--border);
+    background: var(--white);
+    color: var(--primary);
+    font-size: 11.5px;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background .15s;
+}
+.bp-copy-btn:hover { background: var(--primary-light); }
+.bp-field-spaced-sm { margin-top: 16px; }
+.bp-upload-box {
+    border: 1.5px dashed var(--border);
+    border-radius: 10px;
+    padding: 18px;
+    text-align: center;
+    transition: border-color .15s, background .15s;
+}
+.bp-upload-box.bp-dragover { border-color: var(--primary); background: var(--primary-light); }
+.bp-upload-inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+}
+.bp-upload-inner i { font-size: 26px; color: var(--primary); margin-bottom: 4px; }
+.bp-upload-inner strong { font-size: 12.5px; color: var(--text-main); }
+.bp-upload-inner span { font-size: 11px; color: var(--text-muted); }
+.bp-hidden-input { display: none; }
+.bp-upload-filename {
+    margin-top: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--primary);
+    word-break: break-all;
+}
+.bp-amount-callout-cash {
+    color: var(--primary);
+    border: 1px solid rgb(91, 94, 244, 0.30);
+    background: rgb(91, 94, 244, 0.10);
+}
+.bp-amount-callout-cash p {
+    width: 100%;
+    margin: 6px 0 0;
+    font-size: 12.5px;
+    color: var(--text-main);
+    font-weight: 500;
+    line-height: 1.5;
+}
+
+/* ── Payment details: Cash panel ── */
+.bp-cash-steps {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+    text-align: center;
+}
+@media (max-width: 640px) {
+    .bp-cash-steps { grid-template-columns: 1fr; }
+}
+.bp-cash-step { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.bp-cash-step-icon {
+    position: relative;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: var(--primary-light);
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+}
+.bp-cash-step-num {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--primary);
+    color: var(--white);
+    font-size: 11px;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.bp-cash-step-text { font-size: 12.5px; color: var(--text-sub); line-height: 1.5; }
+.bp-cash-step-text strong { color: var(--text-main); font-size: 13px; }
+
+.bp-shop-info-box { margin: 26px 0; }
+.bp-shop-info-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    font-size: 14px;
+    color: var(--text-main);
+    margin-bottom: 8px;
+    line-height: 1.5;
+}
+.bp-shop-info-row i { color: var(--primary); margin-top: 2px; flex-shrink: 0; width: 15px; height: 15px; }
+.bp-field-spaced-lg { margin-top: 26px; }
+
+/* ── Reminders box ── */
+.bp-reminders {
+    background: var(--primary-light);
+    border: 1px solid #d8d9fb;
+    border-radius: var(--radius);
+    padding: 18px 20px;
+}
+.bp-reminders ul { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 6px; }
+.bp-reminders li { font-size: 12.5px; color: var(--text-sub); }
+.bp-reminders-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13.5px;
+    font-weight: 800;
+    color: var(--text-main);
+    margin-bottom: 10px;
+}
+
+/* ── Confirmation state ── */
+.bp-confirm-wrap {
+    display: flex;
+    justify-content: center;
+    padding: 40px 20px;
+}
+.bp-confirm-card {
+    max-width: 460px;
+    width: 100%;
+    text-align: center;
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 36px 32px;
+}
+.bp-confirm-icon { font-size: 52px; color: var(--success); margin-bottom: 12px; }
+.bp-confirm-title { font-size: 21px; font-weight: 800; color: var(--text-main); margin-bottom: 4px; }
+.bp-confirm-sub { font-size: 13.5px; color: var(--text-sub); margin-bottom: 22px; }
+
+.bp-confirm-rows {
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 4px 16px;
+    margin-bottom: 18px;
+    text-align: left;
+}
+.bp-confirm-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+}
+.bp-confirm-row:last-child { border-bottom: none; }
+.bp-confirm-row-icon {
+    width: 34px; height: 34px;
+    border-radius: 8px;
+    background: var(--primary-light);
+    color: var(--primary);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    font-size: 14px;
+}
+.bp-confirm-row-label { flex: 1; font-size: 13px; color: var(--text-sub); font-weight: 600; }
+.bp-confirm-row-value { font-size: 13.5px; font-weight: 800; color: var(--text-main); }
+.bp-confirm-method-value { display: flex; align-items: center; gap: 8px; }
+.bp-confirm-method-badge {
+    width: 24px; height: 24px;
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px;
+    font-weight: 800;
+    color: #fff;
+    flex-shrink: 0;
+}
+
+.bp-status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #fff7ed;
+    color: var(--warning);
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+}
+.bp-confirm-notes {
+    text-align: left;
+    background: #f8f9fb;
+    border-radius: 12px;
+    padding: 6px 16px;
+    margin-bottom: 22px;
+}
+
+.bp-confirm-note-title {
+    font-size: 13px;
+    font-weight: 800;
+    color: var(--text-main);
+    padding: 10px 0 4px;
+}
+.bp-confirm-note {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 12.5px;
+    color: var(--text-sub);
+    line-height: 1.5;
+}
+.bp-confirm-note:last-child { border-bottom: none; }
+.bp-confirm-note strong { color: var(--text-main); font-size: 13px; }
+.bp-confirm-note-icon { font-size: 15px; color: var(--primary); margin-top: 2px; flex-shrink: 0; width: 16px; }
+
+.bp-confirm-actions { display: flex; flex-direction: column; gap: 10px; }
+.bp-confirm-secondary-btn {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-main);
+    text-decoration: none;
+}
+.bp-confirm-secondary-btn:hover { border-color: var(--primary); color: var(--primary); }
+.bp-confirm-footer-note {
+    text-align: center;
+    font-size: 11.5px;
+    color: var(--text-muted);
+    margin-top: 16px;
+}
+.bp-confirm-footer-note i { margin-right: 4px; }
+
+/* ── Cash on Pickup confirmation modal ── */
+.bp-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, .55);
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+.bp-modal {
+    background: var(--white);
+    border-radius: 18px;
+    max-width: 480px;
+    width: 100%;
+    padding: 32px;
+    position: relative;
+    text-align: center;
+    box-shadow: 0 24px 70px rgba(0,0,0,.3);
+    max-height: 90vh;
+    overflow-y: auto;
+}
+.bp-modal-close {
+    position: absolute;
+    top: 16px; right: 16px;
+    border: none;
+    background: none;
+    font-size: 16px;
+    color: var(--text-muted);
+    cursor: pointer;
+}
+.bp-modal-close:hover { color: var(--text-main); }
+.bp-modal-icon {
+    width: 56px; height: 56px;
+    border-radius: 50%;
+    background: var(--primary-light);
+    color: var(--primary);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+    margin: 0 auto 14px;
+}
+.bp-modal-title { font-size: 18px; font-weight: 800; color: var(--text-main); margin-bottom: 16px; }
+.bp-modal-info {
+    display: flex;
+    gap: 10px;
+    text-align: left;
+    background: #eff3ff;
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-size: 13px;
+    color: var(--text-main);
+    line-height: 1.5;
+    margin-bottom: 16px;
+}
+.bp-modal-info i { color: var(--primary); margin-top: 2px; }
+.bp-modal-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 16px;
+    text-align: left;
+}
+
+@media (max-width: 560px) {
+    .bp-modal-grid { grid-template-columns: 1fr; }
+}
+.bp-modal-cell {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px;
+    display: flex;
+    gap: 8px;
+    font-size: 11.5px;
+}
+.bp-modal-cell i { color: var(--primary); margin-top: 2px; }
+.bp-modal-cell-label { color: var(--text-sub); font-weight: 700; margin-bottom: 3px; }
+.bp-modal-cell-value { color: var(--text-main); font-weight: 600; line-height: 1.4; }
+.bp-modal-amount { font-size: 15px; font-weight: 800; color: var(--success); }
+.bp-modal-cell-sub { color: var(--text-muted); font-size: 10.5px; margin-top: 2px; }
+.bp-modal-warning {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #fff7ed;
+    color: var(--warning);
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 12.5px;
+    font-weight: 600;
+    text-align: left;
+    margin-bottom: 16px;
+}
+.bp-modal-checkbox {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    text-align: left;
+    background: #f8f9fb;
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-size: 12.5px;
+    color: var(--text-main);
+    margin-bottom: 20px;
+    cursor: pointer;
+}
+.bp-modal-checkbox input { margin-top: 2px; }
+.bp-modal-actions { display: flex; gap: 10px; }
+.bp-modal-cancel-btn {
+    flex: 1;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--white);
+    font-weight: 700;
+    font-size: 14px;
+    padding: 12px;
+    cursor: pointer;
+    color: var(--text-main);
+}
+.bp-modal-cancel-btn:hover { border-color: var(--text-sub); }

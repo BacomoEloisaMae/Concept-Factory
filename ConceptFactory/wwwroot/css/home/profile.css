@@ -1,0 +1,27 @@
+.profile-card {
+    max-width: 560px;
+    background: #fff;
+    border: 1px solid var(--border, #e5e7eb);
+    border-radius: 14px;
+    padding: 28px 30px;
+}
+
+.profile-footer-note {
+    margin-top: 18px;
+    font-size: 13px;
+    color: var(--text-sub, #6b7280);
+}
+
+.profile-alert {
+    max-width: 560px;
+    border-radius: 10px;
+    padding: 12px 16px;
+    margin-bottom: 18px;
+    font-size: 13.5px;
+}
+
+.profile-alert-success {
+    background: #ecfdf5;
+    color: #047857;
+    border: 1px solid #a7f3d0;
+}

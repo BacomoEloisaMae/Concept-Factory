@@ -1,0 +1,117 @@
+@model IEnumerable<ConceptFactory.Models.ProductionTracking>
+@{
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    ViewData["Title"] = "Production History";
+    ViewData["ActivePage"] = "Production";
+    ViewData["ActiveStation"] = "History";
+
+    string? myStationName = ViewBag.MyStationName;
+    int page = ViewBag.Page ?? 1;
+    int totalPages = ViewBag.TotalPages ?? 1;
+    int totalCount = ViewBag.TotalCount ?? 0;
+    int pageSize = 15;
+    int startItem = totalCount == 0 ? 0 : ((page - 1) * pageSize) + 1;
+    int endItem = Math.Min(page * pageSize, totalCount);
+}
+@section Styles {
+    <link rel="stylesheet" href="~/css/admin/orders.css" asp-append-version="true" />
+    <!-- orders.css used on this page: .page-container, .page-header, .filter-bar, .orders-empty-state, .data-table, .id-link-static, .order-id-link, .status-badge, .pagination -->
+}
+<div class="page-container">
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Production History</h1>
+            <p class="page-subtitle">
+                @if (myStationName != null)
+                {
+                    <text>Every stage-change recorded at your station (@myStationName).</text>
+                }
+                else
+                {
+                    <text>Every production stage-change recorded across all stations.</text>
+                }
+            </p>
+        </div>
+    </div>
+
+    <div class="filter-bar">
+        <form method="get" asp-action="pHistory" class="filter-form">
+            <div class="search-box">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" name="search" value="@ViewBag.Search" placeholder="Search Order ID or customer..." class="search-input" />
+            </div>
+            <button type="submit" class="btn btn-outline">
+                <i class="fa-solid fa-filter"></i> Search
+            </button>
+        </form>
+    </div>
+
+    <div class="card">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Order ID</th>
+                    <th>Customer</th>
+                    <th>Stage Reached</th>
+                    <th>Status</th>
+                    <th>Updated By</th>
+                    <th>Date</th>
+                    <th>Remarks</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Any())
+                {
+                    <tr>
+                        <td colspan="7">
+                            <div class="orders-empty-state">
+                                <i class="fa-solid fa-clock-rotate-left"></i>
+                                <p>No production history yet.</p>
+                            </div>
+                        </td>
+                    </tr>
+                }
+                @foreach (var t in Model)
+                {
+                    <tr>
+                        <td><span class="order-id-link id-link-static">#ORD-@t.OrderID.ToString("D3")</span></td>
+                        <td>@(t.Order?.CustomerName ?? "—")</td>
+                        <td>@t.StageName</td>
+                        <td><span class="status-badge @(t.StageStatus == "Completed" ? "status-completed" : "status-inproduction")">@t.StageStatus</span></td>
+                        <td>@(t.UpdatedByName ?? "—")</td>
+                        <td>@t.UpdatedAt.ToString("MMM d, yyyy h:mm tt")</td>
+                        <td>@(string.IsNullOrWhiteSpace(t.Remarks) ? "—" : t.Remarks)</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        @if (totalPages > 1)
+        {
+            <div class="pagination">
+                <span class="page-info">Showing @startItem–@endItem of @totalCount entries</span>
+                <div class="page-btns">
+                    @if (page > 1)
+                    {
+                        <a asp-action="pHistory" asp-route-page="@(page - 1)" asp-route-search="@ViewBag.Search" class="page-btn">‹</a>
+                    }
+                    @for (int i = 1; i <= totalPages; i++)
+                    {
+                        <a asp-action="pHistory" asp-route-page="@i" asp-route-search="@ViewBag.Search"
+                           class="page-btn @(i == page ? "active" : "")">@i</a>
+                    }
+                    @if (page < totalPages)
+                    {
+                        <a asp-action="pHistory" asp-route-page="@(page + 1)" asp-route-search="@ViewBag.Search" class="page-btn">›</a>
+                    }
+                </div>
+            </div>
+        }
+        else if (totalCount > 0)
+        {
+            <div class="pagination">
+                <span class="page-info">Showing @startItem–@endItem of @totalCount entries</span>
+            </div>
+        }
+    </div>
+</div>

@@ -1,0 +1,768 @@
+
+
+/* ============================================================
+    CSS Custom Properties
+   ============================================================ */
+:root {
+    --pd-primary:       #5B5EF4;
+    --pd-primary-dark:  #4547d4;
+    --pd-primary-light: #eef0ff;
+    --pd-primary-muted: #c7caff;
+    --pd-primary-bg:    #f0f1ff;
+    --pd-card-bg:       #fafbff;
+    --pd-border:        #e2e8f0;
+    --pd-text:          #1e293b;
+    --pd-text-sub:      #64748b;
+    --pd-text-muted:    #94a3b8;
+    --pd-success:       #16a34a;
+    --pd-danger:        rgba(229, 62, 62, .85);
+    --pd-star:          #f59e0b;
+    --pd-accent:        #818cf8;
+    --pd-shadow:        0 4px 14px rgba(91, 94, 244, .3);
+    --pd-radius-sm:     8px;
+    --pd-radius-md:     10px;
+    --pd-radius-lg:     18px;
+}
+
+/* ============================================================
+    Base Reset (moved from inline <style> in hDetails.cshtml)
+   ============================================================ */
+* {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    background: #f8fafc;
+    color: var(--pd-text);
+    margin: 0;
+}
+
+
+/* ============================================================
+    Page Wrapper & Back Link
+   ============================================================ */
+.pd-page {
+    max-width: 1400px;
+    margin: 0 50px;
+    padding: 24px 24px 60px;
+}
+
+.pd-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--pd-text-sub);
+    text-decoration: none;
+    margin-bottom: 20px;
+    transition: color .15s;
+}
+.pd-back:hover { color: var(--pd-primary); }
+
+
+/* ============================================================
+    Two-Column Grid
+   ============================================================ */
+.pd-grid {
+    display: grid;
+    grid-template-columns: 380px 1fr;
+    gap: 32px;
+    align-items: start;
+}
+
+
+/* ============================================================
+    Left Column — Image Card
+   ============================================================ */
+.pd-img-card {
+    background: var(--pd-primary-bg);
+    border-radius: var(--pd-radius-lg);
+    border: 1.5px solid var(--pd-border);
+    overflow: hidden;
+    position: sticky;
+    top: 20px;
+    align-self: start;
+    max-height: calc(100vh - 40px);
+}
+
+/*  Main Image Area & Design Overlay */
+.pd-img-main {
+    aspect-ratio: 1 / 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    position: relative;
+    background: var(--pd-primary-bg);
+}
+.pd-img-main img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    border-radius: var(--pd-radius-sm);
+}
+.pd-img-mockup-fallback {
+    width: 75%;
+    height: 75%;
+    opacity: .9;
+}
+
+/* Customize page only: wraps the garment photo + design overlay together so
+   the overlay's top/left/width percentages are relative to the ACTUAL photo
+   area (this box), not the padded card around it. overflow:hidden also means
+   the design can never render past the photo's own edges. */
+.pd-img-box {
+    position: relative;
+    width: 90%;
+    height: 90%;
+    overflow: hidden;
+    border-radius: var(--pd-radius-sm);
+}
+
+/* Clips the design overlay to the garment's real silhouette: the mask
+   image is the SAME photo currently shown as mainImg, so wherever that
+   photo is transparent (background) the design is hidden too, and
+   wherever it's opaque (actual fabric) the design shows through.
+   mask-mode: alpha reads the photo's real transparency, not its
+   brightness, so it works regardless of garment color. */
+.pd-design-mask {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    mask-position: center;
+    -webkit-mask-size: contain;
+    mask-size: contain;
+    -webkit-mask-mode: alpha;
+    mask-mode: alpha;
+}
+
+.pd-design-overlay {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 14px;
+    font-weight: 900;
+    color: #7c86d4;
+    text-align: center;
+    line-height: 1.4;
+    letter-spacing: 1px;
+    pointer-events: none;
+}
+
+/*  Thumbnail Strip */
+.pd-thumbs {
+    display: flex;
+    gap: 7px;
+    padding: 10px 12px;
+    border-top: 1.5px solid var(--pd-border);
+    background: #fff;
+    flex-wrap: wrap;
+}
+.pd-thumb {
+    width: 65px;
+    height: 65px;
+    flex-shrink: 0;
+    border-radius: var(--pd-radius-sm);
+    border: 1.5px solid var(--pd-border);
+    overflow: hidden;
+    cursor: pointer;
+    transition: border-color .15s;
+    background: var(--pd-primary-bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.pd-thumb img  { width: 100%; height: 100%; object-fit: cover; }
+.pd-thumb i    { font-size: 18px; color: #a5b4fc; }
+.pd-thumb:hover,
+.pd-thumb.active { border-color: var(--pd-primary); }
+
+
+/* ============================================================
+    Right Column — Info Panel
+   ============================================================ */
+.pd-info { 
+    display: flex; 
+    flex-direction: column; 
+    gap: 0;
+    background-color: #fff;
+    padding: 12px 15px;
+    border: 1.5px solid var(--pd-border);
+    border-radius: var(--pd-radius-sm)
+}
+
+/*  Title / Price / Description */
+.pd-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--pd-text);
+    margin-bottom: 6px;
+    line-height: 1.2;
+}
+.pd-price {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--pd-text);
+    margin-bottom: 6px;
+}
+.pd-desc {
+    font-size: 14px;
+    color: var(--pd-text-sub);
+    line-height: 1.65;
+    margin-bottom: 18px;
+}
+
+/*  In-Stock Badge */
+.pd-stock {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--pd-success);
+    margin-top: 8px;
+}
+.pd-stock i { font-size: 13px; }
+.pd-stock-out { color: #dc2626; }
+
+
+/* ============================================================
+    Step Blocks
+   ============================================================ */
+.pd-step { margin-bottom: 16px; }
+
+.pd-step-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--pd-text);
+    margin-bottom: 9px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* ============================================================
+    Design Upload Zone
+   ============================================================ */
+.pd-upload {
+    border: 1.5px dashed var(--pd-primary-muted);
+    border-radius: 11px;
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    cursor: pointer;
+    background: var(--pd-card-bg);
+    transition: border-color .2s, background .2s;
+}
+.pd-upload:hover {
+    border-color: var(--pd-primary);
+    background: var(--pd-primary-light);
+}
+.pd-upload-icon { font-size: 24px; color: var(--pd-accent); flex-shrink: 0; }
+.pd-upload-text strong {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--pd-text);
+    display: block;
+    margin-bottom: 2px;
+}
+.pd-upload-text small { font-size: 11px; color: var(--pd-text-muted); }
+
+.pd-upload-previews {
+    display: flex;
+    gap: 7px;
+    flex-wrap: wrap;
+    margin-top: 8px;
+}
+
+.pd-design-size-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 12px;
+    padding: 10px 12px;
+    background: var(--pd-primary-bg);
+    border-radius: var(--pd-radius-sm);
+}
+.pd-design-size-row label {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--pd-text-sub);
+    white-space: nowrap;
+}
+.pd-design-size-row input[type="range"] {
+    flex: 1;
+    accent-color: var(--pd-primary);
+}
+.pd-design-size-row span {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--pd-primary);
+    min-width: 38px;
+    text-align: right;
+}
+
+.pd-upload-preview-item {
+    position: relative;
+    width: 56px;
+    height: 56px;
+    border-radius: var(--pd-radius-sm);
+    border: 1.5px solid var(--pd-border);
+    overflow: hidden;
+}
+.pd-upload-preview-item img { width: 100%; height: 100%; object-fit: cover; }
+.pd-upload-preview-label {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,.6);
+    color: #fff;
+    font-size: 9px;
+    font-weight: 700;
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: .3px;
+    padding: 2px 0;
+}
+.pd-upload-preview-item .rm {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: rgba(0,0,0,.6);
+    color: #fff;
+    font-size: 11px;
+    line-height: 16px;
+    text-align: center;
+    cursor: pointer;
+}
+
+/* Design overlay position per selected print location — approximate
+   placement on the garment mockup photo. Percentages are relative to
+   .pd-img-box (the actual photo area). The overlay's own
+   transform: translate(-50%, -50%) centers it on that point, and it sits
+   inside .pd-design-mask, which clips it to the garment's real silhouette
+   using that same photo's alpha channel — so even if a location's box is
+   nudged slightly off, the design can only ever show up on actual fabric,
+   never on the background around it. */
+.pd-design-overlay img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    pointer-events: none;
+}
+/* Before a design is uploaded: just nudge the placeholder text toward the
+   chosen location, keep it full-size and readable. */
+.pd-design-overlay[data-location="front"],
+.pd-design-overlay[data-location="back"] { top: 45%; left: 50%; }
+.pd-design-overlay[data-location="front-back"] { top: 45%; left: 50%; }
+.pd-design-overlay[data-location="left-chest"] { top: 31%; left: 40%; }
+.pd-design-overlay[data-location="right-chest"] { top: 31%; left: 60%; }
+.pd-design-overlay[data-location="left-sleeve"] { top: 28%; left: 24%; }
+.pd-design-overlay[data-location="right-sleeve"] { top: 28%; left: 76%; }
+/* Tote bags: no chest/sleeve/back — just one flat surface. */
+.pd-design-overlay[data-location="center"] { top: 50%; left: 52%; top: 60%;}
+.pd-design-overlay[data-location="left"] { top: 50%; left: 20%; }
+.pd-design-overlay[data-location="full"] { top: 50%; left: 50%; }
+.pd-design-overlay[data-location="right"] { top: 50%; left: 78%; }
+/* Once a design image is uploaded: also constrain its size per location so
+   it looks like it's actually sitting on that part of the garment, and
+   never large enough to hang past the edges of the photo. */
+.pd-design-overlay.has-design[data-location="front"],
+.pd-design-overlay.has-design[data-location="back"] { width: 30%; height: 30%; }
+.pd-design-overlay.has-design[data-location="front-back"] { width: 30%; height: 30%; }
+.pd-design-overlay.has-design[data-location="left-chest"],
+.pd-design-overlay.has-design[data-location="right-chest"] { width: 11%; height: 11%; }
+.pd-design-overlay.has-design[data-location="left-sleeve"],
+.pd-design-overlay.has-design[data-location="right-sleeve"] { width: 30%; height: 30%; }
+/* Tote bags: Center = a normal centered print; Edges = a wide, shallow
+   placement hugging the bottom/edge of the bag rather than the middle. */
+.pd-design-overlay.has-design[data-location="center"] { width: 50%; height: 50%; top: 64%; }
+.pd-design-overlay.has-design[data-location="left"] { width: 75%; height: 34%; top: 82%; }
+.pd-design-overlay.has-design[data-location="full"] { width: 100%; height: 100%; top: 75%; }
+.pd-design-overlay.has-design[data-location="right"] { width: 75%; height: 34%; top: 82%; }
+
+
+
+
+/* ============================================================
+    Size Selector Chips
+   ============================================================ */
+.pd-size-row { display: flex; gap: 7px; flex-wrap: wrap; }
+
+.pd-size {
+    min-width: 40px;
+    padding: 6px 12px;
+    border-radius: var(--pd-radius-sm);
+    border: 1.5px solid var(--pd-border);
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--pd-text-sub);
+    background: #fff;
+    cursor: pointer;
+    text-align: center;
+    transition: border-color .15s, color .15s, background .15s;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+}
+.pd-size:hover  { border-color: var(--pd-primary); color: var(--pd-primary); }
+.pd-size.active { background: var(--pd-primary); color: #fff; border-color: var(--pd-primary); }
+
+
+/* ============================================================
+    Color Selector Dots
+   ============================================================ */
+.pd-color-row {
+    display: flex;
+    gap: 9px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+.pd-color {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2.5px solid transparent;
+    outline: 2px solid transparent;
+    transition: outline-color .15s, transform .15s;
+    border: 1.5px solid var(--pd-border);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+    background: var(--swatch, #ccc);
+}
+.pd-color:hover  { transform: scale(1.12); }
+.pd-color.active { outline: 2.5px solid var(--pd-primary); outline-offset: 3px; }
+
+
+/* ============================================================
+    Printing Services Grid
+   ============================================================ */
+/* "(Optional)" tag next to a step title — e.g. this page's Printing
+   Services step, or custom.cshtml's Upload Design step. */
+.pd-optional-label {
+    font-weight: 500;
+    color: var(--pd-text-muted);
+}
+.pd-svc-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+}
+.pd-svc {
+    border: 1.5px solid var(--pd-border);
+    border-radius: var(--pd-radius-md);
+    padding: 9px 8px 8px;
+    cursor: pointer;
+    transition: border-color .15s, background .15s;
+    text-align: center;
+}
+.pd-svc:hover  { border-color: var(--pd-primary); background: var(--pd-card-bg); }
+.pd-svc.active { border-color: var(--pd-primary); background: var(--pd-primary-light); }
+
+.pd-svc-name  { font-size: 11.5px; font-weight: 700; color: var(--pd-text);     line-height: 1.3; margin-bottom: 2px; }
+.pd-svc-price { font-size: 11px;   font-weight: 700; color: var(--pd-primary); }
+.pd-svc-desc  { font-size: 10px;   color: var(--pd-text-muted); line-height: 1.3; margin-top: 2px; }
+
+
+/* ============================================================
+    Print Location Chips & Textarea
+   ============================================================ */
+.pd-loc-grid { display: flex; gap: 7px; flex-wrap: wrap; }
+
+.pd-loc {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 8px 10px 6px;
+    border: 1.5px solid var(--pd-border);
+    border-radius: var(--pd-radius-md);
+    cursor: pointer;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--pd-text-sub);
+    background: #fff;
+    min-width: 78px;
+    transition: border-color .15s, color .15s, background .15s;
+    text-align: center;
+}
+.pd-loc img { 
+    font-size: 20px; 
+    color: #a5b4fc; }
+.pd-loc:hover, .pd-loc.active {
+    border-color: var(--pd-primary);
+    color: var(--pd-primary);
+    background: var(--pd-primary-light);
+}
+.pd-loc.active img {
+    border-color: var(--pd-primary);
+    color: var(--pd-primary);
+    background: var(--pd-primary-light);
+}
+
+.pd-loc-text {
+    width: 100%;
+    margin-top: 8px;
+    padding: 9px 12px;
+    border: 1.5px solid var(--pd-border);
+    border-radius: 9px;
+    font-size: 12.5px;
+    font-family: inherit;
+    color: var(--pd-text);
+    outline: none;
+    resize: none;
+    transition: border-color .2s;
+}
+.pd-loc-text:focus {
+    border-color: var(--pd-primary);
+    box-shadow: 0 0 0 3px rgba(91, 94, 244, .08);
+}
+.pd-loc-hint { font-size: 11px; color: var(--pd-text-muted); margin-top: 4px; }
+
+.pdl-specific {
+    border: 1.5px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 9px 8px;
+    margin: 9px auto;
+}
+.pdl-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #1e293b;
+}  
+
+/* ============================================================
+    Quantity Stepper 
+   ============================================================ */
+.pd-qty-row { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+
+.pd-stepper {
+    display: flex;
+    align-items: center;
+    border: 1.5px solid var(--pd-border);
+    border-radius: 9px;
+    overflow: hidden;
+}
+.pd-stepper button {
+    width: 40px;
+    height: 40px;
+    border: none;
+    background: #f8f9fc;
+    font-size: 18px;
+    font-weight: 700;
+    cursor: pointer;
+    color: var(--pd-text);
+    font-family: inherit;
+    transition: background .15s;
+}
+.pd-stepper button:hover { background: var(--pd-border); }
+.pd-stepper span {
+    min-width: 46px;
+    text-align: center;
+    font-size: 14px;
+    font-weight: 700;
+    height: 38px;
+    line-height: 36px;
+    border-left: 1.5px solid var(--pd-border);
+    border-right: 1.5px solid var(--pd-border);
+}
+
+.pd-qty-badge {
+    padding: 5px 11px;
+    border-radius: 7px;
+    background: var(--pd-primary-bg);
+    border: 1px solid var(--pd-primary-muted);
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--pd-primary);
+    cursor: pointer;
+    transition: background .15s;
+    line-height: 1.4;
+}
+.pd-qty-badge:hover { background: var(--pd-border); }
+
+
+
+/* ============================================================
+    Divider & Total Price Row
+   ============================================================ */
+.pd-divider {
+    border: none;
+    border-top: 1.5px solid var(--pd-border);
+    margin: 14px 0 12px;
+}
+.pd-divider-tight { margin: 10px 0; }
+.pd-total-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+}
+.pd-total-label { font-size: 14px; font-weight: 700; color: var(--pd-text); }
+.pd-total-val   { font-size: 24px; font-weight: 800; color: var(--pd-primary); }
+
+
+/* ============================================================
+    CTA Buttons
+   ============================================================ */
+.pd-cta { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+.pd-btn-cart {
+    padding: 13px;
+    border: 2px solid var(--pd-primary);
+    border-radius: var(--pd-radius-md);
+    background: #fff;
+    color: var(--pd-primary);
+    font-size: 14px;
+    font-weight: 700;
+    font-family: inherit;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: background .15s, color .15s;
+    text-decoration: none;
+}
+.pd-btn-cart:hover { background: var(--pd-primary); color: #fff; }
+.pd-btn-cart.in-cart {
+    background: var(--pd-success);
+    border-color: var(--pd-success);
+    color: #fff;
+}
+.pd-btn-cart.in-cart:hover {
+    background: var(--pd-danger);
+    border-color: var(--pd-danger);
+}
+.pd-btn-cart.in-cart:hover #pdCartLabel::after { content: " (remove)"; }
+
+.pd-btn-checkout {
+    padding: 13px;
+    border: none;
+    border-radius: var(--pd-radius-md);
+    background: var(--pd-primary);
+    color: #fff;
+    font-size: 14px;
+    font-weight: 700;
+    font-family: inherit;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    box-shadow: var(--pd-shadow);
+    transition: background .15s;
+    text-decoration: none;
+}
+.pd-btn-checkout:hover { background: var(--pd-primary-dark); }
+.pd-btn-cart:disabled, .pd-btn-checkout:disabled {
+    opacity: .5;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+.pd-btn-cart:disabled:hover { background: #fff; color: var(--pd-primary); }
+.pd-btn-checkout:disabled:hover { background: var(--pd-primary); }
+
+
+/* Zoom icon on the main image */
+.pd-zoom-btn {
+    position: absolute;
+    bottom: 12px; right: 12px;
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    background: #fff;
+    border: 1.5px solid var(--pd-border);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    color: var(--pd-text-sub);
+    transition: color .15s, border-color .15s;
+}
+.pd-zoom-btn:hover { color: var(--pd-primary); border-color: var(--pd-primary); }
+
+.pd-qty-badge.active { background: var(--pd-primary); border-color: var(--pd-primary); color: #fff; }
+.pd-qty-badge.active small { color: #dcdcff; }
+
+/* ============================================================
+    Order Summary Box
+   ============================================================ */
+.pd-summary-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 12.5px;
+    color: var(--pd-text-sub);
+    margin-bottom: 8px;
+}
+.pd-summary-row:last-child { margin-bottom: 0; }
+.pd-summary-total .pd-summary-label,
+.pd-summary-total span:first-child { font-size: 14px; font-weight: 700; color: var(--pd-text); }
+.pd-summary-total { margin-top: 6px; }
+.pd-total-price-value { color: var(--pd-primary); font-size: 16px; font-weight: 800; }
+
+.pd-zoom-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15,23,42,.82);
+    z-index: 999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: zoom-out;
+}
+.pd-zoom-overlay.js-hidden { display: none; }
+.pd-zoom-img {
+    max-width: 88vw;
+    max-height: 88vh;
+    object-fit: contain;
+    border-radius: 10px;
+}
+
+/* ============================================================
+    Title Wishlist Button (self-contained; page no longer
+    depends on home-index.css for chrome)
+   ============================================================ */
+.pd-wishlist-btn {
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    background: var(--pd-primary-bg);
+    border: none;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--pd-primary);
+    font-size: 14px;
+    cursor: pointer;
+    transition: transform .15s, background .15s, color .15s;
+    flex-shrink: 0;
+}
+.pd-wishlist-btn:hover { transform: scale(1.08); }
+.pd-wishlist-btn.active { background: var(--pd-primary); color: #fff; }
+.pd-wishlist-btn.active i { animation: pdHeartPop .3s ease; }
+@keyframes pdHeartPop { 0%{ transform: scale(1);} 40%{ transform: scale(1.35);} 100%{ transform: scale(1);} }
+
+
+/* ============================================================
+    Responsive Breakpoints
+   ============================================================ */
+@media (max-width: 860px) {
+    .pd-grid { grid-template-columns: 1fr; }
+    .pd-img-card { position: static; max-height: none; }
+}
+
+@media (max-width: 500px) {
+    .pd-svc-grid { grid-template-columns: repeat(2, 1fr); }
+    .pd-cta      { grid-template-columns: 1fr; }
+}
+

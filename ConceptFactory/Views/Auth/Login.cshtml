@@ -9,25 +9,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Login — ConceptFactory</title>
     <link rel="stylesheet" href="~/css/auth.css" asp-append-version="true" />
+    <!-- auth.css used on this page: .blob-1, .blob, .blob-2, .blob-3, .dot-grid, .mockup-float, .tote-float, .auth-card, .auth-icon, .auth-title, .auth-sub, .auth-error-box, .form-group, .form-label, .input-wrap, .prefix, .toggle-pw, .row-between, .remember-label, .btn-primary, .auth-footer -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
 </head>
 <body>
-    <div class="blob blob-1"></div>
-    <div class="blob blob-2"></div>
-    <div class="blob blob-3"></div>
-    <div class="dot-grid"></div>
-
-    <div class="mockup-float">
-        <img src="/images/mockups/tshirt.svg" alt="" />
-    </div>
-    <div class="tote-float">
-        <img src="/images/mockups/totebag.svg" alt="" />
-    </div>
 
     <div class="auth-card">
-        <div class="auth-icon">💡</div>
+        <div class="auth-icon">
+            <img src="~/images/logo/Nlogo.png" />
+        </div>
         <h1 class="auth-title">Welcome Back!</h1>
         <p class="auth-sub">Please login to your account</p>
 
@@ -36,7 +28,7 @@
 
             @if (TempData["Error"] != null)
             {
-                <div style="background:#fdeceb; color:#c0392b; border-radius:8px; padding:10px 14px; font-size:13px; font-weight:600; margin-bottom:14px;">
+                <div class="auth-error-box">
                     <i class="fa-solid fa-circle-xmark"></i> @TempData["Error"]
                 </div>
             }
@@ -65,27 +57,13 @@
                     <input type="checkbox" name="RememberMe" />
                     Remember me
                 </label>
-                <a href="#" class="forgot-link">Forgot Password?</a>
+                <span></span>
             </div>
 
             <button type="submit" class="btn-primary">LOGIN</button>
         </form>
-
-        <div class="divider">or continue with</div>
-
-        <div class="social-row">
-            <button class="btn-social">
-                <img src="https://www.google.com/favicon.ico" alt="Google" />
-                Google
-            </button>
-            <button class="btn-social">
-                <i class="fa-brands fa-facebook-f"></i>
-                Facebook
-            </button>
-        </div>
-
         <p class="auth-footer">
-            Don't have an account? <a href="/Auth/Register">Register</a>
+            Staff/Admin access only. <a asp-controller="Home" asp-action="hIndex">Back to storefront</a>
         </p>
     </div>
 

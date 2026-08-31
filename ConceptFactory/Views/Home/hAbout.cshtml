@@ -1,0 +1,102 @@
+@{
+    ViewData["Title"] = "About Us";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/home/home-index.css" asp-append-version="true" />
+    <!-- home-index.css used on this page: .btn-hero-primary -->
+    <link rel="stylesheet" href="~/css/home/about.css" asp-append-version="true" />
+}
+
+<!-- ═══ HERO ═══ -->
+<section class="about-hero">
+    <div class="about-hero-content">
+        <h1 class="about-hero-title">About Our Company</h1>
+        <p class="about-hero-desc">
+            Concept Factory is a clothing printing company that brings your ideas to life.
+            We specialize in high-quality custom apparel made with passion, creativity, and precision.
+        </p>
+        <p class="about-hero-desc">
+            From your design to the final product, we are dedicated to delivering excellence
+            in every piece we create.
+        </p>
+        <a asp-controller="Home" asp-action="hProducts" class="btn-hero-primary">Shop Now</a>
+    </div>
+</section>
+
+<!-- ═══ OUR STORY + STATS ═══ -->
+<section class="about-story-row">
+    <div class="about-story-card">
+        <h3 class="about-card-title">Our Story</h3>
+        <p>
+            Concept Factory started with a simple idea — to provide high-quality custom
+            printed apparel that everyone can be proud to wear. What began as a small passion
+            project has grown into a trusted printing partner for schools, organizations,
+            businesses, and individuals.
+        </p>
+        <p>
+            We continue to invest in technology, creativity, and our team to ensure that
+            every order meets our commitment to quality and customer satisfaction.
+        </p>
+        <div class="about-story-signature">
+            <span class="about-story-avatar"><i class="fa-solid fa-signature"></i></span>
+            <div>
+                <div class="about-story-name">Concept Factory Team</div>
+                <div class="about-story-role">CLOTHING PRINTING</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="about-stat-card">
+        <span class="about-stat-icon"><i class="fa-solid fa-print"></i></span>
+        <div class="about-stat-value">8+</div>
+        <div class="about-stat-label">Years of Experience</div>
+        <div class="about-stat-desc">Years of dedication in clothing printing</div>
+    </div>
+
+    <div class="about-stat-card">
+        <span class="about-stat-icon"><i class="fa-solid fa-award"></i></span>
+        <div class="about-stat-value">100%</div>
+        <div class="about-stat-label">Quality Commitment</div>
+        <div class="about-stat-desc">Committed to providing the best quality</div>
+    </div>
+
+    <div class="about-stat-card">
+        <span class="about-stat-icon"><i class="fa-regular fa-clock"></i></span>
+        <div class="about-stat-value">3.5 <small>Days</small></div>
+        <div class="about-stat-label">Avg. Production Time</div>
+        <div class="about-stat-desc">Average time to complete your order</div>
+    </div>
+</section>
+
+<!-- ═══ OUR VALUES ═══ -->
+<section class="about-values">
+    <h2 class="about-values-title">Our Values</h2>
+    <div class="about-values-row">
+        <div class="about-value-item">
+            <span class="about-value-icon"><i class="fa-solid fa-shield-halved"></i></span>
+            <div class="about-value-name">Quality</div>
+            <div class="about-value-desc">We never compromise on the quality of our products.</div>
+        </div>
+        <div class="about-value-item">
+            <span class="about-value-icon"><i class="fa-solid fa-lightbulb"></i></span>
+            <div class="about-value-name">Creativity</div>
+            <div class="about-value-desc">We turn ideas into unique and custom designs.</div>
+        </div>
+        <div class="about-value-item">
+            <span class="about-value-icon"><i class="fa-solid fa-user"></i></span>
+            <div class="about-value-name">Customer Focus</div>
+            <div class="about-value-desc">Our customers' satisfaction is our top priority.</div>
+        </div>
+        <div class="about-value-item">
+            <span class="about-value-icon"><i class="fa-solid fa-handshake"></i></span>
+            <div class="about-value-name">Integrity</div>
+            <div class="about-value-desc">We believe in honesty, transparency, and trust.</div>
+        </div>
+        <div class="about-value-item">
+            <span class="about-value-icon"><i class="fa-solid fa-people-group"></i></span>
+            <div class="about-value-name">Teamwork</div>
+            <div class="about-value-desc">We achieve more together as one team.</div>
+        </div>
+    </div>
+</section>

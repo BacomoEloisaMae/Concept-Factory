@@ -1,0 +1,148 @@
+@{
+    ViewData["Title"] = "Register";
+    Layout = null;
+    string? returnUrl = ViewBag.ReturnUrl;
+    var fieldErrors = ViewBag.FieldErrors as Dictionary<string, string> ?? new Dictionary<string, string>();
+    string Err(string field) => fieldErrors.TryGetValue(field, out var msg) ? msg : "";
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Create Account — ConceptFactory</title>
+    <link rel="stylesheet" href="~/css/auth.css" asp-append-version="true" />
+    <!-- auth.css used on this page: .blob-1, .blob, .blob-2, .blob-3, .dot-grid, .mockup-float, .tote-float, .auth-card, .auth-icon, .auth-title, .auth-sub, .form-row-2-inline, .form-group, .form-label, .input-wrap, .prefix, .field-error, .field-hint, .field-hint-inline, .toggle-pw, .pw-requirements, .btn-primary, .auth-footer -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+</head>
+<body>
+
+    <div class="auth-card">
+        <div class="auth-icon">
+            <img src="~/images/logo/Nlogo.png" />
+        </div>
+        <h1 class="auth-title">Create Account</h1>
+        <p class="auth-sub">Register to order and track your purchases</p>
+
+        <form method="post" asp-controller="Account" asp-action="Register">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="returnUrl" value="@returnUrl" />
+
+            <div class="form-row-2-inline">
+                <div class="form-group">
+                    <label class="form-label">First Name</label>
+                    <div class="input-wrap">
+                        <i class="fa-regular fa-user prefix"></i>
+                        <input type="text" name="FirstName" value="@ViewBag.FirstName" placeholder="First name"
+                               autocomplete="given-name" class="@(Err("FirstName") != "" ? "input-invalid" : "")" />
+                    </div>
+                    @if (Err("FirstName") != "")
+                    {
+                        <p class="field-error">@Err("FirstName")</p>
+                    }
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Last Name</label>
+                    <div class="input-wrap">
+                        <i class="fa-regular fa-user prefix"></i>
+                        <input type="text" name="LastName" value="@ViewBag.LastName" placeholder="Last name"
+                               autocomplete="family-name" class="@(Err("LastName") != "" ? "input-invalid" : "")" />
+                    </div>
+                    @if (Err("LastName") != "")
+                    {
+                        <p class="field-error">@Err("LastName")</p>
+                    }
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Email</label>
+                <div class="input-wrap">
+                    <i class="fa-regular fa-envelope prefix"></i>
+                    <input type="email" name="Email" value="@ViewBag.Email" placeholder="Enter your email"
+                           autocomplete="email" class="@(Err("Email") != "" ? "input-invalid" : "")" />
+                </div>
+                @if (Err("Email") != "")
+                {
+                    <p class="field-error">@Err("Email")</p>
+                }
+                else
+                {
+                    <p class="field-hint">Used for order updates and password recovery.</p>
+                }
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Phone Number <span class="field-hint-inline">(optional)</span></label>
+                <div class="input-wrap">
+                    <i class="fa-solid fa-phone prefix"></i>
+                    <input type="text" name="Phone" value="@ViewBag.Phone" placeholder="Enter your phone number" autocomplete="tel" />
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Password</label>
+
+                <div class="input-wrap">
+                    <i class="fa-solid fa-lock prefix"></i>
+
+                    <input type="password"
+                           name="Password"
+                           id="pwReg"
+                           placeholder="At least 8 characters"
+                           autocomplete="new-password"
+                           class="@(Err("Password") != "" ? "input-invalid" : "")" />
+
+                    <button type="button"
+                            class="toggle-pw"
+                            onclick="togglePw('pwReg', this)">
+                        <i class="fa-regular fa-eye"></i>
+                    </button>
+                </div>
+
+                @if (Err("Password") != "")
+                {
+                    <p class="field-error">@Err("Password")</p>
+                }
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Confirm Password</label>
+                <div class="input-wrap">
+                    <i class="fa-solid fa-lock prefix"></i>
+                    <input type="password" name="ConfirmPassword" id="pwConfirm"
+                           placeholder="Re-enter your password" autocomplete="new-password"
+                           class="@(Err("ConfirmPassword") != "" ? "input-invalid" : "")" />
+                    <button type="button" class="toggle-pw" onclick="togglePw('pwConfirm', this)">
+                        <i class="fa-regular fa-eye"></i>
+                    </button>
+                </div>
+                @if (Err("ConfirmPassword") != "")
+                {
+                    <p class="field-error">@Err("ConfirmPassword")</p>
+                }
+            </div>
+
+            <button type="submit" class="btn-primary">Register</button>
+        </form>
+        <button type="submit" class="btn-primary">Register</button>
+
+        <div class="divider">
+            <span>or continue with</span>
+        </div>
+
+        <div class="social-row">
+            <a href="/Account/GoogleLogin" class="btn-social">
+                <img src="~/images/logo/google.png" alt="Google" />
+                <span>Continue with Google</span>
+            </a>
+        </div>
+        <p class="auth-footer">
+            Already have an account? <a asp-controller="Account" asp-action="Login" asp-route-returnUrl="@returnUrl">Login</a>
+        </p>
+    </div>
+
+    <script src="~/js/auth.js" asp-append-version="true"></script>
+</body>
+</html>

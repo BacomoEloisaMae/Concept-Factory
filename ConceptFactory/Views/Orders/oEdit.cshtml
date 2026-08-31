@@ -1,0 +1,53 @@
+@model ConceptFactory.Models.Order
+@{
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    ViewData["Title"] = $"Edit Order #{Model.OrderID}";
+    ViewData["ActivePage"] = "Orders";
+}
+@section Styles {
+    <link rel="stylesheet" href="~/css/admin/orders.css" asp-append-version="true" />
+    <!-- orders.css used on this page: .page-container, .od-back-link, .od-details-card-narrow, .od-details-card, .od-header-spaced, .page-header, .od-card, .od-card-title, .oe-field, .od-form-input-full, .od-form-textarea-full, .od-actions-row-spaced, .od-actions-row -->
+	<link rel="stylesheet" href="~/css/navbar.css" asp-append-version="true" />
+}
+<div class="page-container">
+
+    <a asp-action="oIndex" asp-route-open="@Model.OrderID" class="od-back-link"><i class="fa-solid fa-arrow-left"></i> Back to Order Details</a>
+
+    <div class="od-details-card od-details-card-narrow">
+        <div class="page-header od-header-spaced">
+            <h1 class="page-title">Edit Order Details</h1>
+            <p class="page-subtitle">#ORD-@Model.OrderID.ToString("D5") — only the customer's contact details can be edited here; what was ordered is locked in at checkout.</p>
+        </div>
+
+        @if (!ViewContext.ModelState.IsValid)
+        {
+            <div class="alert alert-danger">Please fix the errors below.</div>
+        }
+
+        <form asp-action="oEdit" asp-route-id="@Model.OrderID" method="post" class="od-card">
+            <div class="od-card-title"><i class="fa-regular fa-id-card"></i> Customer Information</div>
+
+            <div class="oe-field">
+                <label for="customerName">Customer Name</label>
+                <input type="text" id="customerName" name="customerName" value="@Model.CustomerName" class="filter-select od-form-input-full" required />
+            </div>
+            <div class="oe-field">
+                <label for="customerEmail">Email Address</label>
+                <input type="email" id="customerEmail" name="customerEmail" value="@Model.CustomerEmail" class="filter-select od-form-input-full" />
+            </div>
+            <div class="oe-field">
+                <label for="customerPhone">Contact Number</label>
+                <input type="text" id="customerPhone" name="customerPhone" value="@Model.CustomerPhone" class="filter-select od-form-input-full" />
+            </div>
+            <div class="oe-field">
+                <label for="customerAddress">Address</label>
+                <textarea id="customerAddress" name="customerAddress" class="filter-select od-form-textarea-full">@Model.CustomerAddress</textarea>
+            </div>
+
+            <div class="od-actions-row od-actions-row-spaced">
+                <a asp-action="oIndex" asp-route-open="@Model.OrderID" class="btn btn-outline">Cancel</a>
+                <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> Save Changes</button>
+            </div>
+        </form>
+    </div>
+</div>

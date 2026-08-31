@@ -1,0 +1,670 @@
+/* ============================================================
+   BILLING.CSS — Payment Verification admin page
+   Built on top of design tokens from site.css and the shared
+   classes already defined in admin/orders.css (stat-card,
+   order-tabs, status-badge, data-table, pagination, etc.)
+============================================================ */
+
+.billing-stat-cards-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 20px;
+    margin-bottom: 20px;
+}
+.billing-stat-card {
+    color: var(--warning);
+    border: 2px solid rgba(245, 158, 11, 0.30);
+    background: rgba(245, 158, 11, 0.10)
+}
+.billing-stat-card-approved {
+    color: var(--success);
+    border: 2px solid rgba(34, 197, 94, 0.30);
+    background: rgba(34, 197, 94, 0.10);
+}
+.billing-stat-card-rejected {
+    color: var(--danger);
+    border: 2px solid rgba(239, 68, 68, 0.30);
+    background: rgba(239, 68, 68, 0.10);
+}
+.billing-stat-card-full {
+    color: var(--primary);
+    border: 2px solid rgb(91, 94, 244, 0.30);
+    background: rgb(91, 94, 244, 0.10);
+}
+
+
+.billing-payment-id {
+    font-size: 13px;
+    color: var(--primary);
+    font-weight: 700;
+}
+
+.billing-amount-sub {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 2px;
+}
+
+@media (max-width: 1150px) {
+    .billing-stat-cards-row { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 560px) {
+    .billing-stat-cards-row { grid-template-columns: 1fr; }
+}
+
+/* ── Payment Verification modal ── */
+.billing-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.5);
+    display: none;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 40px;
+    overflow-y: auto;
+    z-index: 1000;
+}
+.billing-modal::-webkit-scrollbar { display: none;}
+
+.billing-modal-backdrop.open { display: flex; }
+
+.billing-modal {
+    overflow-y: auto;
+    background-color: #E9E9E9;
+    border-radius: var(--radius);
+    box-shadow: 0 20px 60px rgba(15, 23, 42, 0.25);
+    width: 100%;
+    max-width: 1000px; 
+    max-height: calc(100vh - 40px);
+}
+
+.billing-modal-wrap {
+    position: relative;
+    height: 100%;
+    width: 100%;
+    max-width: 1000px;   
+}
+
+.billing-modal-close {
+    position: absolute;
+    top: -14px;
+    right: -14px;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    background: #fff;
+    color: #475569;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.25);
+    z-index: 1001;
+    font-size: 14px;
+}
+.billing-modal-close:hover {
+    color: var(--danger);
+    border-color: var(--danger);
+}
+@media (max-width: 560px) {
+    .billing-modal-close { top: -12px; right: -8px; }
+}
+
+.billing-modal-loading {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-sub);
+    font-size: 14px;
+}
+.billing-modal-loading i { margin-right: 8px; color: var(--primary); }
+
+/* ── "Mark Fully Paid" confirmation modal ── */
+.fp-confirm-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.55);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    z-index: 1100;
+}
+.fp-confirm-backdrop.open { display: flex; }
+.fp-confirm-modal {
+    background: #fff;
+    border-radius: var(--radius);
+    box-shadow: 0 20px 60px rgba(15, 23, 42, 0.3);
+    width: 100%;
+    max-width: 380px;
+    padding: 28px 24px 22px;
+    text-align: center;
+}
+.fp-confirm-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: rgba(34, 197, 94, 0.12);
+    color: var(--success);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    margin: 0 auto 14px;
+}
+.fp-confirm-title {
+    font-size: 16px;
+    font-weight: 800;
+    color: var(--text-main);
+    margin-bottom: 6px;
+}
+.fp-confirm-text {
+    font-size: 13px;
+    color: var(--text-sub);
+    line-height: 1.5;
+    margin-bottom: 20px;
+}
+.fp-confirm-actions {
+    display: flex;
+    gap: 10px;
+}
+.fp-confirm-actions .btn { flex: 1; justify-content: center; }
+
+/* ── Payment Verification panel content (bvp-*) ── */
+.bvp-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 10px;
+    border-bottom: 1px solid var(--border);
+}
+.bvp-header-icon {
+    width: 38px; height: 38px;
+    border-radius: 10px;
+    background: var(--primary-light);
+    color: var(--primary);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px;
+    flex-shrink: 0;
+}
+.bvp-header-text { flex: 1; }
+.bvp-title { font-size: 17px; font-weight: 800; color: var(--text-main); }
+.bvp-subtitle { font-size: 12.5px; color: var(--text-sub); margin-top: 2px; }
+.bvp-close-btn {
+    display: flex;
+    align-items: center;
+    align-content: center;
+    gap: 6px;
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 7px 12px;
+    color: var(--sub-text);
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+.bvp-close-btn:hover { color: var(--danger); border-color: var(--danger); }
+
+.bvp-summary-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    padding: 16px;
+    margin: 10px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--white);
+}
+.bvp-summary-row.bvp-summary-row-3col { grid-template-columns: repeat(3, 1fr); }
+
+.bvp-summary-item:nth-child(-n+3) {
+    border-right: 1px solid var(--text-sub);
+}
+.bvp-summary-row-3col .bvp-summary-item:last-child { border-right: none; }
+.bvp-summary-item label {
+    display: block;
+    font-size: 13px;
+    color: var(--text-sub);
+    margin-bottom: 3px;
+}
+.bvp-summary-item span {
+    font-size: 13.5px;
+    font-weight: 700;
+}
+
+.bvp-body-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    padding: 10px 12px;
+    max-height: 75vh;
+    overflow-y: auto;
+    background-color: #E9E9E9;
+}
+
+.bvp-body-grid::-webkit-scrollbar {
+    display: none;
+}
+.bvp-card {
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 16px;
+    background-color: var(--white);
+}
+.bvp-card:last-child { margin-bottom: 0; }
+/* Lets a card break out of .bvp-body-grid's 2-column layout and take
+   the full row width — used by the cash-verification breakdown/summary/
+   notes cards, which sit below the side-by-side Customer/Payment cards. */
+.bvp-card-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+.bvp-card-title i { color: var(--primary); }
+
+.bvp-field {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 6px 0;
+    border-bottom: 1px dashed var(--border);
+}
+.bvp-field:last-child { border-bottom: none; padding-bottom: 0; }
+.bvp-field label { font-size: 12px; color: var(--text-sub); }
+.bvp-field span { font-size: 15px; font-weight: 600; color: var(--text-main); margin: 4px 0; }
+.bvp-field .bvp-amount { font-size: 16px; font-weight: 800; }
+
+.bvp-method-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.bvp-notes-textarea {
+    width: 100%;
+    min-height: 70px;
+    flex: 1;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px;
+    font-size: 13px;
+    font-family: inherit;
+    resize: vertical;
+    align-self: stretch
+}
+.bvp-field-note {
+    font-size: 13px;
+    color: var(--text-sub);
+    line-height: 1.6;
+}
+
+.bvp-proof-frame {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    background: #f8f9fb;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 160px;
+}
+.bvp-proof-frame img { width: 100%; max-height: 320px; object-fit: contain; }
+.bvp-view-full-btn {
+    width: 100%;
+    justify-content: center;
+    margin-top: 10px;
+    font-size: 12.5px;
+}
+.bvp-proof-empty {
+    text-align: center;
+    padding: 30px 10px;
+    color: var(--text-sub);
+}
+.bvp-proof-empty i { font-size: 24px; color: var(--text-muted); margin-bottom: 10px; display: block; }
+.bvp-proof-empty p { font-size: 12.5px; }
+
+.bvp-cash-input {
+    width: 100%;
+    border: 1px solid var(--primary);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 15px;
+    font-weight: 700;
+    font-family: inherit;
+    color: var(--text-main);
+    margin: 4px 0 2px;
+}
+.bvp-cash-input:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px var(--primary-light);
+}
+.bvp-cash-hint {
+    font-size: 11.5px;
+    color: var(--text-sub);
+}
+.bvp-cash-boxes {
+    display: grid;
+    gap: 10px;
+    margin: 10px 0;
+}
+.bvp-cash-box {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-radius: 8px;
+    padding: 12px 15px;
+}
+.bvp-cash-box-info {
+    display: flex;
+    flex-direction: column;
+}
+.bvp-cash-box label { display: block; font-size: 15px; font-weight: 700; }
+.bvp-cash-box-sub { font-size: 13px; color: var(--text-sub); }
+.bvp-cash-box span { font-size: 16px; font-weight: 800; }
+.bvp-cash-box-change {
+    background: var(--success-light);
+    color: var(--success);
+}
+.bvp-cash-box-change span { color: var(--success); }
+.bvp-cash-box-applied {
+    background: var(--primary-light);
+    color: var(--primary);
+}
+.bvp-cash-box-applied span { color: var(--primary); }
+
+.bvp-required-mark { color: var(--danger); }
+.bvp-percent-note { font-weight: 600; color: var(--text-sub); }
+
+.bvp-breakdown-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 6px 0;
+    font-size: 13px;
+    color: var(--text-sub);
+}
+.bvp-breakdown-row-highlight {
+    border-bottom: 1px solid var(--border);
+}
+.bvp-breakdown-total {
+    font-weight: 800;
+    font-size: 13.5px;
+    color: var(--text-main);
+    border-top: 1px solid var(--border);
+    margin-top: 4px;
+    padding-top: 10px;
+}
+.bvp-breakdown-divider {
+    height: 1px;
+    background: var(--border);
+    margin: 8px 0;
+}
+.bvp-breakdown-highlight {
+    background: var(--primary-light);
+    border-radius: 8px;
+    padding: 8px 10px;
+    margin-top: 12px; 
+    font-weight: 700;
+}
+.bvp-bd-divider:nth-child(-n+2) {
+    border-bottom: 1px dashed var(--text-muted);
+}
+.payment-required {
+    color: var(--primary);
+}
+
+.payment-paid {
+    color: var(--success);
+}
+
+.payment-remaining {
+    color: var(--text-main);
+}
+
+.payment-remaining span:last-child {
+    color: red;
+}
+
+.bvp-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 12px;
+}
+.bvp-action-form { flex: 1; display: flex; }
+.bvp-btn-approve, .bvp-btn-reject {
+    width: 100%;
+    justify-content: center;
+    font-weight: 700;
+}
+.bvp-btn-approve {
+    background: var(--primary);
+    border: 1px solid var(--primary);
+    color: var(--white);
+}
+.bvp-btn-approve:hover { background: var(--primary-dark); color: var(--white); }
+
+.bvp-btn-reject {
+    background: var(--white);
+    border: 1px solid var(--danger);
+    color: var(--danger);
+}
+.bvp-btn-reject:hover { background: var(--danger); color: var(--white);}
+
+.bvp-approve-hint {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    background: #fffbeb;
+    color: #92400e;
+    font-size: 12px;
+    line-height: 1.6;
+    padding: 8px 16px;
+    border-radius: 8px;
+    margin-top: 12px;
+}
+.bvp-approve-hint i { margin-top: 2px; }
+
+.bvp-already-decided {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    justify-content: center;
+    font-size: 13.5px;
+    font-weight: 700;
+    color: var(--text-sub);
+    padding: 16px 24px 24px;
+}
+.bvp-print-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 12px;
+    padding: 0 16px 16px;
+}
+.bvp-print-actions .btn {
+    flex: 1;
+    justify-content: center;
+    font-weight: 600;
+}
+.bvp-partial-banner {
+    background: var(--primary-light);
+    color: var(--primary);
+    border-radius: 8px;
+    padding: 8px 16px;
+    justify-content: flex-start;
+}
+.bvp-action-bottom {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px;
+    margin: 10px;
+    background: var(--white);
+}
+
+
+@media (max-width: 720px) {
+    .bvp-summary-row { grid-template-columns: repeat(2, 1fr); }
+    .bvp-body-grid { grid-template-columns: 1fr; max-height: none; }
+    .bvp-actions { flex-direction: column; }
+}
+
+/* ============================================================
+   CASH PAYMENT VERIFICATION — reuses .bvp-body-grid's 2-column
+   layout (see the isCash branch in _PaymentVerificationPanel.cshtml),
+   plus .bvp-card/.bvp-field/.bvp-cash-* from above. This block adds
+   what's new: the highlighted Payment Summary box.
+============================================================ */
+.bvp-summary-box {
+    border: 1.5px solid var(--primary);
+    border-radius: 10px;
+    padding: 14px 16px;
+    background: var(--primary-light);
+}
+.bvp-summary-box-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 0;
+    font-size: 14px;
+    color: var(--text-main);
+}
+.bvp-summary-box-row:last-child { border-bottom: none; }
+.bvp-summary-box-row-change { color: var(--success); }
+.bvp-summary-box-row-change span:last-child { font-weight: 700;}
+.bvp-summary-box-row-receive span:last-child { font-weight: 700;}
+.bvp-summary-box-row-total {
+    padding-top: 10px;
+    margin-top: 4px;
+    border-top: 1.5px solid rgba(91, 94, 244, 0.35);
+    border-bottom: none;
+}
+.bvp-summary-box-row-total span:first-child { font-weight: 700; }
+.bvp-summary-box-row-total span:last-child {
+    font-size: 16px;
+    font-weight: 800;
+    color: var(--danger);
+}
+
+.bvp-body-grid > div {
+    display: flex;
+    flex-direction: column;
+}
+
+    .bvp-body-grid > div .bvp-card:last-child {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        margin-bottom: 0;
+    }
+
+.bvp-card:last-child .bvp-card-title {
+    flex-shrink: 0;
+}
+
+.reason-confirm-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.55);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    z-index: 1200;
+}
+
+    .reason-confirm-backdrop.open {
+        display: flex;
+    }
+
+.reason-confirm-modal {
+    background: #fff;
+    border-radius: var(--radius);
+    box-shadow: 0 20px 60px rgba(15, 23, 42, 0.3);
+    width: 100%;
+    max-width: 420px;
+    padding: 28px 24px 22px;
+    text-align: center;
+}
+
+.reason-confirm-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: var(--danger-light);
+    color: var(--danger);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    margin: 0 auto 14px;
+}
+
+.reason-confirm-title {
+    font-size: 16px;
+    font-weight: 800;
+    color: var(--text-main);
+    margin-bottom: 6px;
+}
+
+.reason-confirm-text {
+    font-size: 13px;
+    color: var(--text-sub);
+    line-height: 1.5;
+    margin-bottom: 16px;
+}
+
+.reason-confirm-label {
+    display: block;
+    text-align: left;
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--text-main);
+    margin-bottom: 6px;
+}
+
+.reason-confirm-textarea {
+    width: 100%;
+    min-height: 80px;
+    resize: vertical;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 13px;
+    font-family: inherit;
+    color: var(--text-main);
+    margin-bottom: 6px;
+}
+
+    .reason-confirm-textarea:focus {
+        outline: none;
+        border-color: var(--primary);
+    }
+
+.reason-confirm-error {
+    display: none;
+    text-align: left;
+    font-size: 12px;
+    color: var(--danger);
+    margin-bottom: 10px;
+}
+
+    .reason-confirm-error.show {
+        display: block;
+    }
+
+.reason-confirm-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 14px;
+}
+
+    .reason-confirm-actions .btn {
+        flex: 1;
+        justify-content: center;
+    }

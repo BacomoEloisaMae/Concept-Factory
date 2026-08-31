@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\User\\OneDrive\\Desktop\\New folder\\ConceptFactory\\ConceptFactory.csproj": {}
+    "C:\\Users\\User\\OneDrive\\Desktop\\CF_login\\ConceptFactory\\ConceptFactory.csproj": {}
   },
   "projects": {
-    "C:\\Users\\User\\OneDrive\\Desktop\\New folder\\ConceptFactory\\ConceptFactory.csproj": {
+    "C:\\Users\\User\\OneDrive\\Desktop\\CF_login\\ConceptFactory\\ConceptFactory.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\User\\OneDrive\\Desktop\\New folder\\ConceptFactory\\ConceptFactory.csproj",
+        "projectUniqueName": "C:\\Users\\User\\OneDrive\\Desktop\\CF_login\\ConceptFactory\\ConceptFactory.csproj",
         "projectName": "ConceptFactory",
-        "projectPath": "C:\\Users\\User\\OneDrive\\Desktop\\New folder\\ConceptFactory\\ConceptFactory.csproj",
+        "projectPath": "C:\\Users\\User\\OneDrive\\Desktop\\CF_login\\ConceptFactory\\ConceptFactory.csproj",
         "packagesPath": "C:\\Users\\User\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\User\\OneDrive\\Desktop\\New folder\\ConceptFactory\\obj\\",
+        "outputPath": "C:\\Users\\User\\OneDrive\\Desktop\\CF_login\\ConceptFactory\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"

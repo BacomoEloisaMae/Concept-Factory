@@ -1,0 +1,239 @@
+@model IEnumerable<ConceptFactory.Models.Order>
+@using ConceptFactory.Models
+@{
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    int stationIndex = ViewBag.StationIndex;
+    string stationName = ViewBag.StationName;
+    ViewData["Title"] = $"Production — {stationName}";
+
+    bool hasSelection = ViewBag.HasSelection ?? false;
+    string currentTab = ViewBag.Tab ?? "";
+    int page = ViewBag.Page ?? 1;
+    int totalPages = ViewBag.TotalPages ?? 1;
+    int totalCount = ViewBag.TotalCount ?? 0;
+    int stationTotalCount = ViewBag.StationTotalCount ?? 0;
+    int pageSize = 10;
+    int startItem = totalCount == 0 ? 0 : ((page - 1) * pageSize) + 1;
+    int endItem = Math.Min(page * pageSize, totalCount);
+    bool isReadyForPickup = stationIndex == ConceptFactory.Models.ProductionWorkflow.ReadyForPickupIndex;
+    bool isCutting = stationIndex == 0;
+
+    string RowStatusLabel(ConceptFactory.Models.Order o) => currentTab == "CompletedToday"
+        ? (isReadyForPickup ? "Picked Up" : "Completed")
+        : o.Status == "Confirmed"
+            ? "Ready to Start"
+            : o.Status == "Ready for Pickup"
+                ? "Ready for Pickup"
+                : $"In {stationName}";
+    string RowStatusClass(ConceptFactory.Models.Order o) => currentTab == "CompletedToday"
+        ? "status-completed"
+        : o.Status == "Confirmed"
+            ? "status-pending"
+            : o.Status == "Ready for Pickup"
+                ? "status-readypickup"
+                : "status-inproduction";
+    // Rows in the "Completed" tab (Picked Up on Ready for Pickup;
+    // "cleared this station" everywhere else) are historical — clicking
+    // one now opens a read-only view instead of an active "Mark as Done"
+    // form (see _StationUpdateModal's alreadyPickedUp/stationCleared
+    // branches), so the action button reads "View" there instead of
+    // "Update". The CompletedToday tab query (see pStation in
+    // ProductionController) always contains only already-cleared orders
+    // regardless of station, so the tab itself is enough to tell.
+    bool RowIsReadOnly(ConceptFactory.Models.Order o) => currentTab == "CompletedToday";
+    int RowQuantity(ConceptFactory.Models.Order o) => o.OrderDetails.Sum(d => d.Quantity);    
+    // "Pending" tracks whether any progress has been entered yet at THIS
+    // station (ProductionStageQuantityDone == 0) — mirrors
+    // pendingFromPreviousQuery in ProductionController for every station
+    // except Ready for Pickup, which has no quantity to track and instead
+    // goes by how long the order's been waiting there.
+    bool RowIsPendingFromPrevious(ConceptFactory.Models.Order o) => !isReadyForPickup && o.ProductionStageQuantityDone == 0;
+}
+@section Styles {
+    <link rel="stylesheet" href="~/css/admin/orders.css" asp-append-version="true" />
+    <!-- orders.css used on this page: .page-container, .page-header, .stat-cards-row, .stat-card, .stat-card-clickable, .stat-card-purple, .stat-card-label, .stat-card-body, .stat-icon-purple, .stat-value, .stat-card-orange, .stat-icon-orange, .stat-card-green, .stat-icon-green, .stat-card-yellow, .stat-icon-yellow, .filter-bar, .orders-empty-state, .data-table, .order-row-clickable, .id-link-static, .order-id-link, .order-products-cell, .status-badge, .pagination, .billing-modal-backdrop, .billing-modal -->
+    <link rel="stylesheet" href="~/css/admin/billing.css" asp-append-version="true" />
+    <!-- billing.css used on this page: .btn, .billing-modal-backdrop, .billing-modal, .billing-modal-loading -->
+    <link rel="stylesheet" href="~/css/admin/production.css" asp-append-version="true" />
+    <!-- production.css used on this page: .prod-monitor-icon, .billing-modal-backdrop, .billing-modal -->
+}
+<div class="page-container">
+
+    <!-- Page Header -->
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Production — @stationName Station</h1>
+            <p class="page-subtitle">
+                @if (isReadyForPickup)
+                {
+                    <text>Orders whose production is finished and are waiting for the customer to pick up.</text>
+                }
+                else if (isCutting)
+                {
+                    <text>Orders Billing has approved and are queued or currently at the Cutting stage.</text>
+                }
+                else
+                {
+                    <text>Orders currently at the @stationName stage.</text>
+                }
+            </p>
+        </div>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
+
+    <!-- Stat Cards — click one to see those orders below, same as Overview. -->
+    <div class="stat-cards-row">
+        <a asp-action="pStation" asp-route-stage="@stationIndex" asp-route-tab="All" asp-route-search="@ViewBag.Search"
+           class="stat-card stat-card-purple stat-card-clickable @(currentTab == "All" ? "active" : "")">
+            <span class="stat-card-label">@(isReadyForPickup ? "Ready for Pickup" : $"Total in {stationName}")</span>
+            <div class="stat-card-body">
+                <div class="prod-monitor-icon stat-card-purple"><img src="@Url.Content((string)ViewBag.StationImage)" alt="@stationName" /></div>
+                <span class="stat-value">@stationTotalCount</span>
+            </div>
+        </a>
+        @if (!isReadyForPickup)
+        {
+            <a asp-action="pStation" asp-route-stage="@stationIndex" asp-route-tab="InProgress" asp-route-search="@ViewBag.Search"
+               class="stat-card stat-card-orange stat-card-clickable @(currentTab == "InProgress" ? "active" : "")">
+                <span class="stat-card-label">In Progress</span>
+                <div class="stat-card-body">
+                    <div class="prod-monitor-icon stat-card-orange"><img src="~/images/logo/production.png" alt="Alternate Text"/></div>
+                    <span class="stat-value" id="stationStatInProgress">@ViewBag.InProgressCount</span>
+                </div>
+            </a>
+        }
+        <a asp-action="pStation" asp-route-stage="@stationIndex" asp-route-tab="CompletedToday" asp-route-search="@ViewBag.Search"
+           class="stat-card stat-card-green stat-card-clickable @(currentTab == "CompletedToday" ? "active" : "")">
+            <span class="stat-card-label">@(isReadyForPickup ? "Picked Up" : "Completed")</span>
+            <div class="stat-card-body">
+                <div class="prod-monitor-icon stat-card-green"><img src="~/images/logo/image 24.png" alt="Alternate Text" /></div>
+                <span class="stat-value">@ViewBag.CompletedTodayCount</span>
+            </div>
+        </a>
+        @if (!isReadyForPickup)
+        {
+            <a asp-action="pStation" asp-route-stage="@stationIndex" asp-route-tab="PendingFromPrevious" asp-route-search="@ViewBag.Search"
+               class="stat-card stat-card-yellow stat-card-clickable @(currentTab == "PendingFromPrevious" ? "active" : "")">
+                <span class="stat-card-label">Pending</span>
+                <div class="stat-card-body">
+                    <div class="prod-monitor-icon stat-card-yellow"><img src="~/images/logo/pending 1.png" alt="Alternate Text" /></div>
+                    <span class="stat-value" id="stationStatPending">@ViewBag.PendingFromPreviousCount</span>
+                </div>
+            </a>
+        }
+    </div>
+
+
+    <!-- Filters -->
+    <div class="filter-bar">
+        <form method="get" asp-action="pStation" class="filter-form">
+            <input type="hidden" name="stage" value="@stationIndex" />
+            <input type="hidden" name="tab" value="@currentTab" />
+            <div class="search-box">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" name="search" value="@ViewBag.Search" placeholder="Search Order ID, customer, product..." class="search-input" />
+            </div>
+            <button type="submit" class="btn btn-outline">
+                <i class="fa-solid fa-filter"></i> Search
+            </button>
+        </form>
+
+    </div>
+
+    <!-- Table Card -->
+    <div class="card">
+        @if (!hasSelection)
+        {
+            <div class="orders-empty-state">
+                <i class="fa-solid fa-hand-pointer"></i>
+                <p>Click a stat card or tab above to view those orders.</p>
+            </div>
+        }
+        else
+        {
+            <!-- Station Table -->
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Order ID</th>
+                        <th>Customer</th>
+                        <th>Product</th>
+                        <th>Quantity</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Any())
+                    {
+                        <tr>
+                            <td colspan="6">
+                                <div class="orders-empty-state">
+                                    <i class="fa-solid fa-industry"></i>
+                                    <p>No orders in this view.</p>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                    @foreach (var o in Model)
+                    {
+                        <tr id="station-row-@o.OrderID" class="order-row-clickable" data-pending="@(RowIsPendingFromPrevious(o) ? "true" : "false")" onclick="openStationModal(@o.OrderID, @stationIndex)">
+                            <td><span class="order-id-link id-link-static">#ORD-@o.OrderID.ToString("D3")</span></td>
+                            <td>@o.CustomerName</td>
+                            <td class="order-products-cell">
+                                @Html.Raw(string.Join("<br />", o.OrderDetails.Select(d => $"{d.Quantity}x {(string.IsNullOrEmpty(d.ProductNameSnapshot) ? "Item" : d.ProductNameSnapshot)}{(d.IsCustomOrder ? "" : " (pre-designed)")}")))
+                            </td>
+                            <td>@RowQuantity(o) pcs</td>
+                            <td>
+                                <span class="status-badge @RowStatusClass(o)">@RowStatusLabel(o)</span>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+
+            <!-- Pagination -->
+            @if (totalPages > 1)
+            {
+                <div class="pagination">
+                    <span class="page-info">Showing @startItem–@endItem of @totalCount orders</span>
+                    <div class="page-btns">
+                        @if (page > 1)
+                        {
+                            <a asp-action="pStation" asp-route-stage="@stationIndex" asp-route-tab="@currentTab" asp-route-page="@(page - 1)" asp-route-search="@ViewBag.Search" class="page-btn">‹</a>
+                        }
+                        @for (int i = 1; i <= totalPages; i++)
+                        {
+                            <a asp-action="pStation" asp-route-stage="@stationIndex" asp-route-tab="@currentTab" asp-route-page="@i" asp-route-search="@ViewBag.Search"
+                               class="page-btn @(i == page ? "active" : "")">@i</a>
+                        }
+                        @if (page < totalPages)
+                        {
+                            <a asp-action="pStation" asp-route-stage="@stationIndex" asp-route-tab="@currentTab" asp-route-page="@(page + 1)" asp-route-search="@ViewBag.Search" class="page-btn">›</a>
+                        }
+                    </div>
+                </div>
+            }
+            else if (totalCount > 0)
+            {
+                <div class="pagination">
+                    <span class="page-info">Showing @startItem–@endItem of @totalCount orders</span>
+                </div>
+            }
+        }
+    </div>
+</div>
+
+<!-- Station "Mark as Done" popup -->
+<div class="billing-modal-backdrop" id="stationModalBackdrop" onclick="if(event.target===this) closeStationModal()">
+    <div class="billing-modal" id="stationModal">
+        <div class="billing-modal-loading"><i class="fa-solid fa-spinner fa-spin"></i> Loading…</div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/admin/station-update.js" asp-append-version="true"></script>
+}

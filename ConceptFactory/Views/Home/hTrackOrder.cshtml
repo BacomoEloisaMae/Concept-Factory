@@ -1,0 +1,136 @@
+@model List<ConceptFactory.Models.Order>
+@using ConceptFactory.Models
+@{
+    ViewData["Title"] = "Track Order";
+
+    // "10x Custom Shirt (Red-L)" / "5x Hoodie (Blue-M)" — each line shown
+    // on its own row inside the Items cell (vertical stack), instead of
+    // the old comma-joined single line.
+    string ItemVariant(OrderDetail d)
+    {
+        string color = string.IsNullOrEmpty(d.SelectedColor) ? "" : ConceptFactory.Utils.ColorNameHelper.GetName(d.SelectedColor);
+        string size = d.SelectedSize ?? "";
+        if (color == "" && size == "") return "";
+        if (color != "" && size != "") return $" ({color}-{size})";
+        return $" ({(color != "" ? color : size)})";
+    }
+}
+@section Styles {
+    <link rel="stylesheet" href="~/css/home/home-index.css" asp-append-version="true" />
+    <!-- home-index.css used on this page: .js-hidden, .cf-page, .cf-page-title, .cf-page-sub, .cf-empty -->
+    <link rel="stylesheet" href="~/css/navbar.css" asp-append-version="true" />
+    <!-- navbar.css used on this page: .fa-chevron-down -->
+    <link rel="stylesheet" href="~/css/home/track-order-details.css" asp-append-version="true" />
+    <!-- track-order-details.css used on this page: .cf-page, .cot-page, .cf-page-title, .cf-page-sub, .cf-empty, .track-table-card, .track-order-table, .track-order-row, .track-cell, .track-cell-order, .track-order-id, .track-cell-status, .track-cell-items, .track-item-line, .track-cell-date, .track-cell-amount, .track-row-chevron, .track-order-detail-row, .track-order-detail-inner -->
+    <link rel="stylesheet" href="~/css/admin/orders.css" asp-append-version="true" />
+    <!-- orders.css used on this page: .status-badge, .pagination -->
+    <link rel="stylesheet" href="~/css/admin/production.css" asp-append-version="true" />
+}
+<form id="cfAntiForgeryForm" class="js-hidden">@Html.AntiForgeryToken()</form>
+<div class="cf-page cot-page">
+    <div class="cf-page-title">Track Order</div>
+    <div class="cf-page-sub">Everything you've ordered, with live status and production progress.</div>
+
+    @if (!Model.Any())
+    {
+        <div class="cf-empty">
+            <i class="fa-solid fa-box-open"></i>
+            <p>You haven't placed any orders yet.</p>
+            <a asp-controller="Home" asp-action="hIndex">Browse Products</a>
+        </div>
+    }
+    else
+    {
+        <div class="track-table-card">
+            <table class="track-order-table">
+                <thead>
+                    <tr>
+                        <th>Order #</th>
+                        <th>Status</th>
+                        <th>Items</th>
+                        <th>Order Date</th>
+                        <th>Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var o in Model)
+                    {
+                        <tr class="track-order-row" onclick="toggleTrackOrderRow(@o.OrderID)">
+                            <td class="track-cell">
+                                <div class="track-cell-order">
+                                    <span class="track-order-id">#ORD-@o.OrderID.ToString("D3")</span>
+                                </div>
+                            </td>
+                            <td class="track-cell">
+                                <div class="track-cell-status">
+                                    <span class="status-badge @OrderStatusDisplay.BadgeClass(o.Status)">@o.Status</span>
+                                </div>
+                            </td>
+                            <td class="track-cell track-cell-items">
+                                @foreach (var d in o.OrderDetails)
+                                {
+                                    <div class="track-item-line">@d.Quantity x @(string.IsNullOrEmpty(d.ProductNameSnapshot) ? "Item" : d.ProductNameSnapshot)@ItemVariant(d)</div>
+                                }
+                            </td>
+                            <td class="track-cell">
+                                <div class="track-cell-date">
+                                    @o.OrderDate.ToString("MMMM d, yyyy • h:mm tt") 
+                                </div>
+                            </td>
+                            <td class="track-cell">
+                                <div class="track-cell-amount">
+                                    ₱@o.TotalAmount.ToString("N2")
+                                    <div><i class="fa-solid fa-chevron-down track-row-chevron" id="track-chevron-@o.OrderID"></i></div>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr class="track-order-detail-row" id="track-detail-@o.OrderID" style="display:none;">
+                            <td colspan="5">
+                                <div class="track-order-detail-inner">
+                                    @await Html.PartialAsync("_ProductionStagesReadonly", o)
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        int page = (int)ViewBag.Page;
+        int totalPages = (int)ViewBag.TotalPages;
+        int totalCount = (int)ViewBag.TotalCount;
+        int startItem = (int)ViewBag.StartItem;
+        int endItem = (int)ViewBag.EndItem;
+        @if (totalPages > 1)
+        {
+            <div class="pagination">
+                <span class="page-info">Showing @startItem–@endItem of @totalCount orders</span>
+                <div class="page-btns">
+                    @if (page > 1)
+                    {
+                        <a asp-action="hTrackOrder" asp-route-page="@(page-1)" class="page-btn">‹</a>
+                    }
+                    @for (int i = 1; i <= totalPages; i++)
+                    {
+                        <a asp-action="hTrackOrder" asp-route-page="@i"
+                           class="page-btn @(i == page ? "active" : "")">@i</a>
+                    }
+                    @if (page < totalPages)
+                    {
+                        <a asp-action="hTrackOrder" asp-route-page="@(page+1)" class="page-btn">›</a>
+                    }
+                </div>
+            </div>
+        }
+        else if (totalCount > 0)
+        {
+            <div class="pagination">
+                <span class="page-info">Showing @startItem–@endItem of @totalCount orders</span>
+            </div>
+        }
+    }
+</div>
+
+@section Scripts {
+    <script src="~/js/home/track-order.js" asp-append-version="true"></script>
+}

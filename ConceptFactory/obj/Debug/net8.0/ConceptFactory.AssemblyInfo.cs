@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("ConceptFactory")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+e20a98ceecf2fe7bf16d3b69e006576b8410b4a8")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+679653f58f10dbb888664a0e825398e90891ab07")]
 [assembly: System.Reflection.AssemblyProductAttribute("ConceptFactory")]
 [assembly: System.Reflection.AssemblyTitleAttribute("ConceptFactory")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

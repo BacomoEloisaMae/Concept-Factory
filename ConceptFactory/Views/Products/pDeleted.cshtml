@@ -67,17 +67,17 @@
                 {
                     @foreach (var product in Model)
                     {
-                        <tr style="opacity:0.75;">
+                        <tr class="deleted-row">
                             <td>
                                 <div class="product-cell">
                                     <div class="product-thumb">
                                         @if (!string.IsNullOrEmpty(product.ImagePath))
                                         {
-                                            <img src="@product.ImagePath" alt="@product.ProductName" style="width:50px;height:50px;object-fit:cover;border-radius:6px;" />
+                                            <img src="@product.ImagePath" alt="@product.ProductName" />
                                         }
                                         else
                                         {
-                                            <div style="width:50px;height:50px;background:#e2e8f0;display:flex;align-items:center;justify-content:center;border-radius:6px;color:#94a3b8;">
+                                            <div class="product-thumb-placeholder">
                                                 <i class="fa-solid fa-shirt"></i>
                                             </div>
                                         }
@@ -91,14 +91,14 @@
                                 <td>
                                     @if (!string.IsNullOrEmpty(product.Color)) {
                                         foreach (var hex in product.Color.Split(",").Select(c => c.Trim()).Where(c => !string.IsNullOrEmpty(c))) {
-                                            <span style="display:inline-block;width:14px;height:14px;border-radius:50%;background:@hex;border:1px solid rgba(0,0,0,.15);margin-right:2px;" title="@hex"></span>
+                                            <span class="color-swatch" style="--swatch:@hex" title="@ConceptFactory.Utils.ColorNameHelper.GetName(hex)"></span>
                                         }
-                                    } else { <span style="color:#94a3b8;">—</span> }
+                                    } else { <span class="color-swatch-empty">—</span> }
                                 </td>
                             <td>@(product.DeletedAt?.ToString("MMM dd, yyyy") ?? "—")</td>
                             <td>
                                 <div class="action-btn">
-                                    <button type="button" class="btn-icon" style="color: var(--primary, #4f46e5);" title="Restore"
+                                    <button type="button" class="btn-icon btn-restore" title="Restore"
                                             onclick="confirmRestore(@product.ProductID, '@Html.Raw(product.ProductName.Replace("'", "\\'"))')">
                                         <i class="fa-solid fa-rotate-left"></i>
                                     </button>
@@ -150,9 +150,9 @@
     </div>
 </div>
 
-<div id="restoreModal" class="modal-overlay" style="display:none;">
+<div id="restoreModal" class="modal-overlay js-modal">
     <div class="modal-box">
-        <div class="modal-icon" style="color:var(--primary, #4f46e5);"><i class="fa-solid fa-arrow-rotate-left"></i></div>
+        <div class="modal-icon modal-icon-primary"><i class="fa-solid fa-arrow-rotate-left"></i></div>
         <h3 class="modal-title">Restore Item?</h3>
         <p class="modal-body">
             Are you sure you want to restore <strong id="restoreProductName"></strong> back to active status?
@@ -167,9 +167,9 @@
     </div>
 </div>
 
-<div id="hardDeleteModal" class="modal-overlay" style="display:none;">
+<div id="hardDeleteModal" class="modal-overlay js-modal">
     <div class="modal-box">
-        <div class="modal-icon" style="color:var(--danger,#e53e3e);"><i class="fa-solid fa-triangle-exclamation"></i></div>
+        <div class="modal-icon modal-icon-danger"><i class="fa-solid fa-triangle-exclamation"></i></div>
         <h3 class="modal-title">Permanently Delete?</h3>
         <p class="modal-body">
             <strong id="hardDeleteName"></strong> will be permanently removed and cannot be recovered.

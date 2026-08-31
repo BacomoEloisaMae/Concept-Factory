@@ -1,0 +1,987 @@
+/* ============================================================
+   TRACK-ORDER-DETAILS.CSS
+   Self-contained stylesheet for the customer-facing Track Order
+   feature ONLY: Views/Home/hTrackOrder.cshtml (order list AND,
+   inline on the same view, a single order's details) plus the
+   Views/Home/_CustomerOrderTrackingBody.cshtml partial it renders.
+
+   Not used by, and safe to edit without affecting, any other
+   page — the post-checkout "Order Placed!" confirmation page
+   (hOrderDetails.cshtml) has its own separate stylesheet,
+   order-details.css, and does not load this file.
+
+   .cf-page / .cf-page-title / .cf-page-sub / .cf-empty are the
+   shared page-shell classes every storefront page uses — those
+   live in home-index.css (loaded alongside this file) and are
+   intentionally NOT duplicated here.
+   ============================================================ */
+
+
+/* ============================================================
+   PAGE / BACK LINK
+   ============================================================ */
+
+.cot-page {
+    padding-bottom: 70px;
+}
+
+.cot-back-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 6px;
+    color: var(--text-sub, #64748b);
+    text-decoration: none;
+    font-size: 14px;
+    margin-bottom: 5px;
+    transition: color .15s, background .15s;
+}
+
+    .cot-back-link:hover {
+        color: var(--primary);
+        background: #f1f5f9;
+    }
+
+
+/* ============================================================
+   BUTTONS
+   ============================================================ */
+
+.cot-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 11px 20px;
+    border-radius: 8px;
+    font-size: 13.5px;
+    font-weight: 700;
+    text-decoration: none;
+    cursor: pointer;
+    border: none;
+}
+
+.cot-btn-outline {
+    background: #fff;
+    border: 1.5px solid var(--border);
+    color: #334155;
+}
+
+    .cot-btn-outline:hover {
+        border-color: var(--primary);
+        color: var(--primary);
+    }
+
+.cot-cancel-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 11px 20px;
+    border-radius: 8px;
+    border: 1px solid #fecaca;
+    background: #fff;
+    color: #dc2626;
+    font-weight: 700;
+    font-size: 13.5px;
+    cursor: pointer;
+}
+
+    .cot-cancel-btn:hover {
+        background: #fef2f2;
+    }
+
+.cot-actions-row {
+    margin-top: 12px;
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+}
+
+
+/* ============================================================
+   INFORMATION BANNERS (below the production stepper)
+   ============================================================ */
+
+.cot-note-banner {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #fff7ed;
+    color: #92400e;
+    border: 1px solid #fde68a;
+    border-radius: 6px;
+    padding: 13px 15px;
+    margin-top: 10px;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.cot-note-info {
+    background: #eef0ff;
+    color: #4f46a5;
+    border-color: transparent;
+}
+
+.cot-note-danger {
+    background: #fef2f2;
+    color: #991b1b;
+    border-color: transparent;
+}
+
+
+/* ============================================================
+   ORDER CARD HEADER (Order #, status badge, placed-on date)
+   ============================================================ */
+
+.cot-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 8px 8px 0 0;
+    padding: 18px 22px;
+}
+
+.cot-card-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 17px;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+    .cot-card-title .cot-badge {
+        margin-left: 3px;
+        vertical-align: middle;
+    }
+
+.cot-card-subtitle {
+    font-size: 12.5px;
+    color: #64748b;
+    font-weight: 400;
+    margin-top: 4px;
+}
+
+
+/* ============================================================
+   CARDS / GRID LAYOUT
+   ============================================================ */
+
+.cot-card {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 16px;
+}
+
+.cot-bottom-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+    .cot-bottom-grid .cot-card {
+        margin: 0;
+    }
+
+.cot-section-title {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    font-size: 15px;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 16px;
+}
+
+    .cot-section-title i {
+        color: var(--primary);
+        font-size: 15px;
+    }
+
+
+/* ============================================================
+   BADGES
+   ============================================================ */
+
+.cot-badge {
+    display: inline-flex;
+    align-items: center;
+    white-space: nowrap;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+/* Order detail status badge — see StatusBadgeClass() in
+   _CustomerOrderTrackingBody.cshtml */
+.cot-pendingdp    { background: #f1f5f9; color: var(--text-muted); }
+.cot-pendingcash  { background: #fff7ed; color: var(--warning); }
+.cot-pendingverif { background: #fff7ed; color: var(--warning); }
+.cot-confirmed    { background: var(--primary-light); color: var(--primary); }
+.cot-pending      { background: var(--pending-light); color: var(--pending); }
+.cot-inproduction { background: #fff7ed; color: var(--warning); }
+.cot-readypickup  { background: #ecfeff; color: #0891b2; }
+.cot-completed    { background: var(--success-light); color: #16a34a; }
+.cot-cancelled    { background: var(--danger-light); color: var(--danger); }
+
+/* Payment status badge — see PaymentBadgeClass() in
+   _CustomerOrderTrackingBody.cshtml */
+.cot-waiting       { background: #fff7ed; color: var(--warning); }
+.cot-partiallypaid { background: var(--primary-light); color: var(--primary); }
+.cot-fullypaid     { background: var(--primary-light); color: var(--primary); }
+.cot-rejected      { background: var(--danger-light); color: var(--danger); }
+
+
+/* ============================================================
+   CUSTOMER / PRODUCT / QUANTITY / TOTAL / PAYMENT INFO BAR
+   ============================================================ */
+
+.cot-infobar {
+    display: grid;
+    grid-template-columns: 1.2fr 1.3fr 1fr 1fr 1fr;
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 0 0 8px 8px;
+    padding: 15px 0;
+    margin-bottom: 16px;
+}
+
+.cot-infobar-item {
+    padding: 12px 14px;
+    min-width: 0;
+}
+
+    .cot-infobar-item:not(:last-child) {
+        border-right: 1px solid #e5e7eb;
+    }
+
+    .cot-infobar-item label {
+        display: block;
+        font-size: 12px;
+        color: #64748b;
+        margin-bottom: 4px;
+        font-weight: 500;
+    }
+
+    .cot-infobar-item span {
+        display: block;
+        font-size: 15px;
+        font-weight: 700;
+        color: #1e293b;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+
+/* ============================================================
+   GENERAL INFO ROW (Payment Method / Transaction Ref / Date,
+   in the Order Summary card)
+   ============================================================ */
+
+.cot-info-row {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0;
+    color: var(--text-muted);
+    font-size: 11px;
+    padding: 4px 0;
+}
+
+    .cot-info-row label {
+        color: var(--text-muted);
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .cot-info-row span {
+        font-weight: 600;
+        color: #1e293b;
+    }
+
+
+/* ============================================================
+   PRODUCT ROWS (Order Summary)
+   ============================================================ */
+
+.cot-product-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 0 0 18px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+    .cot-product-row:last-child {
+        border-bottom: none;
+    }
+
+.cot-product-thumb {
+    width: 84px;
+    height: 84px;
+    border-radius: 8px;
+    background: #ddd;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+    .cot-product-thumb img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+    }
+
+.cot-product-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.cot-product-name {
+    font-weight: 700;
+    font-size: 14px;
+    color: #1e293b;
+    margin-bottom: 5px;
+}
+
+.cot-product-attr {
+    font-size: 12px;
+    color: #64748b;
+    line-height: 1.6;
+}
+
+
+/* ============================================================
+   UPLOADED DESIGN
+   ============================================================ */
+
+.cot-design-row {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+}
+
+.cot-design-thumb {
+    width: 64px;
+    height: 64px;
+    border-radius: 5px;
+    border: 1px solid var(--border);
+    background: #f8f9fb;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+    .cot-design-thumb img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+    }
+
+.cot-design-name {
+    font-size: 12px;
+    font-weight: 600;
+    color: #475569;
+    word-break: break-all;
+}
+
+.cot-uploaded-design-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 7px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+    .cot-uploaded-design-label i {
+        color: var(--primary);
+    }
+
+.cot-empty-note {
+    font-size: 13px;
+    color: #64748b;
+    text-align: center;
+    padding: 20px 0;
+}
+
+
+/* ============================================================
+   PAYMENT / ORDER SUMMARY TOTALS
+   ============================================================ */
+
+.cot-summary-divider {
+    border-top: 1px solid #e5e7eb;
+    margin: 8px 0;
+}
+
+.cots-bottom-grid {
+    display: grid;
+    grid-template-columns: 1fr 250px;
+}
+
+    .cots-bottom-grid .cot-card {
+        border: none;
+        padding: 8px;
+    }
+
+    .cots-bottom-grid .cot-card:first-child {
+        border-right: 1px solid var(--border);
+    }
+
+.cot-total-row {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 3px;
+    padding: 2px 0;
+    font-size: 13px;
+    color: var(--text-sub);
+}
+
+    .cot-total-row span {
+        color: var(--text-muted);
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .cot-total-row.cot-total-final {
+        font-weight: 700;
+        font-size: 15px;
+        color: #1e293b;
+        margin-top: 3px;
+        padding-top: 10px;
+    }
+
+        .cot-total-row.cot-total-final span:last-child {
+            color: var(--danger);
+            font-size: 14px;
+        }
+
+.cot-balance-cleared {
+    color: #16a34a !important;
+}
+
+.cot-paid {
+    color: var(--success);
+    border-bottom: 1px solid var(--border);
+}
+
+    .cot-paid span {
+        margin-bottom: 10px;
+    }
+
+
+/* ============================================================
+   HORIZONTAL PRODUCTION PROGRESS
+   ============================================================ */
+
+.cot-progress-card {
+    padding: 20px 22px 24px;
+}
+
+.cot-icon-stepper {
+    display: flex;
+    align-items: flex-start;
+    overflow: visible;
+    padding: 10px 5px 5px;
+}
+
+.cot-icon-step {
+    flex: 0 0 118px;
+    width: 118px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.cot-icon-step-dot {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 19px;
+    background: #fff;
+    border: 2.5px solid var(--border);
+    color: #94a3b8;
+    margin-bottom: 8px;
+}
+
+.cot-icon-step.done .cot-icon-step-dot {
+    background: #effdf1;
+    color: #27b83d;
+    border-color: #27b83d;
+}
+
+.cot-icon-step.current .cot-icon-step-dot {
+    background: #f0edff;
+    color: var(--primary);
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px #f0edff;
+}
+
+.cot-icon-step-label {
+    font-size: 13px;
+    font-weight: 700;
+    color: #64748b;
+    line-height: 1.2;
+}
+
+.cot-icon-step.done .cot-icon-step-label,
+.cot-icon-step.current .cot-icon-step-label {
+    color: #1e293b;
+}
+
+.cot-icon-step-sub {
+    font-size: 11px;
+    color: #94a3b8;
+    margin-top: 3px;
+}
+
+.cot-icon-step.done .cot-icon-step-sub {
+    color: #16a34a;
+    font-weight: 600;
+}
+
+.cot-icon-step.current .cot-icon-step-sub {
+    color: #d97706;
+    font-weight: 600;
+}
+
+.cot-icon-step-line {
+    flex: 1;
+    height: 2px;
+    background: #d9dde5;
+    margin-top: 26px;
+    min-width: 16px;
+}
+
+    .cot-icon-step-line.done {
+        background: #35c94a;
+    }
+
+
+/* ============================================================
+   ORDER TIMELINE
+   ============================================================ */
+
+.cot-timeline {
+    display: flex;
+    flex-direction: column;
+}
+
+.cot-timeline-item {
+    display: flex;
+    gap: 14px;
+    position: relative;
+    padding-bottom: 22px;
+}
+
+    .cot-timeline-item:last-child {
+        padding-bottom: 0;
+    }
+
+    .cot-timeline-item:not(:last-child)::before {
+        content: "";
+        position: absolute;
+        left: 11px;
+        top: 18px;
+        bottom: 0;
+        width: 1px;
+        background: #d9dde5;
+    }
+
+.cot-timeline-marker {
+    flex-shrink: 0;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #25bf3d;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    z-index: 1;
+}
+
+.cot-timeline-content {
+    flex: 1;
+    padding-top: 0;
+    min-width: 0;
+}
+
+.cot-timeline-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 7px;
+}
+
+.cot-timeline-title {
+    font-size: 13.5px;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+.cot-timeline-date {
+    font-size: 11.5px;
+    color: #94a3b8;
+    white-space: nowrap;
+}
+
+.cot-timeline-desc {
+    font-size: 12.5px;
+    color: #64748b;
+    margin-top: 4px;
+    line-height: 1.5;
+}
+
+
+/* ============================================================
+   MY ORDERS LIST
+   ============================================================ */
+
+.cot-orders-list {
+    max-width: 900px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.cot-order-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 16px 20px;
+    cursor: pointer;
+    transition: border-color .15s, transform .15s;
+    text-decoration: none;
+    color: inherit;
+}
+
+    .cot-order-card:hover {
+        border-color: var(--primary);
+        transform: translateY(-1px);
+    }
+
+.cot-order-card-main {
+    flex: 1;
+    min-width: 0;
+}
+
+.cot-order-card-id {
+    font-weight: 800;
+    font-size: 14.5px;
+    color: #1e293b;
+}
+
+.cot-order-card-summary {
+    font-size: 13px;
+    color: #475569;
+    margin-top: 4px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.cot-order-card-date {
+    font-size: 12px;
+    color: #94a3b8;
+    margin-top: 3px;
+}
+
+.cot-order-card-right {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.cot-order-card-total {
+    font-weight: 700;
+    font-size: 14px;
+    color: #1e293b;
+}
+
+.cot-order-card-chevron {
+    color: #94a3b8;
+    font-size: 13px;
+}
+
+
+/* ============================================================
+   RESPONSIVE — TABLET
+   ============================================================ */
+
+@media (max-width: 900px) {
+
+    .cot-infobar {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    .cot-infobar-item:nth-child(3) {
+        border-right: none;
+    }
+
+    .cot-bottom-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .cot-icon-stepper {
+        overflow-x: auto;
+    }
+}
+
+
+/* ============================================================
+   RESPONSIVE — MOBILE
+   ============================================================ */
+
+@media (max-width: 720px) {
+
+    .cot-infobar {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .cot-infobar-item {
+        border-right: none !important;
+        border-bottom: 1px solid var(--border);
+        font-size: 13px;
+    }
+
+        .cot-infobar-item span {
+            font-size: 13px;
+        }
+
+    .cot-card-header {
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .cot-card-title {
+        flex-wrap: wrap;
+    }
+
+    .cot-icon-stepper {
+        overflow-x: auto;
+        padding-bottom: 8px;
+    }
+
+    .cot-icon-step {
+        flex-basis: 96px;
+        width: 96px;
+    }
+
+    .cot-icon-step-dot {
+        width: 42px;
+        height: 42px;
+        font-size: 16px;
+    }
+
+    .cot-icon-step-line {
+        min-width: 10px;
+    }
+
+    .cot-order-card {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .cot-order-card-right {
+        width: 100%;
+        justify-content: space-between;
+    }
+}
+
+
+/* ============================================================
+   RESPONSIVE — SMALL MOBILE
+   ============================================================ */
+
+@media (max-width: 480px) {
+
+    .cot-infobar {
+        grid-template-columns: 1fr;
+    }
+
+    .cot-infobar-item {
+        border-bottom: 1px solid var(--border);
+    }
+
+        .cot-infobar-item:last-child {
+            border-bottom: none;
+        }
+
+    .cot-card-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .cot-timeline-row {
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    .cot-product-row {
+        align-items: flex-start;
+    }
+}
+
+/* ============================================================
+   Track Order — table layout (hTrackOrder.cshtml)
+   ============================================================ */
+.track-cell{
+    align-content: center;
+    text-align: center;
+}
+.track-table-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+}
+
+.track-order-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+    .track-order-table thead th {
+        text-align: center;
+        font-size: 12.5px;
+        font-weight: 700;
+        color: var(--text-sub);
+        padding: 14px 18px;
+        background: var(--primary-light);
+        border-bottom: 1px solid var(--border);
+        border-right: 1px solid var(--border);
+    }
+
+        .track-order-table thead th:last-child {
+            border-right: none;
+        }
+
+    .track-order-table tbody td {
+        padding: 16px 18px;
+        border-bottom: 1px solid #f0f1f4;
+        border-right: 1px solid #f0f1f4;
+        vertical-align: top;
+        font-size: 13px;
+        font-weight: 600;
+    }
+        .track-order-table tbody td
+        .track-order-table tbody td:last-child {
+            border-right: none;
+        }
+
+.track-order-row {
+    cursor: pointer;
+    transition: background .13s;
+}
+
+    .track-order-row:hover {
+        background: #f8f9fb;
+    }
+
+.track-cell-order {
+    display: flex;
+    justify-content: space-between;
+    min-width: 150px;
+}
+.track-cell-status {
+    justify-items: center;
+}
+
+.track-order-id {
+    font-weight: 700;
+    color: #1e293b;
+}
+
+.track-row-chevron {
+    
+    color: var(--text-muted);
+    font-size: 12px;
+    transition: transform .15s;
+}
+
+    .track-row-chevron.open {
+        transform: rotate(180deg);
+    }
+
+.track-cell-items {
+    min-width: 220px;
+}
+
+.track-item-line {
+    font-size: 13px;
+    color: #334155;
+    padding: 2px 0;
+}
+
+
+.track-cell-date {
+    color: var(--text-main);
+}
+
+.track-cell-amount {
+    display: flex;
+    justify-content: space-between;
+    font-weight: 700;
+    color: var(--text-main);
+    white-space: nowrap;
+}
+
+.track-order-detail-row td {
+    background: #fbfbfd;
+    padding: 0 18px 20px 18px;
+    border-right: none;
+}
+
+.track-order-detail-inner {
+    padding-top: 6px;
+    margin: 0 auto;
+}
+
+.prod-target-note {
+    margin-top: 14px;
+    font-size: 12.5px;
+    color: var(--text-sub);
+    display: flex;
+    align-items: center;
+    gap: 7px;
+}
+
+@media (max-width: 700px) {
+    .track-order-table thead {
+        display: none;
+    }
+
+    .track-order-table, .track-order-table tbody, .track-order-table tr, .track-order-table td {
+        display: block;
+        width: 100%;
+    }
+
+    .track-order-table tbody td {
+        border-right: none;
+    }
+}

@@ -1,0 +1,246 @@
+@model ConceptFactory.Models.Product
+@using ConceptFactory.Models
+@{
+    ViewData["Title"] = Model.ProductName;
+
+    var sizes = string.IsNullOrEmpty(Model.Size)
+        ? new List<string>()
+        : Product.SortSizes(Model.Size.Split(','));
+
+    var colors = string.IsNullOrEmpty(Model.Color)
+        ? new List<string>()
+        : Model.Color.Split(',').Select(s => s.Trim()).Where(s => !string.IsNullOrEmpty(s)).ToList();
+
+    // Maps each color hex to the photo the admin attached for that color
+    // (Views/Products/pCreate.cshtml / pEdit.cshtml -> "Color Options").
+    // Colors without a dedicated photo simply fall back to the product's
+    // default image when clicked.
+    var colorImageMap = Model.ColorImages
+        .Where(ci => !string.IsNullOrEmpty(ci.ImagePath))
+        .GroupBy(ci => ci.ColorHex, StringComparer.OrdinalIgnoreCase)
+        .ToDictionary(g => g.Key, g => g.First().ImagePath!, StringComparer.OrdinalIgnoreCase);
+
+    var colorMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+    {
+        {"red","#e53e3e"},{"blue","#3182ce"},{"black","#1a202c"},{"white","#f0f0f0"},
+        {"green","#38a169"},{"yellow","#d69e2e"},{"orange","#dd6b20"},{"purple","#805ad5"},
+        {"pink","#d53f8c"},{"brown","#744210"},{"gray","#718096"},{"grey","#718096"},
+        {"navy","#1a365d"},{"maroon","#742a2a"},{"teal","#2c7a7b"},{"beige","#e8dcc4"},
+        {"dark gray","#4a5568"},{"dark brown","#4a2c17"},{"petrol blue","#0f3d3e"},
+        {"navy blue","#1a365d"},{"olive green","#556b2f"}
+    };
+
+    string GetMockup(string? cat)
+    {
+        if (string.IsNullOrEmpty(cat)) return "tshirt";
+        var n = cat.ToLower();
+        if (n.Contains("hoodie"))                    return "hoodie";
+        if (n.Contains("polo"))                      return "polo";
+        if (n.Contains("tote") || n.Contains("bag")) return "totebag";
+        return "tshirt";
+    }
+}
+@section Styles {
+    <link rel="stylesheet" href="~/css/home/home-index.css" asp-append-version="true" />
+    <!-- home-index.css used on this page: .active, .js-hidden -->
+    <link rel="stylesheet" href="~/css/home/product-details.css" asp-append-version="true" />
+    <!-- product-details.css used on this page: .pd-page, .pd-back, .pd-grid, .pd-img-card, .pd-img-main, .pd-img-mockup-fallback, .pd-design-overlay, .pd-zoom-btn, .pd-thumbs, .active, .pd-thumb, .pd-info, .pd-title, .pd-wishlist-btn, .pd-price, .pd-desc, .pd-step, .pd-step-title, .pd-size-row, .pd-size, .pd-color-row, .pd-color, .pd-svc-grid, .pd-svc, .pd-svc-name, .pd-svc-price, .pd-svc-desc, .pd-qty-row, .pd-stepper, .pd-divider-tight, .pd-divider, .pd-summary-total, .pd-summary-row, .pd-total-price-value, .pd-stock, .pd-cta, .pd-btn-cart, .pd-btn-checkout, .js-hidden, .pd-zoom-overlay, .pd-zoom-img -->
+    <link rel="stylesheet" href="~/css/navbar.css" asp-append-version="true" />
+    <!-- navbar.css used on this page: .active -->
+}
+
+<!-- ═══ DETAIL PAGE ═══ -->
+<div class="pd-page">
+	<a asp-controller="Home" asp-action="hIndex" class="pd-back" onclick="if (document.referrer && document.referrer.indexOf(window.location.host) !== -1) { history.back(); return false; }">
+		<i class="fa-solid fa-arrow-left"></i>Back to Home
+	</a>
+    <div class="pd-grid">
+
+        <!-- ════ LEFT: image ════ -->
+        <div class="pd-img-card">
+            <div class="pd-img-main">
+                @if (!string.IsNullOrEmpty(Model.ImagePath))
+                {
+                    <img src="@Model.ImagePath" alt="@Model.ProductName" id="mainImg" />
+                }
+                else
+                {
+                    <img src="/images/mockups/@(GetMockup(Model.Category?.CategoryName)).svg"
+                         alt="@Model.ProductName" id="mainImg"
+                         class="pd-img-mockup-fallback" />
+                    <div class="pd-design-overlay">YOUR<br>DESIGN<br>HERE</div>
+                }
+                <button type="button" class="pd-zoom-btn" title="Zoom" onclick="zoomMainImage()">
+                    <i class="fa-solid fa-magnifying-glass-plus"></i>
+                </button>
+            </div>
+            <div class="pd-thumbs">
+                @{
+                    var showcaseThumbs = Model.AdditionalImageList;
+                    bool hasMainImg = !string.IsNullOrEmpty(Model.ImagePath);
+                }
+                @if (hasMainImg || showcaseThumbs.Count > 0)
+                {
+                    @if (hasMainImg)
+                    {
+                        <div class="pd-thumb active" onclick="switchMainImage(this, '@Model.ImagePath')">
+                            <img src="@Model.ImagePath" alt="Main" />
+                        </div>
+                    }
+                    @foreach (var sc in showcaseThumbs)
+                    {
+                        <div class="pd-thumb" onclick="switchMainImage(this, '@sc')">
+                            <img src="@sc" alt="" />
+                        </div>
+                    }
+                }
+                else
+                {
+                    @for (int i = 0; i < 4; i++)
+                    {
+                        <div class="pd-thumb @(i == 0 ? "active" : "")"></div>
+                    }
+                }
+            </div>
+        </div>
+
+        <!-- ════ RIGHT: info ════ -->
+        <div class="pd-info">
+            <div class="pd-title">
+                <span>@Model.ProductName</span>
+                <button type="button" id="pdWishlistBtn" class="pd-wishlist-btn"
+                        data-cf-fav="@Model.ProductID"
+                        data-name="@Model.ProductName"
+                        data-price="@Model.Price"
+                        data-image="@Model.ImagePath"
+                        data-category="@(Model.Category?.CategoryName ?? "Item")"
+                        title="Add to wishlist" onclick="cfDetailToggleFav(this)">
+                    <i class="fa-regular fa-heart"></i>
+                </button>
+            </div>
+            <div class="pd-price">₱@Model.Price.ToString("N2")</div>
+
+            @if (!string.IsNullOrEmpty(Model.ProductDescription))
+            {
+                <p class="pd-desc">@Model.ProductDescription</p>
+            }
+
+            <!-- Size -->
+            @if (sizes.Any())
+            {
+                <div class="pd-step">
+                    <div class="pd-step-title">1. Select Size</div>
+                    <div class="pd-size-row">
+                        @foreach (var s in sizes)
+                        {
+                            <div class="pd-size" onclick="selectGroup(this, '.pd-size-row', '.pd-size')">@s</div>
+                        }
+                    </div>
+                </div>
+            }
+
+            <!-- Colors -->
+            @if (colors.Any())
+            {
+                <div class="pd-step">
+                    <div class="pd-step-title">2. Choose Color</div>
+                    <div class="pd-color-row">
+                        @foreach (var c in colors)
+                        {
+                            string hex = c.StartsWith("#") ? c : (colorMap.ContainsKey(c) ? colorMap[c] : "#cccccc");
+                            string? colorImg = colorImageMap.ContainsKey(c) ? colorImageMap[c] : null;
+                            <div class="pd-color" title="@ConceptFactory.Utils.ColorNameHelper.GetName(c)" style="--swatch:@hex"
+                                 onclick="selectGroup(this, '.pd-color-row', '.pd-color'); swapImageForColor('@colorImg')"></div>
+                        }
+                    </div>
+                </div>
+            }
+
+            <!-- Printing Services -->
+            @{ var services = ViewBag.Services as List<Service> ?? new List<Service>(); }
+            @if (services.Any())
+            {
+                <div class="pd-step" id="pdServicesStep">
+                    <div class="pd-step-title">3. Select Printing Service</div>
+                    <div class="pd-svc-grid">
+                        @foreach (var svc in services)
+                        {
+                            <div class="pd-svc" onclick="selectSvc(this)" data-name="@svc.ServiceName" data-price="@svc.ServicePrice">
+                                <div class="pd-svc-name">@svc.ServiceName</div>
+                                <div class="pd-svc-price">+₱@svc.ServicePrice.ToString("N2")</div>
+                                <div class="pd-svc-desc">@svc.ServiceDescription</div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+
+            <!-- Quantity -->
+            <div class="pd-step">
+                <div class="pd-step-title">4. Quantity</div>
+                <div class="pd-qty-row">
+                    <div class="pd-stepper">
+                        <button type="button" onclick="changeQty(-1)">&minus;</button>
+                        <span id="pdQty">1</span>
+                        <button type="button" onclick="changeQty(1)">+</button>
+                    </div>
+            </div>
+
+            <!-- Order Summary -->
+                    <hr class="pd-divider pd-divider-tight" />
+                    <div class="pd-summary-row pd-summary-total">
+                        <span>Total Price</span>
+                        <span id="totalPrice" class="pd-total-price-value">₱@Model.Price.ToString("N2")</span>
+                    </div>
+
+
+            <!-- Stock -->
+            <div class="pd-stock @(Model.StockQuantity <= 0 ? "pd-stock-out" : "")">
+                @if (Model.StockQuantity <= 0)
+                {
+                    <i class="fa-solid fa-circle-xmark"></i>
+                    <text>Out of Stock</text>
+                }
+                else
+                {
+                    <i class="fa-solid fa-circle-check"></i>
+                    <text>In Stock (@Model.StockQuantity available)</text>
+                }
+            </div>
+
+            <hr class="pd-divider" />
+
+            <!-- CTA -->
+            <div class="pd-cta">
+                <button type="button" id="pdAddToCartBtn" class="pd-btn-cart" onclick="cfDetailAddToCart()" @(Model.StockQuantity <= 0 ? "disabled" : "")>
+                    <i class="fa-solid fa-cart-plus"></i> Add to Cart
+                </button>
+                <button type="button" id="pdBuyNowBtn" class="pd-btn-checkout" onclick="cfDetailBuyNow()" @(Model.StockQuantity <= 0 ? "disabled" : "")> Check Out </button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- Simple image zoom lightbox -->
+<div id="pdZoomOverlay" onclick="closeZoom()" class="pd-zoom-overlay js-hidden">
+    <img id="pdZoomImg" src="" alt="" class="pd-zoom-img" />
+</div>
+
+<script>
+    window.CF_PRODUCT = {
+        id: @Model.ProductID,
+        name: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.ProductName)),
+        price: @Model.Price,
+        stockQuantity: @Model.StockQuantity,
+        hasSizes: @(sizes.Any() ? "true" : "false"),
+        hasColors: @(colors.Any() ? "true" : "false"),
+        defaultImage: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.ImagePath)),
+        homeUrl: '@Url.Action("hIndex", "Home")',
+        cartUrl: '@Url.Action("hCart", "Home")',
+        billingUrl: '@Url.Action("hBilling", "Home")'
+    };
+</script>
+@section Scripts {
+    <script src="~/js/product-details.js" asp-append-version="true"></script>
+}

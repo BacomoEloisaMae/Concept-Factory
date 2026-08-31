@@ -1,0 +1,90 @@
+@model ConceptFactory.Models.Order
+@using ConceptFactory.Models
+@{
+    string[] stages =
+    {
+        "Cutting", "Printing", "Sewing", "Trimming", "Quality Check", "Ready to Pickup", "Completed"
+    };
+}
+@if (Model.Status == "Cancelled")
+{
+    bool canReuploadProof = Model.PaymentMethod == "Gcash" && Model.PaymentStatus == "Rejected";
+
+    <div class="od-cancelled-note">
+        <i class="fa-solid fa-circle-xmark"></i>
+        <div>
+            This order was cancelled — production is not tracked.
+            @if (!string.IsNullOrEmpty(Model.PaymentNote))
+            {
+                <div class="cot-cancel-reason">Reason: @Model.PaymentNote</div>
+            }
+        </div>
+    </div>
+
+    @if (canReuploadProof)
+    {
+        <div class="cot-reupload-row">
+            <button type="button" class="cot-reupload-btn" onclick="cfOpenReuploadModal(@Model.OrderID)">
+                <i class="fa-solid fa-rotate"></i> Re-upload Payment Proof
+            </button>
+        </div>
+    }
+}
+else
+{
+        // Production hasn't actually started until an order is past
+        // Billing approval. Everything before "In Production" (the
+        // pre-confirmation "Pending ..." statuses, and "Confirmed" itself,
+        // which just means approved-but-not-started) must show the
+        // stepper as untouched — Order.ProductionStage defaults to 0
+        // ("Cutting") the moment the order row is created, long before
+        // any real production work happens, so it can't be used on its
+        // own to decide what's "done".
+        bool isPending = Model.Status != "Confirmed" && Model.Status != "In Production"
+            && Model.Status != "Ready for Pickup" && Model.Status != "Completed";
+        bool hasStarted = Model.Status == "In Production" || Model.Status == "Ready for Pickup" || Model.Status == "Completed";
+    <div class="prod-card">
+        <div class="prod-card-title">
+            <i class="fa-solid fa-industry"></i> Production Stages
+            @if (isPending)
+            {
+                <span class="prod-items-status prod-items-status-waiting">Waiting for Payment Confirmation</span>
+            }
+            else if (Model.Status == "Confirmed")
+            {
+                <span class="prod-items-status prod-items-status-waiting">Waiting to Start Production</span>
+            }
+            else if (Model.Status == "In Production")
+            {
+                <span class="prod-items-status prod-items-status-started">In @stages[Model.ProductionStage]</span>
+            }
+            else if (Model.Status == "Ready for Pickup")
+            {
+                <span class="prod-items-status prod-items-status-ready">Ready for Pickup</span>
+            }
+            else if (Model.Status == "Completed")
+            {
+                <span class="prod-items-status prod-items-status-completed">Completed</span>
+            }
+        </div>
+        <div class="od-stepper">
+            @for (int i = 0; i < stages.Length; i++)
+            {
+                bool done = hasStarted && i <= Model.ProductionStage;
+                bool current = done && i == Model.ProductionStage && Model.Status != "Completed";
+                <div class="od-stepper-step @(done ? "done" : "") @(current ? "current" : "")">
+                    <span class="od-stepper-dot">@(done ? "✓" : (i + 1).ToString())</span>
+                    <span class="od-stepper-label">@stages[i]</span>
+                </div>
+                @if (i < stages.Length - 1)
+                {
+                    <div class="od-stepper-line @(hasStarted && i < Model.ProductionStage ? "done" : "")"></div>
+                }
+            }
+        </div>
+        @if (Model.ProductionTargetDate.HasValue && Model.Status != "Completed")
+        {
+            <div class="prod-target-note"><i class="fa-regular fa-calendar"></i> Estimated ready by <strong>@Model.ProductionTargetDate.Value.ToString("MMM d, yyyy")</strong></div>
+        }
+    </div>
+}

@@ -1,0 +1,477 @@
+﻿:root {
+    --primary: #5B5EF4;
+    --primary-dark: #4547d4;
+    --primary-light: #EEEEFF;
+    --accent: #7C3AED;
+    --white: #ffffff;
+    --text-main: #1e293b;
+    --text-sub: #64748b;
+    --text-muted: #94a3b8;
+    --border: #e2e8f0;
+    --bg: #f8fafc;
+    --radius: 10px;
+    --shadow: 0 1px 4px rgba(0,0,0,.08);
+    --shadow-md: 0 4px 16px rgba(0,0,0,.10);
+}
+
+/* ============================================================
+   02. BASE BODY
+============================================================ */
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 14px;
+    color: var(--text-main);
+    background: var(--bg);
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* ════════════════════════════════════════
+   NAVBAR
+════════════════════════════════════════ */
+.navbar {
+    position: sticky;
+    top: 0;
+    z-index: 200;
+    background: var(--white);
+    border-bottom: 1px solid var(--border);
+    padding: 0 48px;
+    height: 70px;
+    display: flex;
+    align-items: center;
+    gap: 32px;
+    box-shadow: 0 1px 6px rgba(0,0,0,.06);
+}
+
+.nav-brand {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    text-decoration: none;
+    flex-shrink: 0;
+}
+
+    .nav-brand img {
+        width: 55px;
+        height: 55px;
+        margin-top: 5px;
+    }
+
+.nav-brand-name {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-main);
+    line-height: 1.25;
+}
+
+    .nav-brand-name span {
+        display: block;
+        font-weight: 500;
+        font-size: 10.5px;
+        color: var(--text-muted);
+    }
+
+.nav-links {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex: 1;
+}
+
+.nav-link {
+    padding: 6px 13px;
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--text-sub);
+    text-decoration: none;
+    border-radius: 7px;
+    transition: color .15s, background .15s;
+}
+
+    .nav-link:hover {
+        color: var(--text-main);
+        background: var(--bg);
+    }
+
+    .nav-link.active {
+        color: var(--primary);
+        font-weight: 600;
+    }
+
+.nav-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+}
+
+.search-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 6px 13px;
+    background: var(--bg);
+    width: 190px;
+    transition: border-color .2s, box-shadow .2s;
+}
+
+    .search-bar:focus-within {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(91,94,244,.08);
+    }
+
+    .search-bar i {
+        color: var(--text-muted);
+        font-size: 12px;
+    }
+
+    .search-bar input {
+        border: none;
+        background: none;
+        outline: none;
+        font-size: 12.5px;
+        font-family: inherit;
+        color: var(--text-main);
+        width: 100%;
+    }
+
+        .search-bar input::placeholder {
+            color: var(--text-muted);
+        }
+
+.nav-icon-btn {
+    width: 34px;
+    height: 34px;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-sub);
+    font-size: 13px;
+    text-decoration: none;
+    transition: border-color .15s, color .15s, background .15s;
+    position: relative;
+}
+
+    .nav-icon-btn:hover {
+        border-color: var(--primary);
+        color: var(--primary);
+        background: var(--primary-light);
+    }
+
+/* Cart/wishlist count badge — belongs here, not in a page-specific
+   stylesheet, since the button+badge markup itself lives in the shared
+   navbar (_Layout.cshtml) and shows up on every page. Previously this
+   only lived in home-index.css, so any page that didn't load that file
+   (Customize, Product Details, etc.) rendered the count as plain
+   unstyled text next to the icon instead of the purple badge. */
+.nav-icon-badge {
+    position: absolute;
+    top: -6px; right: -6px;
+    min-width: 17px; height: 17px;
+    padding: 0 4px;
+    border-radius: 999px;
+    background: var(--accent);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    box-shadow: 0 0 0 2px #fff;
+}
+
+.btn-nav-account {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 7px 16px;
+    background: var(--primary);
+    color: var(--white);
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background .15s, box-shadow .15s;
+    box-shadow: 0 3px 10px rgba(91,94,244,.3);
+}
+
+    .btn-nav-account:hover {
+        background: var(--primary-dark);
+    }
+
+.btn-nav-account .fa-chevron-down {
+    font-size: 10px;
+}
+
+/* Account dropdown */
+.nav-account-wrap {
+    position: relative;
+}
+
+.btn-nav-account {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 7px 16px;
+    background: var(--primary);
+    color: var(--white);
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background .15s, box-shadow .15s;
+    box-shadow: 0 3px 10px rgba(91,94,244,.3);
+}
+
+.nav-account-menu {
+    display: none;
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(0,0,0,.10);
+    min-width: 190px;
+    padding: 6px;
+    flex-direction: column;
+    gap: 2px;
+    z-index: 999;
+}
+
+    .nav-account-menu.open {
+        display: flex;
+    }
+
+.nav-account-item {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 9px 11px;
+    border-radius: 7px;
+    color: #1e293b;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 600;
+    transition: background .13s;
+}
+
+    .nav-account-item:hover {
+        background: #f1f2ff;
+        color: var(--primary);
+    }
+
+    .nav-account-item.admin-item {
+        color: var(--primary);
+    }
+
+.nav-account-divider {
+    height: 1px;
+    background: #e2e8f0;
+    margin: 4px 2px;
+}
+
+/* ════════════════════════════════════════
+   FOOTER STRIP
+════════════════════════════════════════ */
+/* Wraps everything between the navbar and .footer-strip on the pages that
+   have one (Home, Browse). Forces that content to grow and consume any
+   leftover vertical space, so .footer-strip is always flush with the
+   real bottom of the window — instead of depending on every page-specific
+   stylesheet correctly preserving body's display:flex/min-height (several
+   of them redeclare `body` without those, which is what let the footer
+   sit with a blank gap below it on short pages). */
+.page-fill {
+    flex: 1 0 auto;
+}
+.footer-strip {
+    background: var(--text-main);
+    color: rgba(255,255,255,.55);
+    padding: 18px 64px;
+    text-align: center;
+    margin-top: auto;
+    font-size: 12px;
+}
+
+    .footer-strip a {
+        color: rgba(255,255,255,.7);
+        text-decoration: none;
+    }
+
+        .footer-strip a:hover {
+            color: var(--white);
+        }
+
+/* ── Notification bell (navbar) ── */
+.nav-notif-wrap {
+    position: relative;
+}
+
+.nav-notif-dropdown {
+    display: none;
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    width: 340px;
+    max-height: 420px;
+    overflow-y: auto;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    box-shadow: 0 12px 32px rgba(0,0,0,.14);
+    z-index: 999;
+    padding: 6px;
+}
+
+    .nav-notif-dropdown.open {
+        display: block;
+    }
+
+.nav-notif-dropdown-loading, .nav-notif-dropdown-empty {
+    padding: 24px 12px;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 13px;
+}
+
+.nav-notif-item {
+    display: flex;
+    gap: 10px;
+    padding: 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background .13s;
+}
+
+    .nav-notif-item:hover {
+        background: #f8f9fb;
+    }
+
+.nav-notif-item-unread {
+    background: var(--primary-light);
+}
+
+.nav-notif-item-form {
+    border: none;
+    width: 100%;
+    text-align: left;
+    align-items: center;
+}
+
+.nav-notif-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    flex-shrink: 0;
+}
+
+.nav-notif-color-blue { background: #e8f0fe; color: #2563eb; }
+.nav-notif-color-green { background: #e6f7ee; color: #16a34a; }
+.nav-notif-color-red { background: #fdeaea; color: #dc2626; }
+.nav-notif-color-purple { background: #f1eefe; color: #7c3aed; }
+.nav-notif-color-orange { background: #fff3e6; color: #ea8c00; }
+.nav-notif-color-teal { background: #e6f7f7; color: #0d9488; }
+.nav-notif-color-yellow { background: #fef9e6; color: #ca8a04; }
+.nav-notif-color-gray { background: #f1f2f4; color: #64748b; }
+
+.nav-notif-item-body {
+    flex: 1;
+    min-width: 0;
+}
+
+.nav-notif-item-title {
+    font-size: 12.5px;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+.nav-notif-item-message {
+    font-size: 12px;
+    color: var(--text-sub);
+    margin-top: 2px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+
+.nav-notif-item-time {
+    font-size: 10.5px;
+    color: var(--text-muted);
+    margin-top: 4px;
+}
+
+.nav-notif-viewall {
+    display: block;
+    text-align: center;
+    padding: 10px;
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--primary);
+    text-decoration: none;
+    border-top: 1px solid #eef0f4;
+    margin-top: 4px;
+}
+
+    .nav-notif-viewall:hover {
+        text-decoration: underline;
+    }
+
+/* ── hNotifications.cshtml — full list + tabs ── */
+.nav-notif-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+    border-bottom: 1px solid #eef0f4;
+    padding-bottom: 10px;
+}
+
+.nav-notif-tab {
+    padding: 7px 14px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-sub);
+    text-decoration: none;
+    background: #f4f5f8;
+}
+
+    .nav-notif-tab.active {
+        background: var(--primary);
+        color: #fff;
+    }
+
+.nav-notif-fulllist {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.nav-notif-fulllist .nav-notif-item {
+    background: #fff;
+    border: 1px solid #eef0f4;
+    border-radius: 10px;
+}
+
+.nav-notif-fulllist .nav-notif-item-unread {
+    background: var(--primary-light);
+    border-color: var(--primary);
+}

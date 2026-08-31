@@ -1,0 +1,397 @@
+@model ConceptFactory.Models.Order
+@using ConceptFactory.Models
+@{
+    decimal itemsSubtotal = Model.OrderDetails.Sum(d => d.UnitPrice * d.Quantity);
+    bool isCash = Model.PaymentMethod == "Cash";
+    decimal amountPaidToShow = Model.PaymentStatus == "Fully Paid" ? Model.TotalAmount : Model.DownPaymentAmount;
+    // Customers can pay more than the 50% minimum, so this is computed from
+    // what they actually entered rather than assumed to be exactly 50% —
+    // this is what admin/sales cross-check against the reference number and
+    // uploaded transaction proof.
+    decimal amountPaidPercent = Model.TotalAmount > 0 ? (amountPaidToShow / Model.TotalAmount) * 100 : 0;
+}
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success om-modal-alert">@TempData["Success"]</div>
+}
+
+<div class="bvp-summary-row @(isCash ? "bvp-summary-row-3col" : "")">
+    <div class="bvp-summary-item">
+        <label>Order #</label>
+        <span>#ORD-@Model.OrderID.ToString("D3")</span>
+    </div>
+    @if (!isCash)
+    {
+        <div class="bvp-summary-item">
+            <label>Payment ID</label>
+            <span title="Same number as the Order #, prefixed PAY- instead of ORD-">#@Model.PaymentID</span>
+        </div>
+    }
+    <div class="bvp-summary-item">
+        <label>Order Date</label>
+        <span>@Model.OrderDate.ToString("MMMM d, yyyy • h:mm tt")</span>
+    </div>
+    <div class="bvp-summary-item">
+        <label>Status</label>
+        <span class="status-badge @OrderStatusDisplay.PaymentBadgeClass(Model.PaymentStatus)">
+            @(Model.PaymentStatus == "Partially Paid" ? "Approved" : Model.PaymentStatus)
+        </span>
+    </div>
+</div>
+
+@if (isCash)
+{
+    // ── Cash payments reuse the same 2-column .bvp-body-grid as the
+    // GCash layout below, just without wrapper "column" divs: Customer
+    // Info and Payment Info sit side by side (auto-placed into col 1 /
+    // col 2), and the wider cards (breakdown, summary, notes) use
+    // .bvp-card-full to span both columns underneath. The "Amount
+    // Received" input + live Change/Payment Summary figures are the
+    // same updateCashPreview() logic as before.
+    bool cashPending = Model.PaymentStatus == "Waiting for Verification";
+    decimal receivedToShow = Model.CashAmountReceived ?? Model.DownPaymentAmount;
+    decimal changeToShow = Math.Max(0, receivedToShow - Model.DownPaymentAmount);
+
+    <div class="bvp-body-grid">
+        @* left column *@
+        <div>
+            <div class="bvp-card">
+                <div class="bvp-card-title"><i class="fa-solid fa-user"></i> Customer Information</div>
+                <div class="bvp-field"><label>Customer Name</label><span>@Model.CustomerName</span></div>
+                <div class="bvp-field"><label>Phone Number</label><span>@(string.IsNullOrEmpty(Model.CustomerPhone) ? "—" : Model.CustomerPhone)</span></div>
+                <div class="bvp-field"><label>Email Address</label><span>@(string.IsNullOrEmpty(Model.CustomerEmail) ? "—" : Model.CustomerEmail)</span></div>
+            </div>
+            <div class="bvp-card">
+                <div class="bvp-card-title"><i class="fa-solid fa-receipt"></i> Order Amount Breakdown</div>
+                @{
+                    decimal totalServiceFeesCash = Model.OrderDetails.Sum(d => (d.ServicePriceSnapshot ?? 0) * d.Quantity);
+                }
+                @foreach (var d in Model.OrderDetails)
+                {
+                    var name = !string.IsNullOrEmpty(d.ProductNameSnapshot) ? d.ProductNameSnapshot : "Item";
+                    var sName = !string.IsNullOrEmpty(d.ServiceNameSnapshot) ? d.ServiceNameSnapshot : "Item";
+                    var lineServiceFee = d.ServicePriceSnapshot ?? 0;
+                    var lineProductPrice = d.UnitPrice - lineServiceFee;
+                    <div class="bvp-breakdown-row">
+                        <span><strong>@name</strong> (@d.Quantity x ₱@lineProductPrice.ToString("N2"))</span>
+                        <span>₱@((lineProductPrice * d.Quantity).ToString("N2"))</span>
+                    </div>
+                    @if (lineServiceFee > 0)
+                    {
+                        <div class="bvp-breakdown-row bvp-breakdown-row-highlight">
+                            <span>@sName — Service Fee (@d.Quantity x ₱@lineServiceFee.ToString("N2"))</span>
+                            <span>₱@((lineServiceFee * d.Quantity).ToString("N2"))</span>
+                        </div>
+                    }
+                }
+                <div class="bvp-breakdown-row bvp-bd-divider payment-required">
+                    <span><strong>Total Order</strong></span>
+                    <span><strong>₱@Model.TotalAmount.ToString("N2")</strong></span>
+                </div>
+            </div>
+            @if (Model.PaymentStatus == "Waiting for Verification" || !string.IsNullOrEmpty(Model.PaymentNote))
+            {
+                <div class="bvp-card">
+                    <div class="bvp-card-title"><i class="fa-regular fa-note-sticky"></i> Notes @(Model.PaymentStatus == "Waiting for Verification" ? "(Optional)" : "")</div>
+                    @if (Model.PaymentStatus == "Waiting for Verification")
+                    {
+                        <textarea id="bvp-note-@Model.OrderID" class="bvp-notes-textarea" maxlength="300" placeholder="Add a note here..."></textarea>
+                    }
+                    else
+                    {
+                        <div class="bvp-field-note">@Model.PaymentNote</div>
+                    }
+                </div>
+            }
+        </div>
+        @* right column *@
+        <div>
+            <div class="bvp-card">
+                <div class="bvp-card-title"><i class="fa-solid fa-credit-card"></i> Payment Information</div>
+                <div class="bvp-field">
+                    <label>Payment Method</label>
+                    <span class="bvp-method-pill">@Model.PaymentMethod</span>
+                </div>
+                <div class="bvp-field">
+                    <label>
+                        @(Model.PaymentStatus == "Waiting for Verification" ? "Amount Submitted" : "Amount Paid")
+                    </label>
+                    <span class="bvp-amount">
+                        ₱@amountPaidToShow.ToString("N2")
+                        <span class="bvp-percent-note">
+                            (@amountPaidPercent.ToString("N1")% of total)
+                        </span>
+                    </span>
+                </div>
+                @if (cashPending)
+                {
+                    <div class="bvp-field">
+                        <label>Amount Received <span class="bvp-required-mark">*</span></label>
+                        <input type="number" id="bvp-cash-received-@Model.OrderID" class="bvp-cash-input" min="0" step="0.01"
+                               value="@Model.DownPaymentAmount.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)"
+                               oninput="updateCashPreview(this, @Model.OrderID, @Model.DownPaymentAmount.ToString(System.Globalization.CultureInfo.InvariantCulture))" />
+                        <small class="bvp-cash-hint">Enter the amount of cash given by the customer.</small>
+                    </div>
+                    <div class="bvp-cash-boxes">
+                        <div class="bvp-cash-box bvp-cash-box-change">
+                            <div class="bvp-cash-box-info">
+                                <label>Change</label>
+                                <div class="bvp-cash-box-sub">Amount to return to customer</div>
+                            </div>
+                            <span id="bvp-change-@Model.OrderID">₱0.00</span>
+                        </div>
+                        <div class="bvp-cash-box bvp-cash-box-applied">
+                            <div class="bvp-cash-box-info">
+                                <label>Payment Applied</label>
+                                <div class="bvp-cash-box-sub">Amount recorded for this order</div>
+                            </div>
+                            <span id="bvp-applied-@Model.OrderID">
+                                ₱@Model.DownPaymentAmount.ToString("N2")
+                            </span>
+                        </div>
+                    </div>
+                }
+                <div class="bvp-field"><label>Payment Date</label><span>@Model.OrderDate.ToString("MMMM d, yyyy • h:mm tt")</span></div>
+                <div class="bvp-field"><label>Received By</label><span>@(string.IsNullOrEmpty(ViewBag.AdminName) ? "Admin / Staff" : ViewBag.AdminName)</span></div>
+            </div>
+            @if (Model.PaymentStatus != "Waiting for Verification")
+            {
+                <div class="bvp-card bvp-card-full">
+                    <div class="bvp-card-title"><i class="fa-solid fa-calculator"></i> Payment Summary</div>
+                    <div class="bvp-summary-box-row bvp-summary-box-row-receive">
+                        <span>Amount Received</span>
+                        <span id="bvp-summary-received-@Model.OrderID">₱@(cashPending? Model.DownPaymentAmount: receivedToShow)</span>
+                    </div>
+                    <div class="bvp-summary-box-row bvp-summary-box-row-change">
+                        <span>Change</span>
+                        <span id="bvp-summary-change-@Model.OrderID">₱@(cashPending ? 0 : changeToShow)</span>
+                    </div>
+                    <div class="bvp-summary-box-row bvp-summary-box-row-total">
+                        <span>Remaining Balance</span>
+                        <span>₱@Model.RemainingBalance.ToString("N2")</span>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+}
+else
+{
+    @* For Gcash *@
+    <div class="bvp-body-grid">
+        <!-- Left column -->
+        <div>
+            <div class="bvp-card">
+                <div class="bvp-card-title"><i class="fa-solid fa-user"></i> Customer Information</div>
+                <div class="bvp-field"><label>Customer Name</label><span>@Model.CustomerName</span></div>
+                <div class="bvp-field"><label>Phone Number</label><span>@(string.IsNullOrEmpty(Model.CustomerPhone) ? "—" : Model.CustomerPhone)</span></div>
+                <div class="bvp-field"><label>Email Address</label><span>@(string.IsNullOrEmpty(Model.CustomerEmail) ? "—" : Model.CustomerEmail)</span></div>
+            </div>
+
+            <div class="bvp-card">
+                <div class="bvp-card-title"><i class="fa-solid fa-credit-card"></i> Payment Information</div>
+                <div class="bvp-field">
+                    <label>Payment Method</label>
+                    <span class="bvp-method-pill">
+                        @(Model.PaymentMethod)
+                    </span>
+                </div>
+                <div class="bvp-field"><label>Amount Paid</label><span class="bvp-amount">₱@amountPaidToShow.ToString("N2") <span class="bvp-percent-note">(@amountPaidPercent.ToString("N1")% of total)</span></span></div>
+                @if (!string.IsNullOrEmpty(Model.ReferenceNumber))
+                {
+                    <div class="bvp-field"><label>Reference Number</label><span>@Model.ReferenceNumber</span></div>
+                }
+                <div class="bvp-field"><label>Payment Date</label><span>@Model.OrderDate.ToString("MMMM d, yyyy • h:mm tt")</span></div>
+            </div>
+
+            <div class="bvp-card">
+                <div class="bvp-card-title"><i class="fa-regular fa-note-sticky"></i> Notes @(Model.PaymentStatus == "Waiting for Verification" ? "(Optional)" : "")</div>
+                @if (Model.PaymentStatus == "Waiting for Verification")
+                {
+                    <textarea id="bvp-note-@Model.OrderID" class="bvp-notes-textarea" maxlength="300" placeholder="Add a note here..."></textarea>
+                }
+                else
+                {
+                    <div class="bvp-field-note">@(string.IsNullOrEmpty(Model.PaymentNote) ? "No notes were added." : Model.PaymentNote)</div>
+                }
+            </div>
+        </div>
+
+        <!-- Right column -->
+        <div>
+            <div class="bvp-card">
+                <div class="bvp-card-title"><i class="fa-regular fa-image"></i> Uploaded Design</div>
+                @{
+                    var linesWithDesign = Model.OrderDetails.Where(d => !string.IsNullOrEmpty(d.DesignFilePath)).ToList();
+                }
+                @if (linesWithDesign.Any())
+                {
+                    @foreach (var d in linesWithDesign)
+                    {
+                        var designFileName = System.IO.Path.GetFileName(d.DesignFilePath);
+                        <div class="od-design-row">
+                            <div class="od-design-thumb"><img src="@d.DesignFilePath" alt="Uploaded design" /></div>
+                            <div class="od-design-info">
+                                <div class="od-design-name">@designFileName</div>
+                                <div class="od-design-actions">
+                                    <a href="@d.DesignFilePath" target="_blank" class="od-design-link"><i class="fa-solid fa-magnifying-glass"></i> Preview</a>
+                                    <a href="@d.DesignFilePath" download class="od-design-link"><i class="fa-solid fa-download"></i> Download</a>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="od-design-empty"><i class="fa-regular fa-image"></i><p>No design file was uploaded for this order.</p></div>
+                }
+            </div>
+
+            <div class="bvp-card">
+                <div class="bvp-card-title"><i class="fa-regular fa-image"></i> Payment Screenshot</div>
+                @if (!string.IsNullOrEmpty(Model.ProofFilePath))
+                {
+                    <div class="bvp-proof-frame">
+                        <img src="@Model.ProofFilePath" alt="Payment proof" />
+                    </div>
+                    <a href="@Model.ProofFilePath" target="_blank" class="btn btn-outline bvp-view-full-btn">
+                        <i class="fa-solid fa-magnifying-glass"></i> View Full Image
+                    </a>
+                }
+                else
+                {
+                    <div class="bvp-proof-empty">
+                        <i class="fa-regular fa-image"></i>
+                        <p>No payment screenshot was uploaded for this order.</p>
+                    </div>
+                }
+            </div>
+
+            <div class="bvp-card">
+                <div class="bvp-card-title"><i class="fa-solid fa-receipt"></i> Order Amount Breakdown</div>
+                @{
+                    decimal totalServiceFees = Model.OrderDetails.Sum(d => (d.ServicePriceSnapshot ?? 0) * d.Quantity);
+                }
+                @foreach (var d in Model.OrderDetails)
+                {
+                    var name = !string.IsNullOrEmpty(d.ProductNameSnapshot) ? d.ProductNameSnapshot : "Item";
+                    var sName = !string.IsNullOrEmpty(d.ServiceNameSnapshot) ? d.ServiceNameSnapshot : "Item";
+                    var lineServiceFee = d.ServicePriceSnapshot ?? 0;
+                    var lineProductPrice = d.UnitPrice - lineServiceFee;
+                    <div class="bvp-breakdown-row ">
+                        <span><strong>@name</strong> (@d.Quantity x ₱@lineProductPrice.ToString("N2"))</span>
+                        <span>₱@((lineProductPrice * d.Quantity).ToString("N2"))</span>
+                    </div>
+                    @if (lineServiceFee > 0)
+                    {
+                        <div class="bvp-breakdown-row bvp-breakdown-row-highlight">
+                            <span>@sName — Service Fee (@d.Quantity x ₱@lineServiceFee.ToString("N2"))</span>
+                            <span>₱@((lineServiceFee * d.Quantity).ToString("N2"))</span>
+                        </div>
+                    }
+                }
+                <div class="bvp-breakdown-highlight">
+                    <div class="bvp-breakdown-row bvp-bd-divider payment-required">
+                        <span>Total Amount</span>
+                        <span>₱@((Model.TotalAmount).ToString("N2"))</span>
+                    </div>
+
+                    <div class="bvp-breakdown-row bvp-bd-divider payment-paid">
+                        <span>Amount Paid (@amountPaidPercent.ToString("N1")%)</span>
+                        <span>₱@Model.DownPaymentAmount.ToString("N2")</span>
+                    </div>
+
+                    <div class="bvp-breakdown-row bvp-bd-divider payment-remaining">
+                        <span>Remaining Balance</span>
+                        <span>₱@Model.RemainingBalance.ToString("N2")</span>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+}
+
+<div class="bvp-action-bottom">
+    @if (Model.PaymentStatus == "Waiting for Verification")
+    {
+        <div class="bvp-approve-hint">
+            <i class="fa-solid fa-circle-info"></i>
+            @if (isCash)
+            {
+				<span>Once confirmed, the order moves to Confirmed and the down payment is marked Approved. Cash payments are collected and verified in person.</span>
+            }
+            else
+            {
+                <span>Once approved, the order moves to Confirmed and the down payment is marked Approved. Once rejected, the customer will need to resubmit proof of payment.</span>
+            }
+        </div>
+        <div class="bvp-actions">
+            @if (!isCash)
+            {
+                <form asp-controller="Billing" asp-action="bReject" method="post" class="bvp-action-form" data-confirm-reject="1">
+                    <input type="hidden" name="id" value="@Model.OrderID" />
+                    <input type="hidden" name="note" class="bvp-note-input" />
+                    <button type="submit" class="btn bvp-btn-reject"><i class="fa-solid fa-xmark"></i> Reject Payment</button>
+                </form>
+            }
+            <form asp-controller="Billing" asp-action="bApprove" method="post" class="bvp-action-form" data-billing-form="1" onsubmit="return fillNote(this, @Model.OrderID)">
+                <input type="hidden" name="id" value="@Model.OrderID" />
+                <input type="hidden" name="note" class="bvp-note-input" />
+                @if (isCash)
+                {
+                    <input type="hidden" name="amountReceived" class="bvp-cash-received-input" data-required="@Model.DownPaymentAmount.ToString(System.Globalization.CultureInfo.InvariantCulture)" />
+                }
+                <button type="submit" class="btn bvp-btn-approve">
+                    <i class="fa-solid fa-check"></i> @(isCash ? "Confirm Payment" : "Approve Payment")
+                </button>
+            </form>
+        </div>
+
+    }
+    else if (Model.PaymentStatus == "Partially Paid")
+    {
+        <div class="bvp-actions">
+            <form asp-controller="Billing" asp-action="bMarkFullyPaid" method="post" class="bvp-action-form" data-confirm-fully-paid="1">
+                <input type="hidden" name="id" value="@Model.OrderID" />
+                <button type="submit" class="btn btn-primary bvp-btn-approve">
+                    <i class="fa-solid fa-circle-check"></i> Mark Remaining Balance as Fully Paid
+                </button>
+            </form>
+        </div>
+        <div class="bvp-approve-hint">
+            <i class="fa-solid fa-circle-info"></i> Mark once the customer has settled the remaining balance (e.g. on pickup).
+        </div>
+        <div class="bvp-print-actions">
+            <a href="@Url.Action("bPrintInvoice", "Billing", new { id = Model.OrderID })" target="_blank" class="btn btn-outline">
+                <i class="fa-solid fa-file-invoice"></i> Print Invoice
+            </a>
+            <a href="@Url.Action("bPrintReceipt", "Billing", new { id = Model.OrderID })" target="_blank" class="btn btn-outline">
+                <i class="fa-solid fa-receipt"></i> Print Receipt
+            </a>
+        </div>
+    }
+    else if (Model.PaymentStatus == "Fully Paid")
+    {
+        <div class="bvp-already-decided">
+            <i class="fa-solid fa-circle-check"></i> This payment has already been fully paid.
+        </div>
+        <div class="bvp-print-actions">
+            <a href="@Url.Action("bPrintInvoice", "Billing", new { id = Model.OrderID })" target="_blank" class="btn btn-outline">
+                <i class="fa-solid fa-file-invoice"></i> Print Invoice
+            </a>
+            <a href="@Url.Action("bPrintReceipt", "Billing", new { id = Model.OrderID })" target="_blank" class="btn btn-outline">
+                <i class="fa-solid fa-receipt"></i> Print Receipt
+            </a>
+        </div>
+    }
+    else
+    {
+        <div class="bvp-already-decided">
+            <i class="fa-solid fa-ban"></i>
+            This payment has already been rejected.
+        </div>
+    }
+
+</div>

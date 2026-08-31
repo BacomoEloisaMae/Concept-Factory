@@ -1,0 +1,91 @@
+@{
+    ViewData["Title"] = "Login";
+    Layout = null;
+    string? returnUrl = ViewBag.ReturnUrl;
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login — ConceptFactory</title>
+    <link rel="stylesheet" href="~/css/auth.css" asp-append-version="true" />
+    <!-- auth.css used on this page: .blob-1, .blob, .blob-2, .blob-3, .dot-grid, .mockup-float, .tote-float, .auth-card, .auth-icon, .auth-title, .auth-sub, .auth-error-box, .auth-success-box, .form-group, .form-label, .input-wrap, .prefix, .toggle-pw, .row-between, .forgot-link, .btn-primary, .auth-footer -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+</head>
+<body>
+    <div class="auth-card">
+        <div class="auth-icon">
+            <img src="~/images/logo/Nlogo.png" />
+        </div>
+        <h1 class="auth-title">Welcome Back!</h1>
+        <p class="auth-sub">Please login to your account</p>
+
+        <form method="post" asp-controller="Account" asp-action="Login">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="returnUrl" value="@returnUrl" />
+
+            @if (TempData["Error"] != null)
+            {
+                <div class="auth-error-box">
+                    <i class="fa-solid fa-circle-xmark"></i> @TempData["Error"]
+                </div>
+            }
+            @if (TempData["Success"] != null)
+            {
+                <div class="auth-success-box">
+                    <i class="fa-solid fa-circle-check"></i> @TempData["Success"]
+                </div>
+            }
+
+            <div class="form-group">
+                <label class="form-label">Email</label>
+                <div class="input-wrap">
+                    <i class="fa-regular fa-envelope prefix"></i>
+                    <input type="email" name="Email" placeholder="Enter your email" autocomplete="email" />
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Password</label>
+                <div class="input-wrap">
+                    <i class="fa-solid fa-lock prefix"></i>
+                    <input type="password" name="Password" id="pwLogin" placeholder="Enter your password" autocomplete="current-password" />
+                    <button type="button" class="toggle-pw" onclick="togglePw('pwLogin', this)">
+                        <i class="fa-regular fa-eye"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="row-between">
+                <label class="remember-label">
+                    <input type="checkbox" name="RememberMe" />
+                    Remember me
+                </label>
+                <span></span>
+                <a asp-controller="Account" asp-action="ForgotPassword" class="forgot-link">Forgot Password?</a>
+            </div>
+
+            <button type="submit" class="btn-primary">LOGIN</button>
+        </form>
+
+        <div class="divider">
+            <span>or continue with</span>
+        </div>
+        <div></div>
+        <div class="social-row">
+            <a href="/Account/GoogleLogin" class="btn-social">
+                <img src="~/images/logo/google.png" alt="Google" />
+                <span>Continue with Google</span>
+            </a>
+        </div>
+        <p class="auth-footer">
+            Don't have an account? <a asp-controller="Account" asp-action="Register" asp-route-returnUrl="@returnUrl">Register</a>
+        </p>
+    </div>
+
+    <script src="~/js/auth.js" asp-append-version="true"></script>
+</body>
+</html>

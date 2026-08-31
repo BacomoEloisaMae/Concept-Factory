@@ -63,7 +63,7 @@
                 {
                     @foreach (var service in Model)
                     {
-                        <tr style="opacity:0.75;">
+                        <tr class="deleted-row">
                             <td>
                                 <div class="service-cell">
                                     <span class="service-icon"><i class="fa-solid fa-print"></i></span>
@@ -75,7 +75,7 @@
                             <td>@(service.DeletedAt?.ToString("MMM dd, yyyy") ?? "—")</td>
                             <td>
                                 <div class="action-btn">
-                                    <button type="button" class="btn-icon" style="color: var(--primary, #4f46e5);" title="Restore"
+                                    <button type="button" class="btn-icon btn-restore" title="Restore"
                                             onclick="confirmRestore(@service.ServiceID, '@Html.Raw(service.ServiceName.Replace("'", "\\'"))')">
                                         <i class="fa-solid fa-rotate-left"></i>
                                     </button>
@@ -125,9 +125,9 @@
     </div>
 </div>
 
-<div id="restoreModal" class="modal-overlay" style="display:none;">
+<div id="restoreModal" class="modal-overlay js-modal">
     <div class="modal-box">
-        <div class="modal-icon" style="color:var(--primary, #4f46e5);"><i class="fa-solid fa-arrow-rotate-left"></i></div>
+        <div class="modal-icon modal-icon-primary"><i class="fa-solid fa-arrow-rotate-left"></i></div>
         <h3 class="modal-title">Restore Service?</h3>
         <p class="modal-body">
             Are you sure you want to restore <strong id="restoreServiceName"></strong> back to the active services menu?
@@ -142,9 +142,9 @@
     </div>
 </div>
 
-<div id="hardDeleteModal" class="modal-overlay" style="display:none;">
+<div id="hardDeleteModal" class="modal-overlay js-modal">
     <div class="modal-box">
-        <div class="modal-icon" style="color:var(--danger,#e53e3e);"><i class="fa-solid fa-triangle-exclamation"></i></div>
+        <div class="modal-icon modal-icon-danger"><i class="fa-solid fa-triangle-exclamation"></i></div>
         <h3 class="modal-title">Permanently Delete Service?</h3>
         <p class="modal-body">
             <strong id="hardDeleteName"></strong> will be permanently removed and cannot be recovered.

@@ -1,0 +1,168 @@
+@model IEnumerable<ConceptFactory.Models.Product>
+@{
+    ViewData["Title"] = "Products";
+    var categories = ViewBag.Categories as List<ConceptFactory.Models.Category>;
+    int? selectedCategory = ViewBag.SelectedCategory;
+    string? search = ViewBag.Search;
+    string? sort = ViewBag.Sort;
+    int total = ViewBag.TotalCount ?? 0;
+}
+@section Styles {
+    <link rel="stylesheet" href="~/css/home/home-index.css" asp-append-version="true" />
+    <!-- home-index.css used on this page: .cat-subchip-label, .cat-subchip-row, .cat-subchip, .catalog-empty, .active, .catalog-grid, .catalog-card, .catalog-card-thumb, .catalog-card-badge-oos, .catalog-card-placeholder, .catalog-card-actions, .catalog-card-fav, .catalog-card-body, .catalog-card-category, .catalog-card-name, .catalog-card-price, .catalog-card-btn -->
+    <link rel="stylesheet" href="~/css/navbar.css" asp-append-version="true" />
+    <!-- navbar.css used on this page: .page-fill, .active, .footer-strip -->
+    <link rel="stylesheet" href="~/css/home/products-browse.css" asp-append-version="true" />
+}
+
+<div class="page-fill">
+<!-- ═══════════════════════════════════
+     HERO
+═══════════════════════════════════ -->
+<div class="browse-hero">
+    <div class="browse-hero-text">
+        <h1>Browse our Products</h1>
+        <p>High quality custom printed apparel for every occasion</p>
+    </div>
+    <img src="/images/hero/heroBrowse.png" alt="" class="browse-hero-img" />
+</div>
+
+<!-- ═══════════════════════════════════
+     FILTER / SORT BAR
+═══════════════════════════════════ -->
+<div class="browse-bar">
+    <div class="browse-pills">
+        <a asp-action="hProducts" asp-route-search="@search" asp-route-sort="@sort"
+           class="browse-pill @(selectedCategory == null ? "active" : "")">All</a>
+        @{
+            var topLevelCategories = categories?.Where(c => c.ParentCategoryID == null).ToList();
+            var selectedCatObj = categories?.FirstOrDefault(c => c.CategoryID == selectedCategory);
+            int? activeTopLevelId = selectedCatObj?.ParentCategoryID ?? selectedCatObj?.CategoryID;
+        }
+        @if (topLevelCategories != null)
+        {
+            foreach (var cat in topLevelCategories)
+            {
+                <a asp-action="hProducts" asp-route-categoryId="@cat.CategoryID"
+                   asp-route-search="@search" asp-route-sort="@sort"
+                   class="browse-pill @(activeTopLevelId == cat.CategoryID ? "active" : "")">
+                    @cat.CategoryName
+                </a>
+            }
+        }
+    </div>
+    @{
+        var childCategories = activeTopLevelId.HasValue
+            ? categories?.Where(c => c.ParentCategoryID == activeTopLevelId).ToList()
+            : null;
+    }
+    @if (childCategories != null && childCategories.Any())
+    {
+        <div class="cat-subchip-label">Products</div>
+        <div class="cat-subchip-row">
+            <a asp-action="hProducts" asp-route-categoryId="@activeTopLevelId"
+               asp-route-search="@search" asp-route-sort="@sort"
+               class="cat-subchip @(selectedCategory == activeTopLevelId ? "active" : "")">All</a>
+            @foreach (var child in childCategories)
+            {
+                <a asp-action="hProducts" asp-route-categoryId="@child.CategoryID"
+                   asp-route-search="@search" asp-route-sort="@sort"
+                   class="cat-subchip @(selectedCategory == child.CategoryID ? "active" : "")">@child.CategoryName</a>
+            }
+        </div>
+    }
+
+    <div class="browse-meta-row">
+        <span class="browse-count">@total product@(total == 1 ? "" : "s")</span>
+        <div class="browse-sort">
+            <label>Sort:</label>
+            <select id="browseSortSelect" onchange="applyBrowseSort(this.value)">
+                <option value="" selected="@(sort == null)">Newest</option>
+                <option value="name" selected="@(sort == "name")">Name A–Z</option>
+                <option value="price_asc" selected="@(sort == "price_asc")">Price ↑</option>
+                <option value="price_desc" selected="@(sort == "price_desc")">Price ↓</option>
+            </select>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════
+     PRODUCT GRID
+═══════════════════════════════════ -->
+<div class="browse-grid-wrap">
+    @if (!Model.Any())
+    {
+        <div class="catalog-empty">
+            <i class="fa-solid fa-box-open"></i>
+            <p>No products found.</p>
+            <a asp-action="hProducts" class="browse-pill active">Clear filters</a>
+        </div>
+    }
+    else
+    {
+        <div class="catalog-grid">
+            @foreach (var item in Model)
+            {
+                <a asp-action="hDetails" asp-route-id="@item.ProductID" class="catalog-card">
+                    <div class="catalog-card-thumb">
+                        @if (item.StockQuantity <= 0)
+                        {
+                            <span class="catalog-card-badge-oos">Out of Stock</span>
+                        }
+                        @if (!string.IsNullOrEmpty(item.ImagePath))
+                        {
+                            <img src="@item.ImagePath" alt="@item.ProductName" />
+                        }
+                        else
+                        {
+                            <div class="catalog-card-placeholder">
+                                <i class="fa-solid fa-shirt"></i>
+                            </div>
+                        }
+                        <div class="catalog-card-actions">
+                            <button type="button" class="catalog-card-fav" title="Add to wishlist"
+                                    data-cf-fav="@item.ProductID"
+                                    data-name="@item.ProductName"
+                                    data-price="@item.Price"
+                                    data-image="@item.ImagePath"
+                                    data-category="@(item.Category?.CategoryName ?? "Item")"
+                                    onclick="cfToggleFav(event, this)">
+                                <i class="fa-regular fa-heart"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="catalog-card-body">
+                        <span class="catalog-card-category">@(item.Category?.CategoryName ?? "Item")</span>
+                        <span class="catalog-card-name">@item.ProductName</span>
+                        <span class="catalog-card-price">₱@item.Price.ToString("N2")</span>
+                        <span class="catalog-card-btn">View Products</span>
+                    </div>
+                </a>
+            }
+            @await Html.PartialAsync("_CustomizeCard")
+        </div>
+    }
+</div>
+</div>
+
+@* ═══════════════════════════════════
+     FOOTER STRIP — shown here and on Views/Home/hIndex.cshtml
+     (Home Index) only, not site-wide. See Views/Shared/_Layout.cshtml
+     for why it's not in the shared layout.
+═══════════════════════════════════ *@
+<div class="footer-strip">
+    &copy; 2026 ConceptFactory. All rights reserved. &nbsp;·&nbsp;
+    <a href="#">Privacy Policy</a> &nbsp;·&nbsp;
+    <a href="#">Terms of Service</a>
+</div>
+
+<script>
+    window.CF_HOME = {
+        baseUrl: '@Url.Action("hProducts", "Home")',
+        selectedCategory: @(selectedCategory.HasValue ? selectedCategory.Value.ToString() : "null")
+    };
+</script>
+@section Scripts {
+    <script src="~/js/home-index.js" asp-append-version="true"></script>
+    <script src="~/js/products-browse.js" asp-append-version="true"></script>
+}

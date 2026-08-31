@@ -1,0 +1,228 @@
+@model IEnumerable<ConceptFactory.Models.Product>
+@{
+    ViewData["Title"] = "Home";
+    var categories = ViewBag.Categories as List<ConceptFactory.Models.Category>;
+    int? selectedCategory = ViewBag.SelectedCategory;
+    string? search = ViewBag.Search;
+}
+@section Styles {
+    <link rel="stylesheet" href="~/css/home/home-index.css" asp-append-version="true" />
+    <!-- home-index.css used on this page: .hero, .hero-content, .hero-eyebrow, .hero-title, .accent, .hero-desc, .hero-btns, .btn-hero-primary, .btn-hero-outline, .features-strip, .feature-item, .feature-icon, .feature-label, .feature-desc, .section, #products, .section-bg-alt, .category-filter, .cat-cards-row, .cat-img-card, .cat-img-thumb, .cat-img-label, .cat-subchip-label, .cat-subchip-row, .cat-subchip, .catalog-empty, .catalog-grid, .catalog-card, .catalog-card-thumb, .catalog-card-badge-oos, .catalog-card-placeholder, .catalog-card-actions, .catalog-card-fav, .catalog-card-body, .catalog-card-category, .catalog-card-name, .catalog-card-price, .catalog-card-btn, .view-all-wrap -->
+    <link rel="stylesheet" href="~/css/navbar.css" asp-append-version="true" />
+    <!-- navbar.css used on this page: .page-fill, .footer-strip -->
+}
+
+
+<div class="page-fill">
+<!-- ═══════════════════════════════════
+     HERO
+═══════════════════════════════════ -->
+<section class="hero">
+    <div class="hero-content">
+        <p class="hero-eyebrow">Welcome to Concept Factory</p>
+        <h1 class="hero-title">
+            Bring your Ideas<br>
+            to <span class="accent">Life.</span>
+        </h1>
+        <p class="hero-desc">
+            High quality custom printing for every style, every story.
+            Design by you. Printed by us.
+        </p>
+        <div class="hero-btns">
+            <a href="#" class="btn-hero-primary">Shop Now</a>
+            <a asp-controller="Customize" asp-action="Index" class="btn-hero-outline">Customize Now</a>
+        </div>
+    </div>
+</section>
+
+<!-- ═══════════════════════════════════
+     FEATURE STRIP
+═══════════════════════════════════ -->
+<div class="features-strip">
+    <div class="feature-item">
+        <div class="feature-icon"><img src="/images/logo/quality.png" alt="High Quality Prints" /></div>
+        <div>
+            <div class="feature-label">High Quality Prints</div>
+            <div class="feature-desc">Vivid colors and long lasting print</div>
+        </div>
+    </div>
+    <div class="feature-item">
+        <div class="feature-icon"><img src="/images/logo/materials.png" alt="Premium Materials" /></div>
+        <div>
+            <div class="feature-label">Premium Materials</div>
+            <div class="feature-desc">We use the best fabric for maximum comfort</div>
+        </div>
+    </div>
+    <div class="feature-item">
+        <div class="feature-icon"><img src="/images/logo/custom.png" alt="Custom Designs" /></div>
+        <div>
+            <div class="feature-label">Custom Designs</div>
+            <div class="feature-desc">Custom Printer, upload your desire design</div>
+        </div>
+    </div>
+    <div class="feature-item">
+        <div class="feature-icon"><img src="/images/logo/bulk 1.png" alt="Customer Support" /></div>
+        <div>
+            <div class="feature-label">Bulk Orders</div>
+            <div class="feature-desc">Perfect for businesses, schools, and events.</div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════
+     CATEGORIES SECTION
+═══════════════════════════════════ -->
+<section class="section section-bg-alt" id="products">
+    <div>
+        <h2 class="category-filter">Shop by Category</h2>
+    </div>
+
+    <div class="cat-cards-row">
+        <a asp-action="hIndex" asp-fragment="products"
+           class="cat-img-card @(selectedCategory == null && string.IsNullOrEmpty(search) ? "active" : "")">
+            <div class="cat-img-thumb">
+                <img src="/images/categories/default.png" alt="All" />
+            </div>
+            <span class="cat-img-label">All</span>
+        </a>
+        @{
+            // Only top-level categories get a big card here (e.g. "Jackets",
+            // not "Varsity Jackets") — specific sub-types are one level down,
+            // in the drill-down strip below.
+            var topLevelCategories = categories?.Where(c => c.ParentCategoryID == null).ToList();
+            var selectedCatObj = categories?.FirstOrDefault(c => c.CategoryID == selectedCategory);
+            // If a sub-type is selected, its PARENT card should still show as active;
+            // if a parent itself is selected, that's already the active one.
+            int? activeTopLevelId = selectedCatObj?.ParentCategoryID ?? selectedCatObj?.CategoryID;
+        }
+        @if (topLevelCategories != null)
+        {
+            var thumbs = ViewBag.CategoryThumbs as Dictionary<int, string>;
+            foreach (var cat in topLevelCategories)
+            {
+                string mockup = (thumbs != null && thumbs.ContainsKey(cat.CategoryID))
+                    ? thumbs[cat.CategoryID]
+                    : "/images/categories/t-shirt.png";
+
+                <a asp-action="hIndex" asp-route-categoryId="@cat.CategoryID" asp-fragment="products"
+                   class="cat-img-card @(activeTopLevelId == cat.CategoryID ? "active" : "")">
+                    <div class="cat-img-thumb">
+                        <img src="@mockup" alt="@cat.CategoryName" />
+                    </div>
+                    <span class="cat-img-label">@cat.CategoryName</span>
+                </a>
+            }
+        }
+    </div>
+    @{
+        // Drill-down chips: only shown once a parent category (or one of its
+        // children) is selected, so a shopper can narrow "Jackets" down to
+        // "Varsity Jackets" specifically if they want.
+        var childCategories = activeTopLevelId.HasValue
+            ? categories?.Where(c => c.ParentCategoryID == activeTopLevelId).ToList()
+            : null;
+    }
+    @if (childCategories != null && childCategories.Any())
+    {
+        <div class="cat-subchip-label">Products</div>
+        <div class="cat-subchip-row">
+            <a asp-action="hIndex" asp-route-categoryId="@activeTopLevelId" asp-fragment="products"
+               class="cat-subchip @(selectedCategory == activeTopLevelId ? "active" : "")">All</a>
+            @foreach (var child in childCategories)
+            {
+                <a asp-action="hIndex" asp-route-categoryId="@child.CategoryID" asp-fragment="products"
+                   class="cat-subchip @(selectedCategory == child.CategoryID ? "active" : "")">@child.CategoryName</a>
+            }
+        </div>
+    }
+    <div>
+        <h2 class="category-filter">Featured Products</h2>
+    </div>
+
+    @* Product grid *@
+    @if (!Model.Any())
+    {
+        <div class="catalog-empty">
+            <i class="fa-solid fa-box-open"></i>
+            <p>No products available yet. Check back soon!</p>
+        </div>
+    }
+    else
+    {
+        <div class="catalog-grid">
+            @foreach (var item in Model)
+            {
+                <a asp-action="hDetails" asp-route-id="@item.ProductID" class="catalog-card">
+                    <div class="catalog-card-thumb">
+                        @if (item.StockQuantity <= 0)
+                        {
+                            <span class="catalog-card-badge-oos">Out of Stock</span>
+                        }
+                        @if (!string.IsNullOrEmpty(item.ImagePath))
+                        {
+                            <img src="@item.ImagePath" alt="@item.ProductName" />
+                        }
+                        else
+                        {
+                            <div class="catalog-card-placeholder">
+                                <i class="fa-solid fa-shirt"></i>
+                            </div>
+                        }
+                        <div class="catalog-card-actions">
+                            <button type="button" class="catalog-card-fav" title="Add to wishlist"
+                                    data-cf-fav="@item.ProductID"
+                                    data-name="@item.ProductName"
+                                    data-price="@item.Price"
+                                    data-image="@item.ImagePath"
+                                    data-category="@(item.Category?.CategoryName ?? "Item")"
+                                    onclick="cfToggleFav(event, this)">
+                                <i class="fa-regular fa-heart"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="catalog-card-body">
+                        <span class="catalog-card-category">@(item.Category?.CategoryName ?? "Item")</span>
+                        <span class="catalog-card-name">@item.ProductName</span>
+                        <span class="catalog-card-price">₱@item.Price.ToString("N2")</span>
+                        <span class="catalog-card-btn">View Product</span>
+                    </div>
+                </a>
+            }
+            @await Html.PartialAsync("_CustomizeCard")
+        </div>
+
+        @if (ViewBag.ShowViewAll == true)
+        {
+            var currentCat = categories?.FirstOrDefault(c => c.CategoryID == selectedCategory);
+            string viewAllLabel = currentCat != null ? $"View All {currentCat.CategoryName}" : "View All Items";
+
+            <div class="view-all-wrap">
+                <a asp-action="hProducts" asp-route-categoryId="@selectedCategory" asp-route-search="@search"
+                   class="btn-hero-outline">
+                    @viewAllLabel
+                </a>
+            </div>
+        }
+    }
+</section>
+</div>
+
+@* ═══════════════════════════════════
+     FOOTER STRIP — shown here and on Views/Home/hProducts.cshtml
+     (Browse) only, not site-wide. See Views/Shared/_Layout.cshtml
+     for why it's not in the shared layout.
+═══════════════════════════════════ *@
+<div class="footer-strip">
+    &copy; 2026 ConceptFactory. All rights reserved. &nbsp;·&nbsp;
+    <a href="#">Privacy Policy</a> &nbsp;·&nbsp;
+    <a href="#">Terms of Service</a>
+</div>
+<script>
+    window.CF_HOME = {
+        baseUrl: '@Url.Action("hIndex", "Home")',
+        selectedCategory: @(selectedCategory.HasValue? selectedCategory.Value.ToString() : "null")
+    };
+</script>
+@section Scripts {
+    <script src="~/js/home-index.js" asp-append-version="true"></script>
+}

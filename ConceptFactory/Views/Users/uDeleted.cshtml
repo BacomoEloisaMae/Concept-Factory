@@ -1,0 +1,155 @@
+@model IEnumerable<ConceptFactory.Models.User>
+@{
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    ViewData["Title"] = "Deleted Staff";
+    ViewData["ActivePage"] = "Customers";
+    int page = ViewBag.Page ?? 1;
+    int totalPages = ViewBag.TotalPages ?? 1;
+    int totalCount = ViewBag.TotalCount ?? 0;
+    int pageSize = 10;
+    int startItem = totalCount == 0 ? 0 : ((page - 1) * pageSize) + 1;
+    int endItem = Math.Min(page * pageSize, totalCount);
+}
+<div class="page-container">
+
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Deleted Staff</h1>
+            <p class="page-subtitle">Restore staff or permanently delete them from here.</p>
+        </div>
+        <a asp-action="uIndex" class="btn btn-outline">
+            <i class="fa-solid fa-arrow-left"></i> Back to Users
+        </a>
+    </div>
+
+    <div class="filter-bar">
+        <form method="get" asp-action="uDeleted" class="filter-form">
+            <div class="search-box">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" name="search" value="@ViewBag.Search"
+                       placeholder="Search deleted staff..." class="search-input" />
+            </div>
+            <button type="submit" class="btn btn-outline">
+                <i class="fa-solid fa-filter"></i> Filter
+            </button>
+        </form>
+    </div>
+
+    <div class="card">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Team</th>
+                    <th>Deleted At</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Any())
+                {
+                    <tr>
+                        <td colspan="5" class="empty-state">
+                            <i class="fa-solid fa-trash-can"></i>
+                            <p>No deleted staff.</p>
+                            <a asp-action="uIndex" class="btn btn-outline btn-sm">Back to Users</a>
+                        </td>
+                    </tr>
+                }
+                else
+                {
+                    @foreach (var user in Model)
+                    {
+                        string fullName = $"{user.FirstName} {user.LastName}";
+                        <tr class="deleted-row">
+                            <td class="users-name-cell">@fullName</td>
+                            <td>@user.Email</td>
+                            <td><span class="status-badge @(user.Department == "Production" ? "status-badge-orange" : "status-badge-blue")">@user.Department</span></td>
+                            <td>@(user.DeletedAt?.ToString("MMM dd, yyyy") ?? "—")</td>
+                            <td>
+                                <div class="action-btn">
+                                    <button type="button" class="btn-icon btn-restore" title="Restore"
+                                            onclick="confirmRestore(@user.UserID, '@Html.Raw(fullName.Replace("'", "\\'"))')">
+                                        <i class="fa-solid fa-rotate-left"></i>
+                                    </button>
+
+                                    <button type="button" class="btn-icon btn-delete" title="Permanently Delete"
+                                            onclick="confirmHardDelete(@user.UserID, '@Html.Raw(fullName.Replace("'", "\\'"))')">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+
+        @if (totalPages > 1)
+        {
+            <div class="pagination">
+                <span class="page-info">Showing @startItem–@endItem of @totalCount deleted staff</span>
+                <div class="page-btns">
+                    @if (page > 1)
+                    {
+                        <a asp-action="uDeleted" asp-route-page="@(page - 1)" asp-route-search="@ViewBag.Search" class="page-btn">‹</a>
+                    }
+                    @for (int i = 1; i <= totalPages; i++)
+                    {
+                        <a asp-action="uDeleted" asp-route-page="@i" asp-route-search="@ViewBag.Search" class="page-btn @(i == page ? "active" : "")">@i</a>
+                    }
+                    @if (page < totalPages)
+                    {
+                        <a asp-action="uDeleted" asp-route-page="@(page + 1)" asp-route-search="@ViewBag.Search" class="page-btn">›</a>
+                    }
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="pagination">
+                <span class="page-info">Showing @startItem–@endItem of @totalCount deleted staff</span>
+            </div>
+        }
+    </div>
+</div>
+
+<div id="restoreModal" class="modal-overlay js-modal">
+    <div class="modal-box">
+        <div class="modal-icon modal-icon-primary"><i class="fa-solid fa-arrow-rotate-left"></i></div>
+        <h3 class="modal-title">Restore Staff?</h3>
+        <p class="modal-body">
+            Are you sure you want to restore <strong id="restoreProductName"></strong> back to active status?
+        </p>
+        <div class="modal-actions">
+            <button onclick="closeAllModals()" class="btn btn-outline">Cancel</button>
+            <form id="restoreForm" method="post">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn btn-primary">Restore Staff</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div id="hardDeleteModal" class="modal-overlay js-modal">
+    <div class="modal-box">
+        <div class="modal-icon modal-icon-danger"><i class="fa-solid fa-triangle-exclamation"></i></div>
+        <h3 class="modal-title">Permanently Delete?</h3>
+        <p class="modal-body">
+            <strong id="hardDeleteName"></strong> will be permanently removed and cannot be recovered.
+        </p>
+        <div class="modal-actions">
+            <button onclick="closeAllModals()" class="btn btn-outline">Cancel</button>
+            <form id="hardDeleteForm" method="post">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn btn-danger">Delete Forever</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/admin/admin-live-filter.js" asp-append-version="true"></script>
+    <script src="~/js/admin/users-deleted.js" asp-append-version="true"></script>
+}

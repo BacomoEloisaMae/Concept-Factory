@@ -1,0 +1,213 @@
+@model List<ConceptFactory.Controllers.UsersController.UserRow>
+@{
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    ViewData["Title"] = "User Management";
+    ViewData["ActivePage"] = "Customers";
+
+    string role = ViewBag.Role;
+    int page = ViewBag.Page;
+    int totalPages = ViewBag.TotalPages;
+    int totalCount = ViewBag.TotalCount;
+    int pageSize = 10;
+    int startItem = totalCount == 0 ? 0 : ((page - 1) * pageSize) + 1;
+    int endItem = Math.Min(page * pageSize, totalCount);
+
+    string RoleBadgeClass(string r) => r switch
+    {
+        "Admin" => "status-badge-purple",
+        "Production" => "status-badge-orange",
+        "Customer" => "status-badge-teal",
+        _ => "status-badge-blue" // Sales / Staff
+    };
+}
+@section Styles {
+    <link rel="stylesheet" href="~/css/admin/orders.css" asp-append-version="true" />
+    <!-- orders.css used on this page: .page-container, .page-header, .stat-cards-row, .stat-card, .stat-card-clickable, .stat-card-purple, .stat-card-label, .stat-card-body, .stat-icon-purple, .stat-icon, .stat-value, .stat-card-blue, .stat-icon-blue, .stat-card-orange, .stat-icon-orange, .stat-card-green, .stat-icon-green, .filter-bar-flat, .filter-bar, .data-table, .orders-empty-state, .status-badge, .order-date-cell, .pagination -->
+    <link rel="stylesheet" href="~/css/admin/users.css" asp-append-version="true" />
+}
+<div class="page-container">
+
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">User Management</h1>
+            <p class="page-subtitle">Every account in the system — admins, staff, and customers.</p>
+        </div>
+        <div class="page-header-actions">
+            <a asp-action="uDeleted" class="btn btn-outline">
+                <i class="fa-solid fa-trash-can-arrow-up"></i> Archive
+            </a>
+            <a asp-action="uCreate" class="btn btn-primary">
+                <i class="fa-solid fa-plus fa-lg"></i> Add Staff
+            </a>
+        </div>
+    </div>
+
+    <!-- Stat Cards — click one to filter the table below -->
+    <div class="stat-cards-row users-stat-cards-row">
+        <a asp-action="uIndex" asp-route-role="All" asp-route-search="@ViewBag.Search"
+           class="stat-card stat-card-purple stat-card-clickable @(role == "All" ? "active" : "")">
+            <span class="stat-card-label">Total Users</span>
+            <div class="stat-card-body">
+                <div class="stat-icon stat-icon-purple"><i class="fa-solid fa-users"></i></div>
+                <span class="stat-value">@ViewBag.TotalUsers</span>
+            </div>
+        </a>
+        <a asp-action="uIndex" asp-route-role="Admin" asp-route-search="@ViewBag.Search"
+           class="stat-card stat-card-blue stat-card-clickable @(role == "Admin" ? "active" : "")">
+            <span class="stat-card-label">Admins</span>
+            <div class="stat-card-body">
+                <div class="stat-icon stat-icon-blue"><i class="fa-solid fa-user-shield"></i></div>
+                <span class="stat-value">@ViewBag.AdminCount</span>
+            </div>
+        </a>
+        <a asp-action="uIndex" asp-route-role="Staff" asp-route-search="@ViewBag.Search"
+           class="stat-card stat-card-orange stat-card-clickable @(role == "Staff" ? "active" : "")">
+            <span class="stat-card-label">Staff</span>
+            <div class="stat-card-body">
+                <div class="stat-icon stat-icon-orange"><i class="fa-solid fa-user-gear"></i></div>
+                <span class="stat-value">@ViewBag.StaffCount</span>
+            </div>
+        </a>
+        <a asp-action="uIndex" asp-route-role="Customer" asp-route-search="@ViewBag.Search"
+           class="stat-card stat-card-green stat-card-clickable @(role == "Customer" ? "active" : "")">
+            <span class="stat-card-label">Customers</span>
+            <div class="stat-card-body">
+                <div class="stat-icon stat-icon-green"><i class="fa-solid fa-user"></i></div>
+                <span class="stat-value">@ViewBag.CustomerCount</span>
+            </div>
+        </a>
+    </div>
+
+    <!-- Filters -->
+    <div class="filter-bar filter-bar-flat">
+        <form method="get" asp-action="uIndex" class="filter-form">
+            <input type="hidden" name="role" value="@role" />
+            <div class="search-box">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" name="search" value="@ViewBag.Search" placeholder="Search by name, email, or phone..." class="search-input" />
+            </div>
+            <button type="submit" class="btn btn-outline">
+                <i class="fa-solid fa-filter"></i> Filter
+            </button>
+        </form>
+    </div>
+
+    <!-- Table -->
+    <div class="card">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>Role</th>
+                    <th>Date Joined</th>
+                    <th>Orders</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Any())
+                {
+                    <tr>
+                        <td colspan="7">
+                            <div class="orders-empty-state">
+                                <i class="fa-solid fa-users"></i>
+                                <p>No users match this view.</p>
+                            </div>
+                        </td>
+                    </tr>
+                }
+                @foreach (var u in Model)
+                {
+                    <tr>
+                        <td class="users-name-cell">@u.Name</td>
+                        <td>@u.Email</td>
+                        <td>@(u.Phone ?? "—")</td>
+                        <td>
+                            <span class="status-badge @RoleBadgeClass(u.Role)">@u.Role</span>
+                            @if (u.Station != null)
+                            {
+                                <span class="users-station-tag">@u.Station</span>
+                            }
+                            @if (u.CanManage && u.Status == "Inactive")
+                            {
+                                <span class="status-badge status-inactive users-inactive-tag">Inactive</span>
+                            }
+                        </td>
+                        <td class="order-date-cell">@u.DateJoined.ToString("MMM d, yyyy")</td>
+                        <td>@(u.OrdersCount?.ToString() ?? "—")</td>
+                        <td>
+                            @if (u.CanManage)
+                            {
+                                <div class="action-btn">
+                                    <a asp-action="uEdit" asp-route-id="@u.Id" class="btn-icon btn-edit" title="Edit">
+                                        <i class="fa-solid fa-pen-to-square"></i>
+                                    </a>
+                                    <button type="button" class="btn-icon btn-delete" title="Delete"
+                                            onclick="confirmDelete(@u.Id, '@Html.Raw(u.Name.Replace("'", "\\'"))')">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </button>
+                                </div>
+                            }
+                            else
+                            {
+                                <span class="users-managed-elsewhere" title="@(u.Role == "Admin" ? "Managed via admin login setup" : "Derived from order history")">—</span>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        @if (totalPages > 1)
+        {
+            <div class="pagination">
+                <span class="page-info">Showing @startItem–@endItem of @totalCount users</span>
+                <div class="page-btns">
+                    @if (page > 1)
+                    {
+                        <a asp-action="uIndex" asp-route-page="@(page-1)" asp-route-role="@role" asp-route-search="@ViewBag.Search" class="page-btn">‹</a>
+                    }
+                    @for (int i = 1; i <= totalPages; i++)
+                    {
+                        <a asp-action="uIndex" asp-route-page="@i" asp-route-role="@role" asp-route-search="@ViewBag.Search" class="page-btn @(i == page ? "active" : "")">@i</a>
+                    }
+                    @if (page < totalPages)
+                    {
+                        <a asp-action="uIndex" asp-route-page="@(page+1)" asp-route-role="@role" asp-route-search="@ViewBag.Search" class="page-btn">›</a>
+                    }
+                </div>
+            </div>
+        }
+        else if (totalCount > 0)
+        {
+            <div class="pagination">
+                <span class="page-info">Showing @startItem–@endItem of @totalCount users</span>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Soft Delete Modal -->
+<div id="deleteModal" class="modal-overlay js-modal">
+    <div class="modal-box">
+        <div class="modal-icon"><i class="fa-solid fa-trash"></i></div>
+        <h3 class="modal-title">Delete Staff?</h3>
+        <p class="modal-body">
+            <strong id="deleteProductName"></strong> will be moved to deleted items.
+            You can restore them later or permanently delete them from there.
+        </p>
+        <div class="modal-actions">
+            <button onclick="closeModal()" class="btn btn-outline">Cancel</button>
+            <form id="deleteForm" method="post">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn btn-danger">Move to Deleted</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/admin/users-index.js" asp-append-version="true"></script>
+}

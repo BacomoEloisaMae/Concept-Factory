@@ -5,7 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] – The Concept Factory</title>
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <!-- site.css used on this page: .js-hidden -->
     <link rel="stylesheet" href="~/css/navbar.css" asp-append-version="true" />
+    <!-- navbar.css used on this page: .navbar, .nav-brand, .nav-brand-name, .nav-links, .nav-link, .nav-right, .search-bar, .nav-notif-wrap, .nav-icon-btn, .nav-icon-badge, .nav-notif-dropdown, .nav-notif-dropdown-loading, .nav-account-wrap, .btn-nav-account, .fa-chevron-down, .nav-account-menu, .nav-account-item, .nav-account-divider -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
     @RenderSection("Styles", required: false)
 </head>
@@ -18,6 +20,7 @@
         string.Equals(currentController, controller, StringComparison.OrdinalIgnoreCase)
         && actions.Any(a => string.Equals(currentAction, a, StringComparison.OrdinalIgnoreCase));
     }
+    <form id="cfSiteAntiForgeryForm" class="js-hidden">@Html.AntiForgeryToken()</form>
     <!-- ═══ NAVBAR ═══ -->
     <nav class="navbar">
         <a asp-controller="Home" asp-action="hIndex" class="nav-brand">
@@ -31,15 +34,24 @@
                class="nav-link @(IsActive("Home", "hProducts") ? "active" : "")">Products</a>
             <a asp-controller="Customize" asp-action="Index"
                class="nav-link @(IsActive("Customize", "Index", "Custom") ? "active" : "")">Customize</a>
-			@* asp-controller="Home" asp-action="hTrackOrder" *@
-			<a href="#"
+            <a asp-controller="Home" asp-action="hTrackOrder"
             class="nav-link @(IsActive("Home", "hTrackOrder") ? "active" : "")">Track Order</a>
-            <a href="#" class="nav-link">About Us</a>
+            <a asp-controller="Home" asp-action="hAbout"
+               class="nav-link @(IsActive("Home", "hAbout") ? "active" : "")">About Us</a>
         </div>
         <div class="nav-right">
             <div class="search-bar">
                 <i class="fa-solid fa-magnifying-glass"></i>
                 <input type="text" id="navSearchInput" placeholder="Search products..." />
+            </div>
+            <div class="nav-notif-wrap" id="navNotifWrap">
+                <button type="button" class="nav-icon-btn" onclick="toggleNavNotifDropdown()" title="Notifications">
+                    <i class="fa-regular fa-bell"></i>
+                    <span class="nav-icon-badge" id="navNotifBadge"></span>
+                </button>
+                <div class="nav-notif-dropdown" id="navNotifDropdown">
+                    <div class="nav-notif-dropdown-loading"><i class="fa-solid fa-spinner fa-spin"></i> Loading…</div>
+                </div>
             </div>
             <a asp-controller="Home" asp-action="hWishlist" class="nav-icon-btn" title="Wishlist">
                 <i class="fa-regular fa-heart"></i>
@@ -49,23 +61,41 @@
                 <i class="fa-solid fa-cart-shopping"></i>
                 <span class="nav-icon-badge" data-cf-cart-badge></span>
             </a>
+            @{
+                string? customerName = Context.Session.GetString("CustomerName");
+            }
             <div class="nav-account-wrap" id="navAccountWrap">
                 <button type="button" class="btn-nav-account" onclick="toggleAccountMenu()">
                     <i class="fa-regular fa-user"></i>
-                    My Account
-                    <i class="fa-solid fa-chevron-down" style="font-size:10px;"></i>
+                    @(customerName ?? "My Account")
+                    <i class="fa-solid fa-chevron-down"></i>
                 </button>
                 <div class="nav-account-menu" id="navAccountMenu">
-                    <a asp-controller="Products" asp-action="pIndex" class="nav-account-item admin-item">
-                        <i class="fa-solid fa-gauge-high"></i> Admin Panel
-                    </a>
-                    <div class="nav-account-divider"></div>
-                    <a href="#" class="nav-account-item"><i class="fa-regular fa-user"></i> My Profile</a>
-					@* asp-controller="Home" asp-action="hTrackOrder" *@
-                    <a href="#" class="nav-account-item"><i class="fa-solid fa-box"></i> My Orders</a>
-                    <a asp-controller="Auth" asp-action="Login" class="nav-account-item">
-                        <i class="fa-solid fa-arrow-right-to-bracket"></i> Login
-                    </a>
+                    @if (customerName != null)
+                    {
+                        <a asp-controller="Account" asp-action="Profile" class="nav-account-item">
+                            <i class="fa-regular fa-id-card"></i> My Profile
+                        </a>
+                        <a asp-controller="Home" asp-action="hTrackOrder" class="nav-account-item">
+                            <i class="fa-solid fa-box"></i> My Orders
+                        </a>
+                        <a asp-controller="Home" asp-action="hNotifications" class="nav-account-item">
+                            <i class="fa-regular fa-bell"></i> Notifications
+                        </a>
+                        <div class="nav-account-divider"></div>
+                        <a asp-controller="Account" asp-action="Logout" class="nav-account-item" onclick="try { CF.clearGuestData(); } catch (e) {}">
+                            <i class="fa-solid fa-arrow-right-from-bracket"></i> Logout
+                        </a>
+                    }
+                    else
+                    {
+                        <a asp-controller="Account" asp-action="Login" class="nav-account-item">
+                            <i class="fa-solid fa-arrow-right-to-bracket"></i> Login
+                        </a>
+                        <a asp-controller="Account" asp-action="Register" class="nav-account-item">
+                            <i class="fa-regular fa-user"></i> Register
+                        </a>
+                    }
                 </div>
             </div>
         </div>
@@ -80,7 +110,15 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+    <script>
+        // Server-rendered data only — the CF_* inline-data convention (see
+        // custom.cshtml). Lets storefront.js know whether to sync cart/
+        // wishlist to the account (CartItems/WishlistItems tables) or stay
+        // purely localStorage-only, same as a guest.
+        window.CF_CUSTOMER_LOGGED_IN = @(Context.Session.GetInt32("CustomerID") != null ? "true" : "false");    
+     </script>
     <script src="~/js/storefront.js" asp-append-version="true"></script>
+    <script src="~/js/navbar-notifications.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

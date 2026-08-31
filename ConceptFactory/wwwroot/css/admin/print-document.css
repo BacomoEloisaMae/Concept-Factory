@@ -1,0 +1,196 @@
+/* ============================================================
+   PRINT-DOCUMENT.CSS — shared by Billing's Print Invoice /
+   Print Receipt pages (Views/Billing/bPrintInvoice.cshtml,
+   bPrintReceipt.cshtml). Standalone pages (Layout = null), so
+   unlike reports.css's @media print block there's no sidebar/
+   topbar to hide — this just styles the document itself and
+   hides the on-screen-only toolbar when actually printed.
+============================================================ */
+
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    background: #eef0f4;
+    font-family: 'Poppins', 'Segoe UI', Arial, sans-serif;
+    color: #1f2430;
+}
+
+.pd-toolbar {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    padding: 14px;
+    background: #1f2430;
+}
+.pd-toolbar button {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 18px;
+    border-radius: 8px;
+    border: none;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+}
+.pd-btn-print {
+    background: #5b5ef4;
+    color: #fff;
+}
+.pd-btn-print:hover { background: #4a4de0; }
+.pd-btn-close {
+    background: #383e4f;
+    color: #e6e8ee;
+}
+.pd-btn-close:hover { background: #4a5065; }
+
+.pd-page {
+    max-width: 820px;
+    margin: 28px auto 60px;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.15);
+    padding: 48px;
+}
+
+.pd-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    border-bottom: 3px solid #1f2430;
+    padding-bottom: 20px;
+    margin-bottom: 28px;
+}
+.pd-brand { display: flex; align-items: center; gap: 12px; }
+.pd-brand img { width: 46px; height: 46px; object-fit: contain; }
+.pd-brand-name { font-size: 20px; font-weight: 800; letter-spacing: .3px; }
+.pd-brand-tagline { font-size: 12px; color: #6b7280; margin-top: 2px; }
+
+.pd-doc-title { text-align: right; }
+.pd-doc-title h1 {
+    margin: 0;
+    font-size: 26px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+.pd-doc-title .pd-doc-number { color: #5b5ef4; font-weight: 700; margin-top: 4px; }
+.pd-doc-title .pd-doc-date { font-size: 12px; color: #6b7280; margin-top: 2px; }
+
+.pd-stamp {
+    display: inline-block;
+    margin-top: 8px;
+    padding: 4px 12px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .5px;
+    text-transform: uppercase;
+}
+.pd-stamp-paid { background: rgba(34,197,94,.12); color: #16803d; border: 1px solid rgba(34,197,94,.35); }
+.pd-stamp-partial { background: rgba(245,158,11,.12); color: #a15c07; border: 1px solid rgba(245,158,11,.35); }
+
+.pd-info-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-bottom: 28px;
+}
+.pd-info-block h4 {
+    margin: 0 0 8px;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    color: #6b7280;
+}
+.pd-info-block p { margin: 0 0 3px; font-size: 13.5px; }
+.pd-info-block .pd-info-main { font-weight: 700; font-size: 14.5px; }
+
+table.pd-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 24px;
+}
+table.pd-table th {
+    text-align: left;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .4px;
+    color: #6b7280;
+    background: #f4f5f8;
+    padding: 10px 12px;
+    border-bottom: 2px solid #e2e4ea;
+}
+table.pd-table td {
+    padding: 10px 12px;
+    font-size: 13.5px;
+    border-bottom: 1px solid #eceef2;
+    vertical-align: top;
+}
+table.pd-table td.pd-num, table.pd-table th.pd-num { text-align: right; }
+.pd-line-sub { display: block; font-size: 11.5px; color: #8a8fa3; margin-top: 2px; }
+
+.pd-totals {
+    margin-left: auto;
+    width: 300px;
+}
+.pd-totals-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 7px 0;
+    font-size: 13.5px;
+}
+.pd-totals-row.pd-totals-grand {
+    border-top: 2px solid #1f2430;
+    margin-top: 6px;
+    padding-top: 10px;
+    font-size: 15px;
+    font-weight: 800;
+}
+.pd-totals-row.pd-totals-paid { color: #16803d; font-weight: 700; }
+.pd-totals-row.pd-totals-balance { color: #b45309; font-weight: 700; }
+
+.pd-payment-box {
+    margin-top: 8px;
+    background: #f8f9fb;
+    border: 1px solid #e2e4ea;
+    border-radius: 8px;
+    padding: 16px 20px;
+}
+.pd-payment-box .pd-payment-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13.5px;
+    padding: 4px 0;
+}
+.pd-payment-box .pd-payment-row.pd-payment-amount {
+    font-size: 16px;
+    font-weight: 800;
+    color: #16803d;
+    border-top: 1px dashed #d3d6de;
+    margin-top: 6px;
+    padding-top: 8px;
+}
+
+.pd-footer {
+    margin-top: 36px;
+    padding-top: 16px;
+    border-top: 1px solid #e2e4ea;
+    font-size: 11.5px;
+    color: #8a8fa3;
+    text-align: center;
+}
+
+@media print {
+    body { background: #fff; }
+    .pd-toolbar { display: none !important; }
+    .pd-page {
+        margin: 0 auto;
+        box-shadow: none;
+        border-radius: 0;
+        max-width: 100%;
+    }
+}

@@ -1,0 +1,164 @@
+@model IEnumerable<ConceptFactory.Models.ActivityLog>
+@{
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    ViewData["Title"] = "Logs";
+
+    int page = ViewBag.Page ?? 1;
+    int totalPages = ViewBag.TotalPages ?? 1;
+    int totalCount = ViewBag.TotalCount ?? 0;
+    int pageSize = 20;
+    int startItem = totalCount == 0 ? 0 : ((page - 1) * pageSize) + 1;
+    int endItem = Math.Min(page * pageSize, totalCount);
+    string currentCategory = ViewBag.Category ?? "All";
+    DateTime? currentDate = ViewBag.Date;
+}
+@section Styles {
+    <link rel="stylesheet" href="~/css/admin/orders.css" asp-append-version="true" />
+    <!-- orders.css used on this page: .page-container, .page-header, .stat-cards-row, .stat-card, .stat-card-label, .stat-card-body, .stat-icon-purple, .stat-icon, .stat-value, .stat-icon-blue, .order-tabs, .order-tab, .filter-bar, .data-table, .orders-empty-state, .order-date-cell, .order-time, .pagination -->
+    <link rel="stylesheet" href="~/css/admin/logs.css" asp-append-version="true" />
+}
+<div class="page-container">
+
+    <!-- Page Header -->
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Logs</h1>
+            <p class="page-subtitle">A record of every action taken across Billing, Orders, Production, Products, Services, and admin sign-ins — for accountability, not for editing.</p>
+        </div>
+    </div>
+
+    <!-- Stat Cards -->
+    <div class="stat-cards-row">
+        <div class="stat-card">
+            <span class="stat-card-label">Logged Today</span>
+            <div class="stat-card-body">
+                <div class="stat-icon stat-icon-purple"><i class="fa-solid fa-calendar-day"></i></div>
+                <span class="stat-value">@ViewBag.TodayCount</span>
+            </div>
+        </div>
+        <div class="stat-card">
+            <span class="stat-card-label">Total Entries</span>
+            <div class="stat-card-body">
+                <div class="stat-icon stat-icon-blue"><i class="fa-solid fa-list-check"></i></div>
+                <span class="stat-value">@totalCount</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Table Card -->
+    <div class="card">
+
+        <!-- Category tabs -->
+        <div class="order-tabs">
+            <a asp-action="lIndex" asp-route-category="" asp-route-search="@ViewBag.Search" asp-route-date="@currentDate?.ToString("yyyy-MM-dd")"
+               class="order-tab @(currentCategory == "All" ? "active" : "")">All</a>
+            @foreach (var cat in ConceptFactory.Controllers.LogsController.Categories)
+            {
+                <a asp-action="lIndex" asp-route-category="@cat" asp-route-search="@ViewBag.Search" asp-route-date="@currentDate?.ToString("yyyy-MM-dd")"
+                   class="order-tab @(currentCategory == cat ? "active" : "")">@cat</a>
+            }
+        </div>
+
+        <!-- Filters -->
+        <form method="get" asp-action="lIndex" class="filter-bar">
+            <input type="hidden" name="category" value="@(currentCategory == "All" ? "" : currentCategory)" />
+            <div class="search-box">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" name="search" value="@ViewBag.Search" placeholder="Search user, action, details, Order ID..." class="search-input" />
+            </div>
+            <input type="date" name="date" value="@currentDate?.ToString("yyyy-MM-dd")" class="log-filter-date" />
+            <button type="submit" class="btn btn-outline">
+                <i class="fa-solid fa-filter"></i> Search
+            </button>
+            @if (!string.IsNullOrWhiteSpace(ViewBag.Search) || currentDate.HasValue)
+            {
+                <a asp-action="lIndex" asp-route-category="@(currentCategory == "All" ? "" : currentCategory)" class="btn btn-outline">
+                    <i class="fa-solid fa-xmark"></i> Clear
+                </a>
+            }
+        </form>
+
+        <!-- Logs Table -->
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Date &amp; Time</th>
+                    <th>Users</th>
+                    <th>Category</th>
+                    <th>Action</th>
+                    <th>Details</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Any())
+                {
+                    <tr>
+                        <td colspan="5">
+                            <div class="orders-empty-state">
+                                <i class="fa-solid fa-clipboard-list"></i>
+                                <p>No log entries match these filters.</p>
+                            </div>
+                        </td>
+                    </tr>
+                }
+                @foreach (var log in Model)
+                {
+                    <tr>
+                        <td class="order-date-cell">
+                            @log.Timestamp.ToString("MMMM d, yyyy")
+                            <span class="order-time">@log.Timestamp.ToString("h:mm tt")</span>
+                        </td>
+                        <td class="log-admin-cell">
+                            @if (string.IsNullOrEmpty(log.AdminName))
+                            {
+                                <span class="log-admin-none">System / Unknown</span>
+                            }
+                            else
+                            {
+                                @log.AdminName
+                            }
+                        </td>
+                        <td><span class="log-cat-badge log-cat-@log.Category">@log.Category</span></td>
+                        <td class="log-action-cell">
+                            @log.Action
+                            @if (log.OrderID.HasValue)
+                            {
+                                <span class="log-action-order-ref"> · #ORD-@log.OrderID.Value.ToString("D5")</span>
+                            }
+                        </td>
+                        <td class="log-details-cell">@log.Details</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        <!-- Pagination -->
+        @if (totalPages > 1)
+        {
+            <div class="pagination">
+                <span class="page-info">Showing @startItem–@endItem of @totalCount entries</span>
+                <div class="page-btns">
+                    @if (page > 1)
+                    {
+                        <a asp-action="lIndex" asp-route-category="@(currentCategory == "All" ? "" : currentCategory)" asp-route-search="@ViewBag.Search" asp-route-date="@currentDate?.ToString("yyyy-MM-dd")" asp-route-page="@(page-1)" class="page-btn">‹</a>
+                    }
+                    @for (int i = 1; i <= totalPages; i++)
+                    {
+                        <a asp-action="lIndex" asp-route-category="@(currentCategory == "All" ? "" : currentCategory)" asp-route-search="@ViewBag.Search" asp-route-date="@currentDate?.ToString("yyyy-MM-dd")" asp-route-page="@i"
+                           class="page-btn @(i == page ? "active" : "")">@i</a>
+                    }
+                    @if (page < totalPages)
+                    {
+                        <a asp-action="lIndex" asp-route-category="@(currentCategory == "All" ? "" : currentCategory)" asp-route-search="@ViewBag.Search" asp-route-date="@currentDate?.ToString("yyyy-MM-dd")" asp-route-page="@(page+1)" class="page-btn">›</a>
+                    }
+                </div>
+            </div>
+        }
+        else if (totalCount > 0)
+        {
+            <div class="pagination">
+                <span class="page-info">Showing @startItem–@endItem of @totalCount entries</span>
+            </div>
+        }
+    </div>
+</div>

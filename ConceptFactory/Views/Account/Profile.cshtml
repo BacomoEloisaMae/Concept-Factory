@@ -1,0 +1,97 @@
+@model ConceptFactory.Models.Customer
+@{
+    ViewData["Title"] = "My Profile";
+    var fieldErrors = ViewBag.FieldErrors as Dictionary<string, string> ?? new Dictionary<string, string>();
+    string Err(string field) => fieldErrors.TryGetValue(field, out var msg) ? msg : "";
+}
+@section Styles {
+    <link rel="stylesheet" href="~/css/home/home-index.css" asp-append-version="true" />
+    <!-- home-index.css used on this page: .cf-page, .cf-page-title, .cf-page-sub -->
+    <link rel="stylesheet" href="~/css/navbar.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/auth.css" asp-append-version="true" />
+    <!-- auth.css used on this page: .form-group, .form-label, .input-wrap, .prefix, .field-error, .field-hint, .field-hint-inline, .btn-primary -->
+    <link rel="stylesheet" href="~/css/home/profile.css" asp-append-version="true" />
+}
+<div class="cf-page profile-page">
+    <div class="cf-page-title">My Profile</div>
+    <div class="cf-page-sub">Edit your personal information.</div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="profile-alert profile-alert-success">
+            <i class="fa-solid fa-circle-check"></i> @TempData["Success"]
+        </div>
+    }
+
+    <div class="profile-card">
+        <form method="post" asp-controller="Account" asp-action="Profile">
+            @Html.AntiForgeryToken()
+
+            <div class="form-row-2-inline">
+                <div class="form-group">
+                    <label class="form-label">First Name</label>
+                    <div class="input-wrap">
+                        <i class="fa-regular fa-user prefix"></i>
+                        <input type="text" name="FirstName" value="@Model.FirstName" placeholder="First name"
+                               autocomplete="given-name" class="@(Err("FirstName") != "" ? "input-invalid" : "")" />
+                    </div>
+                    @if (Err("FirstName") != "")
+                    {
+                        <p class="field-error">@Err("FirstName")</p>
+                    }
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Last Name</label>
+                    <div class="input-wrap">
+                        <i class="fa-regular fa-user prefix"></i>
+                        <input type="text" name="LastName" value="@Model.LastName" placeholder="Last name"
+                               autocomplete="family-name" class="@(Err("LastName") != "" ? "input-invalid" : "")" />
+                    </div>
+                    @if (Err("LastName") != "")
+                    {
+                        <p class="field-error">@Err("LastName")</p>
+                    }
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Email</label>
+                <div class="input-wrap">
+                    <i class="fa-regular fa-envelope prefix"></i>
+                    <input type="email" name="Email" value="@Model.Email" placeholder="Enter your email"
+                           autocomplete="email" class="@(Err("Email") != "" ? "input-invalid" : "")" />
+                </div>
+                @if (Err("Email") != "")
+                {
+                    <p class="field-error">@Err("Email")</p>
+                }
+                else
+                {
+                    <p class="field-hint">Used for order updates and password recovery.</p>
+                }
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Phone Number <span class="field-hint-inline">(optional)</span></label>
+                <div class="input-wrap">
+                    <i class="fa-solid fa-phone prefix"></i>
+                    <input type="text" name="Phone" value="@Model.Phone" placeholder="Enter your phone number" autocomplete="tel" />
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Address <span class="field-hint-inline">(optional)</span></label>
+                <div class="input-wrap">
+                    <i class="fa-solid fa-location-dot prefix"></i>
+                    <input type="text" name="Address" value="@Model.Address" placeholder="Enter your address" autocomplete="street-address" />
+                </div>
+            </div>
+
+            <button type="submit" class="btn-primary">Save Changes</button>
+        </form>
+
+        <p class="profile-footer-note">
+            Want to change your password? <a asp-controller="Account" asp-action="ForgotPassword">Reset it here</a>.
+        </p>
+    </div>
+</div>

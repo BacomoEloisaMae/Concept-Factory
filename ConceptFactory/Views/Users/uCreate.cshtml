@@ -1,0 +1,112 @@
+@model ConceptFactory.Models.User
+@{
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    ViewData["Title"] = "Add Staff";
+    ViewData["ActivePage"] = "Customers";
+}
+<div class="page-container">
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Add Staff</h1>
+            <p class="page-subtitle">Add a member to the Sales or Production team.</p>
+        </div>
+        <a asp-action="uIndex" class="btn btn-outline">
+            <i class="fa-solid fa-arrow-left"></i> Back to Users
+        </a>
+    </div>
+
+    <div class="form-card form-card-narrow">
+        <form asp-action="uCreate" method="post">
+            @Html.AntiForgeryToken()
+            <div asp-validation-summary="ModelOnly" class="field-error"></div>
+
+            <div class="form-header"><h2>Staff Details</h2></div>
+
+            <div class="form-row-2">
+                <div class="form-group">
+                    <label asp-for="FirstName" class="form-label">First Name</label>
+                    <input asp-for="FirstName" class="form-control" placeholder="e.g. Maria" />
+                    <span asp-validation-for="FirstName" class="field-error"></span>
+                </div>
+                <div class="form-group">
+                    <label asp-for="LastName" class="form-label">Last Name</label>
+                    <input asp-for="LastName" class="form-control" placeholder="e.g. Santos" />
+                    <span asp-validation-for="LastName" class="field-error"></span>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="Email" class="form-label">Email</label>
+                <input asp-for="Email" class="form-control" placeholder="e.g. maria.santos@conceptfactory.com" />
+                <span asp-validation-for="Email" class="field-error"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="ContactNum" class="form-label">Contact Number</label>
+                <input asp-for="ContactNum" class="form-control" placeholder="e.g. 0917 123 4567" />
+            </div>
+
+            <div class="form-row-2">
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <input type="password" name="Password" class="form-control" placeholder="At least 6 characters" autocomplete="new-password" />
+                    <span class="field-error">@Html.ValidationMessage("Password")</span>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Confirm Password</label>
+                    <input type="password" name="ConfirmPassword" class="form-control" autocomplete="new-password" />
+                    <span class="field-error">@Html.ValidationMessage("ConfirmPassword")</span>
+                </div>
+            </div>
+
+            <div class="form-row-2">
+                <div class="form-group">
+                    <label asp-for="Department" class="form-label">Team</label>
+                    <select asp-for="Department" class="form-control" id="staffDepartmentSelect" onchange="toggleStationField()">
+                        <option value="Sales">Sales</option>
+                        <option value="Production">Production</option>
+                    </select>
+                    <span asp-validation-for="Department" class="field-error"></span>
+                </div>
+                <div class="form-group">
+                    <label asp-for="Status" class="form-label">Status</label>
+                    <select asp-for="Status" class="form-control">
+                        <option value="Active">Active</option>
+                        <option value="Inactive">Inactive</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group" id="staffStationField">
+                <label asp-for="StationIndex" class="form-label">Station</label>
+                <select asp-for="StationIndex" class="form-control">
+                    <option value="">Select a station…</option>
+                    @foreach (var s in (IEnumerable<(int Index, string Name)>)ViewBag.Stations)
+                    {
+                        <option value="@s.Index">@s.Name</option>
+                    }
+                </select>
+                <span asp-validation-for="StationIndex" class="field-error"></span>
+                <p class="form-sublabel"><i class="fa-solid fa-circle-info"></i> Which station this Production staff can see and work — they'll only see "My Station" for this one.</p>
+            </div>
+
+            <p class="form-sublabel"><i class="fa-solid fa-circle-info"></i> This password logs them into the Sales/Production side of the admin panel — they'll only see the pages their team is allowed to.</p>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Save Staff</button>
+                <a asp-action="uIndex" class="btn btn-outline">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        function toggleStationField() {
+            var dept = document.getElementById('staffDepartmentSelect').value;
+            document.getElementById('staffStationField').style.display = dept === 'Production' ? '' : 'none';
+        }
+        toggleStationField();
+    </script>
+}

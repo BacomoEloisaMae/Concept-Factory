@@ -1,0 +1,122 @@
+@model ConceptFactory.Models.Order
+@{
+    Layout = null;
+    ViewData["Title"] = "Invoice #ORD-" + Model.OrderID.ToString("D3");
+    bool isFullyPaid = Model.PaymentStatus == "Fully Paid";
+    decimal totalServiceFees = Model.OrderDetails.Sum(d => (d.ServicePriceSnapshot ?? 0) * d.Quantity);
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>@ViewData["Title"]</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+    <link rel="stylesheet" href="~/css/admin/print-document.css" asp-append-version="true" />
+    <!-- print-document.css used on this page: .pd-toolbar, .pd-btn-print, .pd-btn-close, .pd-page, .pd-header, .pd-brand, .pd-brand-name, .pd-brand-tagline, .pd-doc-title, .pd-doc-number, .pd-doc-date, .pd-stamp, .pd-info-row, .pd-info-block, .pd-info-main, .pd-table, .pd-num, .pd-line-sub, .pd-totals, .pd-totals-row, .pd-totals-grand, .pd-totals-paid, .pd-totals-balance, .pd-footer -->
+</head>
+<body>
+    <div class="pd-toolbar no-print">
+        <button type="button" class="pd-btn-print" onclick="window.print()"><i class="fa-solid fa-print"></i> Print</button>
+        <button type="button" class="pd-btn-close" onclick="window.close()"><i class="fa-solid fa-xmark"></i> Close</button>
+    </div>
+
+    <div class="pd-page">
+        <div class="pd-header">
+            <div class="pd-brand">
+                <img src="~/images/logo/Nlogo.png" alt="ConceptFactory" />
+                <div>
+                    <div class="pd-brand-name">ConceptFactory</div>
+                    <div class="pd-brand-tagline">Custom Apparel Printing & Merchandise</div>
+                </div>
+            </div>
+            <div class="pd-doc-title">
+                <h1>Invoice</h1>
+                <div class="pd-doc-number">#ORD-@Model.OrderID.ToString("D3")</div>
+                <div class="pd-doc-date">Issued @DateTime.Now.ToString("MMMM d, yyyy")</div>
+                <span class="pd-stamp @(isFullyPaid ? "pd-stamp-paid" : "pd-stamp-partial")">
+                    @(isFullyPaid ? "Fully Paid" : "Down Payment Approved")
+                </span>
+            </div>
+        </div>
+
+        <div class="pd-info-row">
+            <div class="pd-info-block">
+                <h4>Billed To</h4>
+                <p class="pd-info-main">@Model.CustomerName</p>
+                <p>@(string.IsNullOrEmpty(Model.CustomerEmail) ? "—" : Model.CustomerEmail)</p>
+                <p>@(string.IsNullOrEmpty(Model.CustomerPhone) ? "—" : Model.CustomerPhone)</p>
+                @if (!string.IsNullOrEmpty(Model.CustomerAddress))
+                {
+                    <p>@Model.CustomerAddress</p>
+                }
+            </div>
+            <div class="pd-info-block">
+                <h4>Order Details</h4>
+                <p><strong>Order Date:</strong> @Model.OrderDate.ToString("MMMM d, yyyy")</p>
+                <p><strong>Payment Method:</strong> @(Model.PaymentMethod ?? "—")</p>
+                @if (!string.IsNullOrEmpty(Model.ReferenceNumber))
+                {
+                    <p><strong>Reference #:</strong> @Model.ReferenceNumber</p>
+                }
+            </div>
+        </div>
+
+        <table class="pd-table">
+            <thead>
+                <tr>
+                    <th>Item</th>
+                    <th class="pd-num">Qty</th>
+                    <th class="pd-num">Unit Price</th>
+                    <th class="pd-num">Amount</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var d in Model.OrderDetails)
+                {
+                    var name = !string.IsNullOrEmpty(d.ProductNameSnapshot) ? d.ProductNameSnapshot : "Item";
+                    var lineServiceFee = d.ServicePriceSnapshot ?? 0;
+                    var lineProductPrice = d.UnitPrice - lineServiceFee;
+                    <tr>
+                        <td>
+                            @name
+                            @if (!string.IsNullOrEmpty(d.SelectedSize) || !string.IsNullOrEmpty(d.SelectedColor))
+                            {
+                                <span class="pd-line-sub">@ConceptFactory.Utils.ColorNameHelper.GetName(d.SelectedColor) @(!string.IsNullOrEmpty(d.SelectedColor) && !string.IsNullOrEmpty(d.SelectedSize) ? "•" : "") @d.SelectedSize</span>
+                            }
+                        </td>
+                        <td class="pd-num">@d.Quantity</td>
+                        <td class="pd-num">₱@lineProductPrice.ToString("N2")</td>
+                        <td class="pd-num">₱@((lineProductPrice * d.Quantity).ToString("N2"))</td>
+                    </tr>
+                    @if (lineServiceFee > 0)
+                    {
+                        <tr>
+                            <td>@(!string.IsNullOrEmpty(d.ServiceNameSnapshot) ? d.ServiceNameSnapshot : "Printing Service") — Service Fee</td>
+                            <td class="pd-num">@d.Quantity</td>
+                            <td class="pd-num">₱@lineServiceFee.ToString("N2")</td>
+                            <td class="pd-num">₱@((lineServiceFee * d.Quantity).ToString("N2"))</td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+
+        <div class="pd-totals">
+            <div class="pd-totals-row"><span>Subtotal</span><span>₱@((Model.TotalAmount).ToString("N2"))</span></div>
+            <div class="pd-totals-row pd-totals-grand"><span>Total Amount</span><span>₱@Model.TotalAmount.ToString("N2")</span></div>
+            <div class="pd-totals-row pd-totals-paid">
+                <span>Amount Paid</span>
+                <span>₱@((isFullyPaid ? Model.TotalAmount : Model.DownPaymentAmount).ToString("N2"))</span>
+            </div>
+            @if (!isFullyPaid)
+            {
+                <div class="pd-totals-row pd-totals-balance"><span>Remaining Balance</span><span>₱@Model.RemainingBalance.ToString("N2")</span></div>
+            }
+        </div>
+
+        <div class="pd-footer">
+            This invoice was generated from ConceptFactory order records. For questions about this order, please contact us with your order number.
+        </div>
+    </div>
+</body>
+</html>

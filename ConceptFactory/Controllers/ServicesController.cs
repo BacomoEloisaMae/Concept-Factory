@@ -2,9 +2,12 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ConceptFactory.Data;
 using ConceptFactory.Models;
+using ConceptFactory.Utils;
+using ConceptFactory.Filters;
 
 namespace ConceptFactory.Controllers
 {
+    [AdminAuthFilter(Roles = "Admin")]
     public class ServicesController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -92,6 +95,7 @@ namespace ConceptFactory.Controllers
                 service.DateAdded = DateTime.Now;
                 _context.Add(service);
                 await _context.SaveChangesAsync();
+                await ActivityLogger.LogAsync(_context, HttpContext, "Services", "Added Service", $"\"{service.ServiceName}\"");
                 TempData["Success"] = "Service added successfully.";
                 return RedirectToAction(nameof(sIndex));
             }
@@ -126,6 +130,7 @@ namespace ConceptFactory.Controllers
 
                     _context.Update(service);
                     await _context.SaveChangesAsync();
+                    await ActivityLogger.LogAsync(_context, HttpContext, "Services", "Edited Service", $"\"{service.ServiceName}\"");
                     TempData["Success"] = "Service updated successfully.";
                 }
                 catch (DbUpdateConcurrencyException)
@@ -149,6 +154,7 @@ namespace ConceptFactory.Controllers
                 service.IsDeleted = true;
                 service.DeletedAt = DateTime.Now;
                 await _context.SaveChangesAsync();
+                await ActivityLogger.LogAsync(_context, HttpContext, "Services", "Deleted Service", $"\"{service.ServiceName}\" moved to deleted items.");
                 TempData["Success"] = $"\"{service.ServiceName}\" moved to deleted items.";
             }
             return RedirectToAction(nameof(sIndex));
@@ -162,9 +168,11 @@ namespace ConceptFactory.Controllers
             var service = await _context.Services.FindAsync(id);
             if (service != null)
             {
+                string serviceName = service.ServiceName;
                 _context.Services.Remove(service);
                 await _context.SaveChangesAsync();
-                TempData["Success"] = $"\"{service.ServiceName}\" permanently deleted.";
+                await ActivityLogger.LogAsync(_context, HttpContext, "Services", "Permanently Deleted Service", $"\"{serviceName}\"");
+                TempData["Success"] = $"\"{serviceName}\" permanently deleted.";
             }
             return RedirectToAction(nameof(sDeleted));
         }
@@ -180,6 +188,7 @@ namespace ConceptFactory.Controllers
                 service.IsDeleted = false;
                 service.DeletedAt = null;
                 await _context.SaveChangesAsync();
+                await ActivityLogger.LogAsync(_context, HttpContext, "Services", "Restored Service", $"\"{service.ServiceName}\"");
                 TempData["Success"] = $"\"{service.ServiceName}\" restored successfully.";
             }
             return RedirectToAction(nameof(sDeleted));
@@ -194,6 +203,7 @@ namespace ConceptFactory.Controllers
 
             service.Status = service.Status == "Active" ? "Inactive" : "Active";
             await _context.SaveChangesAsync();
+            await ActivityLogger.LogAsync(_context, HttpContext, "Services", "Toggled Service Status", $"\"{service.ServiceName}\" → {service.Status}");
 
             return Json(new { success = true, status = service.Status });
         }

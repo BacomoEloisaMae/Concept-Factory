@@ -1,0 +1,61 @@
+/* ============================================================
+   Logs (admin audit trail) — Views/Logs/lIndex.cshtml
+============================================================ */
+.log-cat-Auth       { background: #f3f4f6; color: #4b5563; }
+.log-cat-Billing    { background: var(--success-light); color: #16a34a; }
+.log-cat-Orders     { background: var(--primary-light); color: var(--primary); }
+.log-cat-Production { background: #fff7ed; color: var(--warning); }
+.log-cat-Products   { background: #eff6ff; color: #3b82f6; }
+.log-cat-Services   { background: #ecfeff; color: #0891b2; }
+
+.log-filter-select {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 9px 12px;
+    font-size: 13.5px;
+    font-family: inherit;
+    color: var(--text-main);
+    background: #fff;
+}
+.log-filter-date {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 13.5px;
+    font-family: inherit;
+    color: var(--text-main);
+}
+
+.log-admin-cell {
+    font-weight: 600;
+    color: var(--text-main);
+}
+.log-admin-cell .log-admin-none {
+    font-weight: 500;
+    font-style: italic;
+    color: var(--text-muted);
+}
+
+.log-cat-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.log-action-cell {
+    font-weight: 600;
+}
+.log-action-order-ref {
+    color: var(--text-sub);
+    font-weight: 500;
+}
+.log-details-cell {
+    color: var(--text-sub);
+    font-size: 12.5px;
+    max-width: 380px;
+}
